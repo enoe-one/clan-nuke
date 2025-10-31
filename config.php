@@ -1,17 +1,24 @@
 <?php
-// Configuration de la base de données pour Railway
-// Railway fournit les variables d'environnement automatiquement
-$db_host = getenv('MYSQLHOST') ?: 'localhost';
-$db_name = getenv('MYSQLDATABASE') ?: 'railway';
-$db_user = getenv('MYSQLUSER') ?: 'root';
-$db_pass = getenv('MYSQLPASSWORD') ?: '';
-$db_port = getenv('MYSQLPORT') ?: '3306';
+// Configuration Railway - Gestion automatique MySQL
+$database_url = getenv('DATABASE_URL');
 
-define('DB_HOST', $db_host);
-define('DB_NAME', $db_name);
-define('DB_USER', $db_user);
-define('DB_PASS', $db_pass);
-define('DB_PORT', $db_port);
+if ($database_url) {
+    // Railway fournit DATABASE_URL (format: mysql://user:pass@host:port/dbname)
+    $url_parts = parse_url($database_url);
+    
+    define('DB_HOST', $url_parts['host']);
+    define('DB_NAME', ltrim($url_parts['path'], '/'));
+    define('DB_USER', $url_parts['user']);
+    define('DB_PASS', $url_parts['pass']);
+    define('DB_PORT', $url_parts['port'] ?? '3306');
+} else {
+    // Fallback variables individuelles
+    define('DB_HOST', getenv('MYSQLHOST') ?: 'localhost');
+    define('DB_NAME', getenv('MYSQLDATABASE') ?: 'railway');
+    define('DB_USER', getenv('MYSQLUSER') ?: 'root');
+    define('DB_PASS', getenv('MYSQLPASSWORD') ?: '');
+    define('DB_PORT', getenv('MYSQLPORT') ?: '3306');
+}
 
 // Configuration du site
 define('SITE_URL', getenv('RAILWAY_PUBLIC_DOMAIN') ? 'https://' . getenv('RAILWAY_PUBLIC_DOMAIN') : 'http://localhost');
@@ -27,75 +34,58 @@ session_start();
 
 // Connexion à la base de données
 try {
+    $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+    
     $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+        $dsn,
         DB_USER,
         DB_PASS,
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false
+            PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
         ]
     );
 } catch(PDOException $e) {
-    die("Erreur de connexion à la base de données: " . $e->getMessage());
+    die("Erreur de connexion à la base de données. Veuillez contacter l'administrateur.");
 }
 
-// Fonction pour logger les actions admin
+// Fonctions utilitaires...
 function logAdminAction($pdo, $user_id, $action, $details = null) {
     $stmt = $pdo->prepare("INSERT INTO admin_logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$user_id, $action, $details, $_SERVER['REMOTE_ADDR']]);
+    $stmt->execute([$user_id, $action, $details, $_SERVER['REMOTE_ADDR'] ?? 'unknown']);
 }
 
-// Fonction pour vérifier si l'utilisateur est connecté
 function isLoggedIn() {
     return isset($_SESSION['user_id']) || isset($_SESSION['member_id']);
 }
 
-// Fonction pour vérifier si c'est un admin
 function isAdmin() {
     return isset($_SESSION['user_id']);
 }
 
-// Fonction pour vérifier si c'est un membre
 function isMember() {
     return isset($_SESSION['member_id']);
 }
 
-// Fonction pour vérifier les permissions admin
 function hasAccess($permission) {
     return isset($_SESSION[$permission]) && $_SESSION[$permission] == 1;
 }
 
-// Liste des grades disponibles
 function getGrades() {
     return [
-        'Soldat',
-        'Caporal',
-        'Sergent',
-        'Adjudant',
-        'Sous-lieutenant',
-        'Lieutenant',
-        'Capitaine',
-        'Commandant',
-        'Lieutenant-colonel',
-        'Colonel',
-        'Général de brigade',
-        'Général de division',
-        'Général de corps d\'armée',
-        'Général d\'armée'
+        'Soldat', 'Caporal', 'Sergent', 'Adjudant', 'Sous-lieutenant',
+        'Lieutenant', 'Capitaine', 'Commandant', 'Lieutenant-colonel',
+        'Colonel', 'Général de brigade', 'Général de division',
+        'Général de corps d\'armée', 'Général d\'armée'
     ];
 }
 
-// Liste des rangs disponibles
 function getRangs() {
     return [
-        'Recrue',
-        '2ème classe',
-        '1ère classe',
-        '2ème classe (avancé)',
-        'Commando',
-        'Vétéran'
+        'Recrue', '2ème classe', '1ère classe', '2ème classe (avancé)',
+        'Commando', 'Vétéran'
     ];
 }
 ?>
