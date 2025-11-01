@@ -258,4 +258,5 @@ $member_diplomes = $stmt->fetchAll();
 
     <?php include '../includes/footer.php'; ?>
 </body>
+
 </html>
