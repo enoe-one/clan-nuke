@@ -1,6 +1,7 @@
 <?php
 // ⚠️ SUPPRIMER CE FICHIER APRÈS UTILISATION !
-set_time_limit(300); // 5 minutes max
+set_time_limit(300);
+ob_start(); // Ajouter cette ligne au début
 
 require_once 'config.php';
 
@@ -12,18 +13,18 @@ echo "╚═══════════════════════�
 $sql_file = 'database_complete.sql';
 
 if (!file_exists($sql_file)) {
-    die("❌ ERREUR : Fichier $sql_file introuvable !\nAssurez-vous qu'il est uploadé à la racine.\n");
+    die("❌ ERREUR : Fichier $sql_file introuvable !\n");
 }
 
 echo "📄 Lecture de $sql_file...\n";
 $sql = file_get_contents($sql_file);
 echo "✅ " . strlen($sql) . " caractères lus\n\n";
 
-echo "🔄 Import en cours (peut prendre 1-2 minutes)...\n";
+echo "🔄 Import en cours...\n";
 echo "─────────────────────────────────────────\n";
 
 try {
-    // Supprimer les commentaires et lignes vides
+    // Supprimer commentaires
     $sql = preg_replace('/^--.*$/m', '', $sql);
     $sql = preg_replace('/^\s*$/m', '', $sql);
     
@@ -52,11 +53,14 @@ try {
             if ($success % 5 == 0 || $success == $total) {
                 $pct = round(($success / $total) * 100);
                 echo sprintf("  ⏳ %3d%% [%d/%d]\n", $pct, $success, $total);
+                
+                // Remplacer les lignes problématiques par ceci :
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
                 flush();
-                ob_flush();
             }
         } catch(PDOException $e) {
-            // Ignorer les erreurs "already exists"
             if (strpos($e->getMessage(), 'already exists') === false) {
                 echo "  ⚠️  Requête #$i : " . substr($e->getMessage(), 0, 100) . "\n";
             }
@@ -67,25 +71,30 @@ try {
     echo "║   ✅ IMPORT TERMINÉ                    ║\n";
     echo "╚════════════════════════════════════════╝\n\n";
     
-    echo "📊 Résumé :\n";
-    echo "  • $success requêtes exécutées\n";
-    echo "  • " . ($total - $success) . " erreurs (normales)\n\n";
-    
-    // Lister les tables créées
+    // Vérifier les tables
     echo "📁 Tables créées :\n";
     echo "─────────────────────────────────────────\n";
-    $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
     
-    $expected_tables = [
-        'users', 'legions', 'diplomes', 'members', 'member_diplomes',
-        'member_applications', 'faction_applications', 'faction_members',
-        'admin_logs', 'reports'
+    $expected = [
+        'users' => 0,
+        'legions' => 2,
+        'diplomes' => 35,
+        'members' => 0,
+        'member_diplomes' => 0,
+        'member_applications' => 0,
+        'faction_applications' => 0,
+        'faction_members' => 0,
+        'admin_logs' => 0,
+        'reports' => 0
     ];
     
-    foreach ($expected_tables as $table) {
+    $tables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+    
+    foreach ($expected as $table => $expectedCount) {
         if (in_array($table, $tables)) {
             $count = $pdo->query("SELECT COUNT(*) FROM `$table`")->fetchColumn();
-            echo sprintf("  ✅ %-25s %5d lignes\n", $table, $count);
+            $status = ($count >= $expectedCount) ? '✅' : '⚠️';
+            echo sprintf("  %s %-25s %5d lignes\n", $status, $table, $count);
         } else {
             echo "  ❌ $table (MANQUANTE)\n";
         }
@@ -93,35 +102,18 @@ try {
     
     echo "\n🎉 BASE DE DONNÉES PRÊTE !\n\n";
     echo "📋 Prochaines étapes :\n";
-    echo "1. Allez sur : create_users.php\n";
-    echo "2. Créez les comptes admin\n";
-    echo "3. ⚠️  SUPPRIMEZ import_db.php ET create_users.php\n";
+    echo "─────────────────────────────────────────\n";
+    echo "1. ✅ Base de données importée\n";
+    echo "2. 👉 Allez sur : create_users.php\n";
+    echo "3. 👉 Créez les 6 comptes admin\n";
+    echo "4. ⚠️  SUPPRIMEZ import_db.php\n";
+    echo "5. ⚠️  SUPPRIMEZ create_users.php\n";
+    echo "6. ⚠️  SUPPRIMEZ database_complete.sql\n";
     
 } catch(PDOException $e) {
     echo "\n❌ ERREUR FATALE :\n";
-    echo $e->getMessage() . "\n\n";
-    echo "MySQL est peut-être en veille.\n";
-    echo "Rafraîchissez cette page dans 2 minutes.\n";
+    echo $e->getMessage() . "\n";
 }
 
 echo "\n</pre>";
 ?>
-```
-
-**Instructions :**
-
-1. **Uploadez** `import_db.php` et `database_complete.sql` sur Railway
-2. **Allez immédiatement** sur `https://votre-app.up.railway.app/import_db.php`
-3. **Attendez** 1-2 minutes (ne fermez pas la page)
-4. Si erreur "MySQL server has gone away", **rafraîchissez** la page (MySQL se réveillera)
-
----
-
-## 🎯 Après l'import réussi
-
-Une fois que vous voyez :
-```
-✅ users                     0 lignes
-✅ legions                   2 lignes
-✅ diplomes                 35 lignes
-...
