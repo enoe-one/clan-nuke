@@ -48,7 +48,9 @@ try {
         ]
     );
 } catch(PDOException $e) {
-    die("Erreur de connexion à la base de données. Veuillez contacter l'administrateur.");
+    die('Erreur de connexion à la base de données. Veuillez recharger la page et attendre. 
+    Si au bout de 2 minutes le site n\'est pas lancé, veuillez contacter l\'administrateur 
+    en cliquant <a href="https://discord.gg/KhSBWp8X" style="color:#fff;background-color:#5865F2;padding:6px 12px;border-radius:6px;text-decoration:none;">ici</a>.');
 }
 
 // Fonctions utilitaires...
@@ -88,4 +90,5 @@ function getRangs() {
         'Commando', 'Vétéran'
     ];
 }
+
 ?>
