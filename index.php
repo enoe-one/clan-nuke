@@ -47,7 +47,7 @@ if ($appearance['background_style'] == 'gradient') {
             <div class="mb-8">
                 <?php if ($appearance['logo_path']): ?>
                     <img src="uploads/<?php echo htmlspecialchars($appearance['logo_path']); ?>" 
-                         alt="Logo CFWT" class="h-32 mx-auto mb-6">
+                         alt="Logo CFWT" class="h-56 mx-auto mb-12">
                 <?php else: ?>
                     <i class="fas fa-shield-alt text-9xl mb-6" style="color: <?php echo htmlspecialchars($appearance['primary_color']); ?>"></i>
                 <?php endif; ?>
@@ -145,3 +145,4 @@ if ($appearance['background_style'] == 'gradient') {
     <?php include 'includes/footer.php'; ?>
 </body>
 </html>
+
