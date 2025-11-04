@@ -1,0 +1,17 @@
+# Autoriser seulement les images
+<FilesMatch "\.(jpg|jpeg|png|gif|svg)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>
+
+# Bloquer l'exécution de PHP
+<FilesMatch "\.php$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Bloquer l'accès aux fichiers cachés
+<FilesMatch "^\.">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
