@@ -1,0 +1,28 @@
+# Fichiers sensibles
+config.php
+database_complete.sql
+create_users.php
+import_db.php
+test_db.php
+check_files.php
+reset_db.php
+
+# Uploads (logos, images)
+uploads/*
+!uploads/.htaccess
+
+# Backups
+backups/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
