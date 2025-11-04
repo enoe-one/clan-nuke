@@ -40,8 +40,11 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false
     ]);
 } catch(PDOException $e) {
-    die("Erreur de connexion à la base de données.");
+    die('Erreur de connexion à la base de données. Veuillez recharger la page et attendre. 
+    Si au bout de 2 minutes le site n\'est pas lancé, veuillez contacter l\'administrateur 
+    en cliquant <a href="https://discord.gg/KhSBWp8X" style="color:#fff;background-color:#5865F2;padding:6px 12px;border-radius:6px;text-decoration:none;">ici</a>.');
 }
+
 
 // Inclure les fonctions d'apparence
 require_once __DIR__ . '/includes/get_appearance.php';
@@ -105,3 +108,4 @@ function getRangs() {
     ];
 }
 ?>
+
