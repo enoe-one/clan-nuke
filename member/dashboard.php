@@ -118,4 +118,55 @@ $member_diplomes = $stmt->fetchAll();
                         <div class="space-y-2 max-h-64 overflow-y-auto">
                             <?php foreach ($member_diplomes as $diplome): ?>
                                 <div class="bg-gray-700 p-3 rounded">
+<p class="text-white font-semibold text-sm">
+                                        <?php echo htmlspecialchars($diplome['code']); ?> - <?php echo htmlspecialchars($diplome['nom']); ?>
+                                    </p>
+                                    <p class="text-gray-400 text-xs">
+                                        Niveau <?php echo $diplome['niveau']; ?> - <?php echo ucfirst($diplome['categorie']); ?>
+                                    </p>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-gray-400 text-center py-8">
+                            <i class="fas fa-graduation-cap text-4xl mb-2"></i><br>
+                            Aucun diplôme pour le moment
+                        </p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <a href="change_password.php" 
+                   class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-blue-500">
+                    <i class="fas fa-key text-blue-500 text-4xl mb-3"></i>
+                    <h3 class="text-xl font-bold text-white mb-2">Changer mon mot de passe</h3>
+                    <p class="text-gray-400">Sécurisez votre compte</p>
+                </a>
+
+                <a href="<?php echo DISCORD_INVITE; ?>" target="_blank"
+                   class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-purple-500">
+                    <i class="fab fa-discord text-purple-500 text-4xl mb-3"></i>
+                    <h3 class="text-xl font-bold text-white mb-2">Rejoindre le Discord</h3>
+                    <p class="text-gray-400">Communauté CFWT</p>
+                </a>
+            </div>
+
+            <!-- Historique d'activité (futur) -->
+            <div class="bg-gray-800 p-6 rounded-lg mt-6">
+                <h2 class="text-2xl font-bold text-white mb-4">
+                    <i class="fas fa-history mr-2"></i> Activité récente
+                </h2>
+                <div class="text-center py-12 text-gray-500">
+                    <i class="fas fa-clock text-6xl mb-4"></i>
+                    <p class="text-xl">Fonctionnalité en développement</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php include '../includes/footer.php'; ?>
+</body>
+</html>
            
