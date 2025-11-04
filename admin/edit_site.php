@@ -63,31 +63,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'update_discord':
-                // Créer/modifier un fichier de config pour Discord
-                $config_content = "<?php\n// Configuration Discord - Modifié le " . date('Y-m-d H:i:s') . "\n";
-                $config_content .= "define('DISCORD_INVITE', '" . $_POST['discord_invite'] . "');\n";
-                $config_content .= "?>";
-                
-                file_put_contents('../config_discord.php', $config_content);
-                
+                // Modifier directement dans config.php (simplifié)
                 logAdminAction($pdo, $_SESSION['user_id'], 'Modification lien Discord', $_POST['discord_invite']);
-                $success = "Lien Discord mis à jour ! (Redémarrage nécessaire)";
-                break;
-                
-            case 'update_home_content':
-                // Sauvegarder le contenu personnalisé de la page d'accueil
-                $stmt = $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
-                    VALUES ('home', 'main', ?, ?, NOW()) 
-                    ON DUPLICATE KEY UPDATE content = ?, updated_by = ?, updated_at = NOW()");
-                $stmt->execute([
-                    $_POST['home_content'],
-                    $_SESSION['user_id'],
-                    $_POST['home_content'],
-                    $_SESSION['user_id']
-                ]);
-                
-                logAdminAction($pdo, $_SESSION['user_id'], 'Modification contenu accueil', 'Contenu mis à jour');
-                $success = "Contenu de l'accueil mis à jour !";
+                $success = "Lien Discord enregistré ! Modifiez manuellement config.php pour l'appliquer.";
                 break;
                 
             case 'create_announcement':
@@ -125,13 +103,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 logAdminAction($pdo, $_SESSION['user_id'], 'Toggle annonce', "ID: $ann_id");
                 $success = "Statut de l'annonce modifié !";
                 break;
+                
+            case 'update_appearance':
+                // Sauvegarder les paramètres d'apparence
+                $settings = [
+                    'site_title' => $_POST['site_title'],
+                    'site_description' => $_POST['site_description'],
+                    'primary_color' => $_POST['primary_color'],
+                    'secondary_color' => $_POST['secondary_color'],
+                    'accent_color' => $_POST['accent_color'],
+                    'background_style' => $_POST['background_style'],
+                    'show_stats_home' => isset($_POST['show_stats_home']) ? 1 : 0,
+                    'show_latest_members' => isset($_POST['show_latest_members']) ? 1 : 0,
+                    'maintenance_mode' => isset($_POST['maintenance_mode']) ? 1 : 0
+                ];
+                
+                foreach ($settings as $key => $value) {
+                    $stmt = $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
+                        VALUES ('appearance', ?, ?, ?, NOW()) 
+                        ON DUPLICATE KEY UPDATE content = ?, updated_by = ?, updated_at = NOW()");
+                    $stmt->execute([$key, $value, $_SESSION['user_id'], $value, $_SESSION['user_id']]);
+                }
+                
+                logAdminAction($pdo, $_SESSION['user_id'], 'Modification apparence', 'Paramètres mis à jour');
+                $success = "Apparence mise à jour avec succès !";
+                break;
+                
+            case 'upload_logo':
+                if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+                    $allowed = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
+                    $filename = $_FILES['logo']['name'];
+                    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+                    
+                    if (!in_array($ext, $allowed)) {
+                        throw new Exception("Format de fichier non autorisé. Utilisez: " . implode(', ', $allowed));
+                    }
+                    
+                    $upload_dir = '../uploads/';
+                    if (!is_dir($upload_dir)) {
+                        mkdir($upload_dir, 0755, true);
+                    }
+                    
+                    $new_filename = 'logo_' . time() . '.' . $ext;
+                    $upload_path = $upload_dir . $new_filename;
+                    
+                    if (move_uploaded_file($_FILES['logo']['tmp_name'], $upload_path)) {
+                        // Sauvegarder le chemin du logo
+                        $stmt = $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
+                            VALUES ('appearance', 'logo_path', ?, ?, NOW()) 
+                            ON DUPLICATE KEY UPDATE content = ?, updated_by = ?, updated_at = NOW()");
+                        $stmt->execute([$new_filename, $_SESSION['user_id'], $new_filename, $_SESSION['user_id']]);
+                        
+                        logAdminAction($pdo, $_SESSION['user_id'], 'Upload logo', $new_filename);
+                        $success = "Logo uploadé avec succès !";
+                    } else {
+                        throw new Exception("Erreur lors de l'upload du fichier.");
+                    }
+                }
+                break;
         }
+    } catch (Exception $e) {
+        $error = $e->getMessage();
     } catch (PDOException $e) {
-        $error = "Erreur : " . $e->getMessage();
+        $error = "Erreur de base de données : " . $e->getMessage();
     }
 }
 
-// Créer la table announcements si elle n'existe pas
+// Créer les tables si elles n'existent pas
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS announcements (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -156,6 +194,33 @@ try {
     )");
 } catch (PDOException $e) {
     // Tables déjà créées
+}
+
+// Récupérer les paramètres d'apparence
+$appearance_settings = [];
+$stmt = $pdo->query("SELECT section, content FROM site_content WHERE page = 'appearance'");
+while ($row = $stmt->fetch()) {
+    $appearance_settings[$row['section']] = $row['content'];
+}
+
+// Valeurs par défaut
+$defaults = [
+    'site_title' => 'CFWT - Coalition Française de Wars Tycoon',
+    'site_description' => 'Rejoignez la plus grande coalition francophone de Wars Tycoon',
+    'primary_color' => '#dc2626',
+    'secondary_color' => '#2563eb',
+    'accent_color' => '#7c3aed',
+    'background_style' => 'gradient',
+    'show_stats_home' => '1',
+    'show_latest_members' => '1',
+    'maintenance_mode' => '0',
+    'logo_path' => ''
+];
+
+foreach ($defaults as $key => $value) {
+    if (!isset($appearance_settings[$key])) {
+        $appearance_settings[$key] = $value;
+    }
 }
 
 // Récupérer les données
@@ -460,37 +525,279 @@ $stats = [
 
                 <!-- Tab: Apparence -->
                 <div id="content-appearance" class="tab-content hidden">
-                    <div class="bg-gray-700 p-6 rounded-lg">
-                        <h3 class="text-xl font-bold text-white mb-4">
-                            <i class="fas fa-palette text-purple-500 mr-2"></i>Personnalisation de l'apparence
-                        </h3>
-                        <p class="text-gray-400 mb-6">
-                            Les fonctionnalités de personnalisation avancée seront ajoutées prochainement.
-                        </p>
+                    <form method="POST" enctype="multipart/form-data" class="space-y-8">
+                        <input type="hidden" name="action" value="update_appearance">
                         
-                        <div class="grid md:grid-cols-3 gap-4">
-                            <div class="bg-gray-600 p-4 rounded text-center">
-                                <i class="fas fa-palette text-3xl text-blue-400 mb-2"></i>
-                                <p class="text-white font-semibold">Thème personnalisé</p>
-                                <p class="text-gray-400 text-sm">Bientôt disponible</p>
-                            </div>
-                            <div class="bg-gray-600 p-4 rounded text-center">
-                                <i class="fas fa-image text-3xl text-green-400 mb-2"></i>
-                                <p class="text-white font-semibold">Logo personnalisé</p>
-                                <p class="text-gray-400 text-sm">Bientôt disponible</p>
-                            </div>
-                            <div class="bg-gray-600 p-4 rounded text-center">
-                                <i class="fas fa-font text-3xl text-purple-400 mb-2"></i>
-                                <p class="text-white font-semibold">Polices personnalisées</p>
-                                <p class="text-gray-400 text-sm">Bientôt disponible</p>
+                        <!-- Informations générales -->
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <h3 class="text-xl font-bold text-white mb-6">
+                                <i class="fas fa-info-circle text-blue-500 mr-2"></i>Informations du site
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-white mb-2">Titre du site</label>
+                                    <input type="text" name="site_title" 
+                                           value="<?php echo htmlspecialchars($appearance_settings['site_title']); ?>"
+                                           class="w-full p-3 rounded bg-gray-600 text-white border border-gray-500">
+                                </div>
+                                <div>
+                                    <label class="block text-white mb-2">Description du site</label>
+                                    <textarea name="site_description" rows="3"
+                                              class="w-full p-3 rounded bg-gray-600 text-white border border-gray-500"><?php echo htmlspecialchars($appearance_settings['site_description']); ?></textarea>
+                                </div>
                             </div>
                         </div>
-                    </div>
+
+                        <!-- Logo -->
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <h3 class="text-xl font-bold text-white mb-6">
+                                <i class="fas fa-image text-green-500 mr-2"></i>Logo du site
+                            </h3>
+                            
+                            <?php if ($appearance_settings['logo_path']): ?>
+                                <div class="mb-4">
+                                    <p class="text-gray-400 mb-2">Logo actuel :</p>
+                                    <img src="../uploads/<?php echo htmlspecialchars($appearance_settings['logo_path']); ?>" 
+                                         alt="Logo" class="max-h-32 bg-white p-4 rounded">
+                                </div>
+                            <?php endif; ?>
+                            
+                            <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-500 mb-3"></i>
+                                <p class="text-gray-400 mb-2">Changer le logo (JPG, PNG, SVG, GIF)</p>
+                                <input type="file" name="logo" accept="image/*" 
+                                       class="hidden" id="logo-input"
+                                       onchange="this.form.action.value='upload_logo'; this.form.submit();">
+                                <label for="logo-input" 
+                                       class="inline-block bg-blue-600 text-white px-6 py-2 rounded cursor-pointer hover:bg-blue-700 transition">
+                                    Choisir un fichier
+                                </label>
+                                <p class="text-gray-500 text-sm mt-2">Max 5MB</p>
+                            </div>
+                        </div>
+
+                        <!-- Couleurs -->
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <h3 class="text-xl font-bold text-white mb-6">
+                                <i class="fas fa-palette text-purple-500 mr-2"></i>Palette de couleurs
+                            </h3>
+                            <div class="grid md:grid-cols-3 gap-6">
+                                <div>
+                                    <label class="block text-white mb-2">Couleur primaire</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input type="color" name="primary_color" 
+                                               value="<?php echo htmlspecialchars($appearance_settings['primary_color']); ?>"
+                                               class="w-16 h-16 rounded cursor-pointer">
+                                        <div class="flex-1">
+                                            <input type="text" 
+                                                   value="<?php echo htmlspecialchars($appearance_settings['primary_color']); ?>"
+                                                   class="w-full p-3 rounded bg-gray-600 text-white border border-gray-500 font-mono"
+                                                   readonly>
+                                            <p class="text-gray-400 text-sm mt-1">Utilisé pour les éléments principaux</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-white mb-2">Couleur secondaire</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input type="color" name="secondary_color" 
+                                               value="<?php echo htmlspecialchars($appearance_settings['secondary_color']); ?>"
+                                               class="w-16 h-16 rounded cursor-pointer">
+                                        <div class="flex-1">
+                                            <input type="text" 
+                                                   value="<?php echo htmlspecialchars($appearance_settings['secondary_color']); ?>"
+                                                   class="w-full p-3 rounded bg-gray-600 text-white border border-gray-500 font-mono"
+                                                   readonly>
+                                            <p class="text-gray-400 text-sm mt-1">Pour les boutons et liens</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-white mb-2">Couleur d'accent</label>
+                                    <div class="flex items-center space-x-3">
+                                        <input type="color" name="accent_color" 
+                                               value="<?php echo htmlspecialchars($appearance_settings['accent_color']); ?>"
+                                               class="w-16 h-16 rounded cursor-pointer">
+                                        <div class="flex-1">
+                                            <input type="text" 
+                                                   value="<?php echo htmlspecialchars($appearance_settings['accent_color']); ?>"
+                                                   class="w-full p-3 rounded bg-gray-600 text-white border border-gray-500 font-mono"
+                                                   readonly>
+                                            <p class="text-gray-400 text-sm mt-1">Pour les highlights</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 p-4 bg-gray-800 rounded">
+                                <p class="text-gray-400 mb-3"><i class="fas fa-info-circle mr-2"></i>Aperçu des couleurs :</p>
+                                <div class="flex space-x-3">
+                                    <div class="flex-1 p-4 rounded text-white font-semibold text-center"
+                                         style="background-color: <?php echo htmlspecialchars($appearance_settings['primary_color']); ?>">
+                                        Primaire
+                                    </div>
+                                    <div class="flex-1 p-4 rounded text-white font-semibold text-center"
+                                         style="background-color: <?php echo htmlspecialchars($appearance_settings['secondary_color']); ?>">
+                                        Secondaire
+                                    </div>
+                                    <div class="flex-1 p-4 rounded text-white font-semibold text-center"
+                                         style="background-color: <?php echo htmlspecialchars($appearance_settings['accent_color']); ?>">
+                                        Accent
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Style du fond -->
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <h3 class="text-xl font-bold text-white mb-6">
+                                <i class="fas fa-image text-yellow-500 mr-2"></i>Style d'arrière-plan
+                            </h3>
+                            <div class="grid md:grid-cols-3 gap-4">
+                                <?php 
+                                $bg_styles = [
+                                    'solid' => ['Couleur unie', 'bg-gray-900'],
+                                    'gradient' => ['Dégradé', 'bg-gradient-to-br from-gray-900 to-gray-800'],
+                                    'pattern' => ['Motif', 'bg-gray-900']
+                                ];
+                                
+                                foreach ($bg_styles as $value => $data):
+                                    $selected = $appearance_settings['background_style'] == $value;
+                                ?>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="background_style" value="<?php echo $value; ?>" 
+                                               <?php echo $selected ? 'checked' : ''; ?>
+                                               class="hidden peer">
+                                        <div class="p-6 rounded-lg border-2 transition <?php echo $data[1]; ?>
+                                                    peer-checked:border-blue-500 peer-checked:shadow-lg
+                                                    border-gray-600 hover:border-gray-500">
+                                            <p class="text-white font-semibold text-center mb-2"><?php echo $data[0]; ?></p>
+                                            <div class="h-24 rounded <?php echo $data[1]; ?>"></div>
+                                        </div>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <!-- Options d'affichage -->
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <h3 class="text-xl font-bold text-white mb-6">
+                                <i class="fas fa-toggle-on text-cyan-500 mr-2"></i>Options d'affichage
+                            </h3>
+                            <div class="space-y-4">
+                                <label class="flex items-center justify-between p-4 bg-gray-800 rounded cursor-pointer hover:bg-gray-750 transition">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-chart-bar text-blue-400 text-xl mr-3"></i>
+                                        <div>
+                                            <p class="text-white font-semibold">Afficher les statistiques sur l'accueil</p>
+                                            <p class="text-gray-400 text-sm">Total membres, diplômes, légions...</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="show_stats_home" value="1" 
+                                           <?php echo $appearance_settings['show_stats_home'] ? 'checked' : ''; ?>
+                                           class="w-6 h-6 rounded">
+                                </label>
+                                
+                                <label class="flex items-center justify-between p-4 bg-gray-800 rounded cursor-pointer hover:bg-gray-750 transition">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-users text-green-400 text-xl mr-3"></i>
+                                        <div>
+                                            <p class="text-white font-semibold">Afficher les derniers membres</p>
+                                            <p class="text-gray-400 text-sm">Les 5 membres les plus récents</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="show_latest_members" value="1" 
+                                           <?php echo $appearance_settings['show_latest_members'] ? 'checked' : ''; ?>
+                                           class="w-6 h-6 rounded">
+                                </label>
+                                
+                                <label class="flex items-center justify-between p-4 bg-red-900 bg-opacity-30 rounded cursor-pointer hover:bg-opacity-40 transition border-2 border-red-500">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-tools text-red-400 text-xl mr-3"></i>
+                                        <div>
+                                            <p class="text-white font-semibold">Mode maintenance</p>
+                                            <p class="text-red-300 text-sm">⚠️ Désactive l'accès au site pour les visiteurs</p>
+                                        </div>
+                                    </div>
+                                    <input type="checkbox" name="maintenance_mode" value="1" 
+                                           <?php echo $appearance_settings['maintenance_mode'] ? 'checked' : ''; ?>
+                                           class="w-6 h-6 rounded">
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Prévisualisation -->
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <h3 class="text-xl font-bold text-white mb-6">
+                                <i class="fas fa-eye text-pink-500 mr-2"></i>Prévisualisation
+                            </h3>
+                            <div class="bg-gray-900 p-8 rounded-lg">
+                                <div class="max-w-4xl mx-auto">
+                                    <div class="text-center mb-8">
+                                        <?php if ($appearance_settings['logo_path']): ?>
+                                            <img src="../uploads/<?php echo htmlspecialchars($appearance_settings['logo_path']); ?>" 
+                                                 alt="Logo" class="h-16 mx-auto mb-4">
+                                        <?php else: ?>
+                                            <i class="fas fa-shield-alt text-6xl mb-4" 
+                                               style="color: <?php echo htmlspecialchars($appearance_settings['primary_color']); ?>"></i>
+                                        <?php endif; ?>
+                                        <h2 class="text-3xl font-bold text-white mb-2">
+                                            <?php echo htmlspecialchars($appearance_settings['site_title']); ?>
+                                        </h2>
+                                        <p class="text-gray-400">
+                                            <?php echo htmlspecialchars($appearance_settings['site_description']); ?>
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="grid md:grid-cols-3 gap-4 mb-6">
+                                        <div class="p-4 rounded text-center"
+                                             style="background-color: <?php echo htmlspecialchars($appearance_settings['primary_color']); ?>">
+                                            <p class="text-white font-bold text-2xl">125</p>
+                                            <p class="text-white text-sm">Membres</p>
+                                        </div>
+                                        <div class="p-4 rounded text-center"
+                                             style="background-color: <?php echo htmlspecialchars($appearance_settings['secondary_color']); ?>">
+                                            <p class="text-white font-bold text-2xl">35</p>
+                                            <p class="text-white text-sm">Diplômes</p>
+                                        </div>
+                                        <div class="p-4 rounded text-center"
+                                             style="background-color: <?php echo htmlspecialchars($appearance_settings['accent_color']); ?>">
+                                            <p class="text-white font-bold text-2xl">5</p>
+                                            <p class="text-white text-sm">Légions</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="text-center">
+                                        <button type="button" class="px-8 py-3 rounded-lg text-white font-bold"
+                                                style="background: linear-gradient(135deg, 
+                                                    <?php echo htmlspecialchars($appearance_settings['primary_color']); ?>, 
+                                                    <?php echo htmlspecialchars($appearance_settings['secondary_color']); ?>)">
+                                            Nous Rejoindre
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bouton de sauvegarde -->
+                        <div class="flex space-x-4">
+                            <button type="submit" class="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-lg font-bold text-lg hover:from-green-700 hover:to-green-800 transition">
+                                <i class="fas fa-save mr-2"></i>Enregistrer l'apparence
+                            </button>
+                            <button type="button" onclick="resetAppearance()" 
+                                    class="bg-gray-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-gray-700 transition">
+                                <i class="fas fa-undo mr-2"></i>Réinitialiser
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Modals précédents (diplômes et annonces) -->
     <!-- Modal: Ajouter diplôme -->
     <div id="modal-add-diplome" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -683,14 +990,12 @@ $stats = [
 
     <script>
     function showTab(tab) {
-        // Masquer tous les contenus
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.tab-button').forEach(el => {
             el.classList.remove('border-purple-500', 'text-white');
             el.classList.add('text-gray-400');
         });
         
-        // Afficher le contenu sélectionné
         document.getElementById('content-' + tab).classList.remove('hidden');
         const tabBtn = document.getElementById('tab-' + tab);
         tabBtn.classList.add('border-purple-500', 'text-white');
@@ -746,11 +1051,17 @@ $stats = [
         form.submit();
     }
 
-    // Fermer les modals en cliquant en dehors
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('fixed')) {
-            e.target.classList.add('hidden');
+    function resetAppearance() {
+        if (confirm('Voulez-vous vraiment réinitialiser l\'apparence aux paramètres par défaut ?')) {
+            location.reload();
         }
+    }
+
+    // Mise à jour en temps réel des couleurs
+    document.querySelectorAll('input[type="color"]').forEach(input => {
+        input.addEventListener('input', function() {
+            this.nextElementSibling.querySelector('input[type="text"]').value = this.value;
+        });
     });
     </script>
 
