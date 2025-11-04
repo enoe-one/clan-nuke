@@ -1,88 +1,143 @@
-<nav class="bg-gradient-to-r from-red-900 to-blue-900 text-white shadow-lg">
-    <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-between items-center py-4">
-            <div class="flex items-center space-x-3">
-                <i class="fas fa-shield-alt text-3xl"></i>
-                <span class="text-2xl font-bold">CFWT</span>
+<?php
+if (!defined('SITE_URL')) {
+    define('SITE_URL', 'https://' . $_SERVER['HTTP_HOST']);
+}
+
+// Récupérer les paramètres d'apparence
+$appearance = getAppearanceSettings($pdo);
+?>
+<style>
+    :root {
+        --primary-color: <?php echo htmlspecialchars($appearance['primary_color']); ?>;
+        --secondary-color: <?php echo htmlspecialchars($appearance['secondary_color']); ?>;
+        --accent-color: <?php echo htmlspecialchars($appearance['accent_color']); ?>;
+    }
+    
+    .bg-primary { background-color: var(--primary-color); }
+    .bg-secondary { background-color: var(--secondary-color); }
+    .bg-accent { background-color: var(--accent-color); }
+    .text-primary { color: var(--primary-color); }
+    .text-secondary { color: var(--secondary-color); }
+    .text-accent { color: var(--accent-color); }
+    .border-primary { border-color: var(--primary-color); }
+    .border-secondary { border-color: var(--secondary-color); }
+    .border-accent { border-color: var(--accent-color); }
+    
+    .hover\:bg-primary:hover { background-color: var(--primary-color); }
+    .hover\:bg-secondary:hover { background-color: var(--secondary-color); }
+    .hover\:text-primary:hover { color: var(--primary-color); }
+    
+    .gradient-primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    }
+</style>
+
+<header class="shadow-lg" style="background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));">
+    <nav class="max-w-7xl mx-auto px-4 py-4">
+        <div class="flex justify-between items-center">
+            <!-- Logo et titre -->
+            <a href="<?php echo SITE_URL; ?>/index.php" class="flex items-center text-white text-2xl font-bold">
+                <?php if ($appearance['logo_path']): ?>
+                    <img src="<?php echo SITE_URL; ?>/uploads/<?php echo htmlspecialchars($appearance['logo_path']); ?>" 
+                         alt="Logo CFWT" class="h-12 mr-3">
+                <?php else: ?>
+                    <i class="fas fa-shield-alt mr-2"></i>
+                <?php endif; ?>
+                <span class="hidden md:inline">CFWT</span>
+            </a>
+            
+            <!-- Menu principal -->
+            <div class="hidden lg:flex space-x-6">
+                <a href="<?php echo SITE_URL; ?>/index.php" class="text-white hover:text-gray-200 transition flex items-center">
+                    <i class="fas fa-home mr-1"></i> Accueil
+                </a>
+                <a href="<?php echo SITE_URL; ?>/grades.php" class="text-white hover:text-gray-200 transition flex items-center">
+                    <i class="fas fa-star mr-1"></i> Grades
+                </a>
+                <a href="<?php echo SITE_URL; ?>/diplomes.php" class="text-white hover:text-gray-200 transition flex items-center">
+                    <i class="fas fa-graduation-cap mr-1"></i> Diplômes
+                </a>
+                <a href="<?php echo SITE_URL; ?>/legions.php" class="text-white hover:text-gray-200 transition flex items-center">
+                    <i class="fas fa-shield-alt mr-1"></i> Légions
+                </a>
+                <a href="<?php echo SITE_URL; ?>/members.php" class="text-white hover:text-gray-200 transition flex items-center">
+                    <i class="fas fa-users mr-1"></i> Membres
+                </a>
+                <a href="<?php echo SITE_URL; ?>/recruitment.php" class="text-white hover:text-gray-200 transition flex items-center">
+                    <i class="fas fa-user-plus mr-1"></i> Recrutement
+                </a>
+                <a href="<?php echo SITE_URL; ?>/game.php" class="text-white hover:text-gray-200 transition flex items-center">
+                    <i class="fas fa-gamepad mr-1"></i> Jeu
+                </a>
             </div>
             
-            <button class="md:hidden" id="mobile-menu-btn">
-                <i class="fas fa-bars text-2xl"></i>
-            </button>
-
-            <div class="hidden md:flex space-x-6" id="desktop-menu">
-                <a href="<?php echo SITE_URL; ?>/index.php" class="flex items-center space-x-2 hover:text-red-300 transition">
-                    <i class="fas fa-home"></i>
-                    <span>Accueil</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>/recruitment.php" class="flex items-center space-x-2 hover:text-red-300 transition">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Recrutement</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>/grades.php" class="flex items-center space-x-2 hover:text-red-300 transition">
-                    <i class="fas fa-award"></i>
-                    <span>Grades</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>/diplomes.php" class="flex items-center space-x-2 hover:text-red-300 transition">
-                    <i class="fas fa-graduation-cap"></i>
-                    <span>Diplômes</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>/legions.php" class="flex items-center space-x-2 hover:text-red-300 transition">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>Légions</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>/members.php" class="flex items-center space-x-2 hover:text-red-300 transition">
-                    <i class="fas fa-users"></i>
-                    <span>Membres</span>
-                </a>
-                <a href="<?php echo SITE_URL; ?>/game.php" class="flex items-center space-x-2 hover:text-red-300 transition">
-                    <i class="fas fa-gamepad"></i>
-                    <span>Mini-Jeu</span>
-                </a>
-                <?php if (isLoggedIn()): ?>
-                    <?php if (isAdmin()): ?>
-                        <a href="<?php echo SITE_URL; ?>/admin/dashboard.php" class="flex items-center space-x-2 hover:text-red-300 transition">
-                            <i class="fas fa-cogs"></i>
-                            <span>Admin</span>
-                        </a>
-                    <?php else: ?>
-                        <a href="<?php echo SITE_URL; ?>/member/dashboard.php" class="flex items-center space-x-2 hover:text-red-300 transition">
-                            <i class="fas fa-user"></i>
-                            <span>Mon Profil</span>
-                        </a>
-                    <?php endif; ?>
+            <!-- Boutons de connexion -->
+            <div class="flex items-center space-x-4">
+                <?php if (isset($_SESSION['user_id'])): ?>
+                    <a href="<?php echo SITE_URL; ?>/admin/dashboard.php" 
+                       class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded transition flex items-center">
+                        <i class="fas fa-cog mr-2"></i>
+                        <span class="hidden md:inline">Admin</span>
+                    </a>
+                    <a href="<?php echo SITE_URL; ?>/logout.php" 
+                       class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded transition">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
+                <?php elseif (isset($_SESSION['member_id'])): ?>
+                    <a href="<?php echo SITE_URL; ?>/member/dashboard.php" 
+                       class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded transition flex items-center">
+                        <i class="fas fa-user mr-2"></i>
+                        <span class="hidden md:inline">Mon Compte</span>
+                    </a>
+                    <a href="<?php echo SITE_URL; ?>/logout.php" 
+                       class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded transition">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </a>
                 <?php else: ?>
-                    <a href="<?php echo SITE_URL; ?>/member_login.php" class="flex items-center space-x-2 hover:text-red-300 transition">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span>Connexion</span>
+                    <a href="<?php echo SITE_URL; ?>/member_login.php" 
+                       class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white px-4 py-2 rounded transition flex items-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        <span class="hidden md:inline">Connexion</span>
                     </a>
                 <?php endif; ?>
+                
+                <!-- Menu mobile -->
+                <button onclick="toggleMobileMenu()" class="lg:hidden text-white">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
             </div>
         </div>
-
-        <div class="md:hidden pb-4 space-y-2 hidden" id="mobile-menu">
-            <a href="<?php echo SITE_URL; ?>/index.php" class="block py-2 hover:bg-red-800 px-2 rounded">Accueil</a>
-            <a href="<?php echo SITE_URL; ?>/recruitment.php" class="block py-2 hover:bg-red-800 px-2 rounded">Recrutement</a>
-            <a href="<?php echo SITE_URL; ?>/grades.php" class="block py-2 hover:bg-red-800 px-2 rounded">Grades</a>
-            <a href="<?php echo SITE_URL; ?>/diplomes.php" class="block py-2 hover:bg-red-800 px-2 rounded">Diplômes</a>
-            <a href="<?php echo SITE_URL; ?>/legions.php" class="block py-2 hover:bg-red-800 px-2 rounded">Légions</a>
-            <a href="<?php echo SITE_URL; ?>/members.php" class="block py-2 hover:bg-red-800 px-2 rounded">Membres</a>
-            <a href="<?php echo SITE_URL; ?>/game.php" class="block py-2 hover:bg-red-800 px-2 rounded">Mini-Jeu</a>
-            <?php if (isLoggedIn()): ?>
-                <?php if (isAdmin()): ?>
-                    <a href="<?php echo SITE_URL; ?>/admin/dashboard.php" class="block py-2 hover:bg-red-800 px-2 rounded">Admin</a>
-                <?php else: ?>
-                    <a href="<?php echo SITE_URL; ?>/member/dashboard.php" class="block py-2 hover:bg-red-800 px-2 rounded">Mon Profil</a>
-                <?php endif; ?>
-            <?php else: ?>
-                <a href="<?php echo SITE_URL; ?>/member_login.php" class="block py-2 hover:bg-red-800 px-2 rounded">Connexion</a>
-            <?php endif; ?>
+        
+        <!-- Menu mobile -->
+        <div id="mobile-menu" class="hidden lg:hidden mt-4 space-y-2">
+            <a href="<?php echo SITE_URL; ?>/index.php" class="block text-white hover:bg-white hover:bg-opacity-10 px-4 py-2 rounded">
+                <i class="fas fa-home mr-2"></i> Accueil
+            </a>
+            <a href="<?php echo SITE_URL; ?>/grades.php" class="block text-white hover:bg-white hover:bg-opacity-10 px-4 py-2 rounded">
+                <i class="fas fa-star mr-2"></i> Grades
+            </a>
+            <a href="<?php echo SITE_URL; ?>/diplomes.php" class="block text-white hover:bg-white hover:bg-opacity-10 px-4 py-2 rounded">
+                <i class="fas fa-graduation-cap mr-2"></i> Diplômes
+            </a>
+            <a href="<?php echo SITE_URL; ?>/legions.php" class="block text-white hover:bg-white hover:bg-opacity-10 px-4 py-2 rounded">
+                <i class="fas fa-shield-alt mr-2"></i> Légions
+            </a>
+            <a href="<?php echo SITE_URL; ?>/members.php" class="block text-white hover:bg-white hover:bg-opacity-10 px-4 py-2 rounded">
+                <i class="fas fa-users mr-2"></i> Membres
+            </a>
+            <a href="<?php echo SITE_URL; ?>/recruitment.php" class="block text-white hover:bg-white hover:bg-opacity-10 px-4 py-2 rounded">
+                <i class="fas fa-user-plus mr-2"></i> Recrutement
+            </a>
+            <a href="<?php echo SITE_URL; ?>/game.php" class="block text-white hover:bg-white hover:bg-opacity-10 px-4 py-2 rounded">
+                <i class="fas fa-gamepad mr-2"></i> Jeu
+            </a>
         </div>
-    </div>
-</nav>
+    </nav>
+</header>
 
 <script>
-document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
-    document.getElementById('mobile-menu').classList.toggle('hidden');
-});
+function toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    menu.classList.toggle('hidden');
+}
 </script>
