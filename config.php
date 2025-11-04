@@ -1,5 +1,5 @@
 <?php
-// Configuration Railway - Gestion automatique MySQL
+// Configuration Railway - Version simplifiée avec DATABASE_URL uniquement
 $database_url = getenv('DATABASE_URL');
 
 if ($database_url) {
@@ -12,7 +12,7 @@ if ($database_url) {
     define('DB_PASS', $url_parts['pass']);
     define('DB_PORT', $url_parts['port'] ?? '3306');
 } else {
-    // Fallback variables individuelles
+    // Fallback variables individuelles pour local
     define('DB_HOST', getenv('MYSQLHOST') ?: 'localhost');
     define('DB_NAME', getenv('MYSQLDATABASE') ?: 'railway');
     define('DB_USER', getenv('MYSQLUSER') ?: 'root');
@@ -28,53 +28,66 @@ define('DISCORD_INVITE', 'https://discord.gg/Jt24qeYk');
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_only_cookies', 1);
 ini_set('session.cookie_samesite', 'Strict');
-
-// Démarrer la session
 session_start();
 
 // Connexion à la base de données
 try {
     $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
     
-    $pdo = new PDO(
-        $dsn,
-        DB_USER,
-        DB_PASS,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-            PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
-        ]
-    );
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES => false
+    ]);
 } catch(PDOException $e) {
-    die('Erreur de connexion à la base de données. Veuillez recharger la page et attendre. 
-    Si au bout de 2 minutes le site n\'est pas lancé, veuillez contacter l\'administrateur 
-    en cliquant <a href="https://discord.gg/KhSBWp8X" style="color:#fff;background-color:#5865F2;padding:6px 12px;border-radius:6px;text-decoration:none;">ici</a>.');
+    die("Erreur de connexion à la base de données.");
 }
 
-// Fonctions utilitaires...
+// Inclure les fonctions d'apparence
+require_once __DIR__ . '/includes/get_appearance.php';
+
+// Vérifier le mode maintenance (sauf pour les pages d'admin et de connexion)
+$current_page = basename($_SERVER['PHP_SELF']);
+$excluded_pages = ['login.php', 'member_login.php', 'maintenance.php'];
+
+if (!in_array($current_page, $excluded_pages) && 
+    strpos($_SERVER['REQUEST_URI'], '/admin/') === false &&
+    isMaintenanceMode($pdo)) {
+    header('Location: maintenance.php');
+    exit;
+}
+
+// Fonction pour logger les actions admin
 function logAdminAction($pdo, $user_id, $action, $details = null) {
-    $stmt = $pdo->prepare("INSERT INTO admin_logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$user_id, $action, $details, $_SERVER['REMOTE_ADDR'] ?? 'unknown']);
+    try {
+        $stmt = $pdo->prepare("INSERT INTO admin_logs (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$user_id, $action, $details, $_SERVER['REMOTE_ADDR'] ?? 'unknown']);
+    } catch (PDOException $e) {
+        // Erreur silencieuse
+    }
 }
 
+// Fonction pour vérifier si l'utilisateur est connecté
 function isLoggedIn() {
     return isset($_SESSION['user_id']) || isset($_SESSION['member_id']);
 }
 
+// Fonction pour vérifier si c'est un admin
 function isAdmin() {
     return isset($_SESSION['user_id']);
 }
 
+// Fonction pour vérifier si c'est un membre
 function isMember() {
     return isset($_SESSION['member_id']);
 }
 
+// Fonction pour vérifier les permissions admin
 function hasAccess($permission) {
     return isset($_SESSION[$permission]) && $_SESSION[$permission] == 1;
 }
 
+// Liste des grades disponibles
 function getGrades() {
     return [
         'Soldat', 'Caporal', 'Sergent', 'Adjudant', 'Sous-lieutenant',
@@ -84,11 +97,11 @@ function getGrades() {
     ];
 }
 
+// Liste des rangs disponibles
 function getRangs() {
     return [
         'Recrue', '2ème classe', '1ère classe', '2ème classe (avancé)',
         'Commando', 'Vétéran'
     ];
 }
-
 ?>
