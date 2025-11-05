@@ -1008,6 +1008,8 @@ $stats = [
         tabBtn.classList.add('border-purple-500', 'text-white');
         tabBtn.classList.remove('text-gray-400');
     }
+            }
+
 
     function editDiplome(diplome) {
         document.getElementById('edit-diplome-id').value = diplome.id;
@@ -1020,6 +1022,8 @@ $stats = [
         
         document.getElementById('modal-edit-diplome').classList.remove('hidden');
     }
+            }
+
 
     function deleteDiplome(id, nom) {
         if (confirm(`Êtes-vous sûr de vouloir supprimer le diplôme "${nom}" ?\n\nAttention : Cette action supprimera également toutes les attributions de ce diplôme aux membres.`)) {
@@ -1076,3 +1080,4 @@ $stats = [
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
+
