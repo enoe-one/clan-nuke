@@ -69,7 +69,7 @@ $appearance = getAppearanceSettings($pdo);
                 <a href="<?php echo SITE_URL; ?>/game.php" class="text-white hover:text-gray-200 transition flex items-center">
                     <i class="fas fa-gamepad mr-1"></i> Jeu
                 </a>
-                <a href="events.php" class="text-white hover:text-gray-200 transition">
+                <a href="<?php echo SITE_URL; ?>/events.php" class="text-white hover:text-gray-200 transition">
                    <i class="fas fa-calendar-alt mr-1"></i> Événements
 </a>
             </div>
@@ -134,6 +134,9 @@ $appearance = getAppearanceSettings($pdo);
             <a href="<?php echo SITE_URL; ?>/game.php" class="block text-white hover:bg-white hover:bg-opacity-10 px-4 py-2 rounded">
                 <i class="fas fa-gamepad mr-2"></i> Jeu
             </a>
+            <a href="<?php echo SITE_URL; ?>/events.php" class="text-white hover:text-gray-200 transition">
+                <i class="fas fa-user-plus mr-2"></i> Événements
+            </a>
         </div>
     </nav>
 </header>
@@ -144,4 +147,5 @@ function toggleMobileMenu() {
     menu.classList.toggle('hidden');
 }
 </script>
+
 
