@@ -721,7 +721,56 @@ $stats = [
         }
     }
     </script>
+function editLegion(id) {
+    const legions = <?php echo json_encode($legions); ?>;
+    const legion = legions.find(l => l.id == id);
+    if (!legion) return alert('Légion introuvable');
 
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full mx-4">
+            <h2 class="text-2xl font-bold text-white mb-6">Modifier la légion</h2>
+            <form method="POST" class="space-y-4">
+                <input type="hidden" name="action" value="update_legion">
+                <input type="hidden" name="legion_id" value="${legion.id}">
+
+                <div>
+                    <label class="block text-white mb-2">Nom de la légion *</label>
+                    <input type="text" name="nom_legion" value="${legion.nom}" required
+                           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                </div>
+
+                <div>
+                    <label class="block text-white mb-2">Description</label>
+                    <textarea name="description_legion" rows="3"
+                              class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">${legion.description || ''}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-white mb-2">Chef de légion</label>
+                    <select name="chef_id" class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                        <option value="">Aucun</option>
+                        <?php foreach ($users as $user): ?>
+                            <option value="<?php echo $user['id']; ?>"><?php echo htmlspecialchars($user['username']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="flex space-x-4">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+                        <i class="fas fa-save mr-2"></i>Enregistrer
+                    </button>
+                    <button type="button" onclick="this.closest('.fixed').remove()" 
+                            class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </div>`;
+    document.body.appendChild(modal);
+}
+</script>
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>Nom d'utilisateur *</label>
@@ -732,3 +781,4 @@ $stats = [
                 <div>
 
                     <label class="block text-white mb-2">
+
