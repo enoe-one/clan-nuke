@@ -1056,6 +1056,7 @@ $stats = [
         `;
         document.body.appendChild(form);
         form.submit();
+        }
     }
 
     function resetAppearance() {
@@ -1075,6 +1076,3 @@ $stats = [
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
-
-
-
