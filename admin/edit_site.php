@@ -15,18 +15,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     try {
-        switch ($action) {
-            case 'add_diplome':
-                $stmt = $pdo->prepare("INSERT INTO diplomes (code, nom, description, categorie, niveau, prerequis) 
-                    VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->execute([
-                    $_POST['code'],
-                    $_POST['nom'],
-                    $_POST['description'],
-                    $_POST['categorie'],
-                    $_POST['niveau'],
-                    $_POST['prerequis'] ?: null
-                ]);
+    switch ($action) {
+        case 'add_diplome':
+            $stmt = $pdo->prepare("INSERT INTO diplomes (code, nom, description, categorie, niveau, prerequis) 
+                VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $_POST['code'],
+                $_POST['nom'],
+                $_POST['description'],
+                $_POST['categorie'],
+                $_POST['niveau'],
+                $_POST['prerequis'] ?: null
+            ]);
+            break; // ✅ nécessaire pour fermer le case
+
+        // ici tu peux ajouter d'autres case si besoin
+    } // ✅ fermeture du switch
+} catch (Exception $e) {
+    $error = $e->getMessage();
+} catch (PDOException $e) {
+    $error = "Erreur PDO : " . $e->getMessage();
+} // ✅ fermeture du try-catch
+
                 
                 logAdminAction($pdo, $_SESSION['user_id'], 'Ajout diplôme', $_POST['nom']);
                 $success = "Diplôme ajouté avec succès !";
@@ -1053,4 +1063,5 @@ $stats = [
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
+
 
