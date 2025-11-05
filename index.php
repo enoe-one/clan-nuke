@@ -36,7 +36,7 @@ if ($appearance['background_style'] == 'gradient') {
     <title><?php echo htmlspecialchars($appearance['site_title']); ?></title>
     <meta name="description" content="<?php echo htmlspecialchars($appearance['site_description']); ?>">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/all.min.css">
 </head>
 <body class="<?php echo $background_class; ?>">
     <?php include 'includes/header.php'; ?>
@@ -145,6 +145,7 @@ if ($appearance['background_style'] == 'gradient') {
     <?php include 'includes/footer.php'; ?>
 </body>
 </html>
+
 
 
 
