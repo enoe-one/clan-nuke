@@ -1,27 +1,19 @@
 <?php
 /**
  * Script simple pour modifier la colonne "type" de la table "events"
- * sur Railway. Il doit être lancé depuis un service PHP ayant la variable
- * d'environnement DATABASE_URL définie.
+ * Remplis les valeurs ci-dessous avec celles de ta base MySQL
  */
 
+$host = 'mysql.railway.internal'; // <-- ton host
+$port = '3306';                             // <-- ton port
+$db   = 'railway';                          // <-- nom de ta base
+$user = 'root';                             // <-- utilisateur
+$pass = 'JwaAIaqRIRzIGarebfqimmiKHDfnARiE';                       // <-- mot de passe
+
 try {
-    // Récupère la variable DATABASE_URL
-    $databaseUrl = getenv('DATABASE_URL');
-    if (!$databaseUrl) {
-        die("❌ La variable DATABASE_URL n'est pas définie.\n");
-    }
-
-    // Exemple DATABASE_URL: mysql://user:pass@host:port/dbname
-    $databaseUrl = str_replace('mysql://', '', $databaseUrl);
-    list($auth, $hostInfo) = explode('@', $databaseUrl);
-    list($user, $pass) = explode(':', $auth);
-    list($hostPort, $dbName) = explode('/', $hostInfo);
-    list($host, $port) = explode(':', $hostPort);
-
     // Connexion PDO
     $pdo = new PDO(
-        "mysql:host=$host;port=$port;dbname=$dbName;charset=utf8mb4",
+        "mysql:host=$host;port=$port;dbname=$db;charset=utf8mb4",
         $user,
         $pass,
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
