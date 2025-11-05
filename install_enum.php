@@ -4,7 +4,7 @@
  * Remplis les valeurs ci-dessous avec celles de ta base MySQL
  */
 
-$host = 'mysql.railway.internal'; // <-- ton host
+$host = 'metro.proxy.rlwy.net'; // <-- ton host
 $port = '50858';                             // <-- ton port
 $db   = 'railway';                          // <-- nom de ta base
 $user = 'root';                             // <-- utilisateur
