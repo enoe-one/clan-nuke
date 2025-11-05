@@ -295,8 +295,16 @@ $month_name = strftime('%B %Y', $first_day_of_month);
                             
                             <h2 class="text-2xl font-bold text-white capitalize">
                                 <?php 
-                                setlocale(LC_TIME, 'fr_FR.UTF-8', 'fra');
-                                echo strftime('%B %Y', mktime(0, 0, 0, $month, 1, $year)); 
+$date = new DateTime();
+$date->setDate($year, $month, 1);
+
+$formatter = new IntlDateFormatter(
+    'fr_FR', 
+    IntlDateFormatter::LONG, 
+    IntlDateFormatter::NONE
+);
+echo ucfirst($formatter->format($date)); // ex: Novembre 2025
+
                                 ?>
                             </h2>
                             
