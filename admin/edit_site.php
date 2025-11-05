@@ -1,7 +1,7 @@
 <?php
 require_once '../config.php';
 
-// VÃ©rifier que l'utilisateur est connectÃ© et a les droits edit_site
+// Vérifier que l'utilisateur est connecté et a les droits edit_site
 if (!isAdmin() || !hasAccess('access_edit_site')) {
     header('Location: ../login.php');
     exit;
@@ -28,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_POST['prerequis'] ?: null
                 ]);
                 
-                logAdminAction($pdo, $_SESSION['user_id'], 'Ajout diplÃ´me', $_POST['nom']);
-                $success = "DiplÃ´me ajoutÃ© avec succÃ¨s !";
+                logAdminAction($pdo, $_SESSION['user_id'], 'Ajout diplôme', $_POST['nom']);
+                $success = "Diplôme ajouté avec succès !";
                 break;
                 
             case 'edit_diplome':
@@ -45,8 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_POST['diplome_id']
                 ]);
                 
-                logAdminAction($pdo, $_SESSION['user_id'], 'Modification diplÃ´me', $_POST['nom']);
-                $success = "DiplÃ´me modifiÃ© avec succÃ¨s !";
+                logAdminAction($pdo, $_SESSION['user_id'], 'Modification diplôme', $_POST['nom']);
+                $success = "Diplôme modifié avec succès !";
                 break;
                 
             case 'delete_diplome':
@@ -58,14 +58,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $pdo->prepare("DELETE FROM diplomes WHERE id = ?");
                 $stmt->execute([$diplome_id]);
                 
-                logAdminAction($pdo, $_SESSION['user_id'], 'Suppression diplÃ´me', $nom);
-                $success = "DiplÃ´me supprimÃ© avec succÃ¨s !";
+                logAdminAction($pdo, $_SESSION['user_id'], 'Suppression diplôme', $nom);
+                $success = "Diplôme supprimé avec succès !";
                 break;
                 
             case 'update_discord':
-                // Modifier directement dans config.php (simplifiÃ©)
+                // Modifier directement dans config.php (simplifié)
                 logAdminAction($pdo, $_SESSION['user_id'], 'Modification lien Discord', $_POST['discord_invite']);
-                $success = "Lien Discord enregistrÃ© ! Modifiez manuellement config.php pour l'appliquer.";
+                $success = "Lien Discord enregistré ! Modifiez manuellement config.php pour l'appliquer.";
                 break;
                 
             case 'create_announcement':
@@ -78,8 +78,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['user_id']
                 ]);
                 
-                logAdminAction($pdo, $_SESSION['user_id'], 'CrÃ©ation annonce', $_POST['title']);
-                $success = "Annonce crÃ©Ã©e avec succÃ¨s !";
+                logAdminAction($pdo, $_SESSION['user_id'], 'Création annonce', $_POST['title']);
+                $success = "Annonce créée avec succès !";
                 break;
                 
             case 'delete_announcement':
@@ -92,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$ann_id]);
                 
                 logAdminAction($pdo, $_SESSION['user_id'], 'Suppression annonce', $title);
-                $success = "Annonce supprimÃ©e avec succÃ¨s !";
+                $success = "Annonce supprimée avec succès !";
                 break;
                 
             case 'toggle_announcement':
@@ -101,11 +101,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$ann_id]);
                 
                 logAdminAction($pdo, $_SESSION['user_id'], 'Toggle annonce', "ID: $ann_id");
-                $success = "Statut de l'annonce modifiÃ© !";
+                $success = "Statut de l'annonce modifié !";
                 break;
                 
             case 'update_appearance':
-                // Sauvegarder les paramÃ¨tres d'apparence
+                // Sauvegarder les paramètres d'apparence
                 $settings = [
                     'site_title' => $_POST['site_title'],
                     'site_description' => $_POST['site_description'],
@@ -125,8 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->execute([$key, $value, $_SESSION['user_id'], $value, $_SESSION['user_id']]);
                 }
                 
-                logAdminAction($pdo, $_SESSION['user_id'], 'Modification apparence', 'ParamÃ¨tres mis Ã  jour');
-                $success = "Apparence mise Ã  jour avec succÃ¨s !";
+                logAdminAction($pdo, $_SESSION['user_id'], 'Modification apparence', 'Paramètres mis à jour');
+                $success = "Apparence mise à jour avec succès !";
                 break;
                 
             case 'upload_logo':
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
                     
                     if (!in_array($ext, $allowed)) {
-                        throw new Exception("Format de fichier non autorisÃ©. Utilisez: " . implode(', ', $allowed));
+                        throw new Exception("Format de fichier non autorisé. Utilisez: " . implode(', ', $allowed));
                     }
                     
                     $upload_dir = '../uploads/';
@@ -155,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->execute([$new_filename, $_SESSION['user_id'], $new_filename, $_SESSION['user_id']]);
                         
                         logAdminAction($pdo, $_SESSION['user_id'], 'Upload logo', $new_filename);
-                        $success = "Logo uploadÃ© avec succÃ¨s !";
+                        $success = "Logo uploadé avec succès !";
                     } else {
                         throw new Exception("Erreur lors de l'upload du fichier.");
                     }
@@ -165,11 +165,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } catch (Exception $e) {
         $error = $e->getMessage();
     } catch (PDOException $e) {
-        $error = "Erreur de base de donnÃ©es : " . $e->getMessage();
+        $error = "Erreur de base de données : " . $e->getMessage();
     }
 }
 
-// CrÃ©er les tables si elles n'existent pas
+// Créer les tables si elles n'existent pas
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS announcements (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -193,19 +193,19 @@ try {
         FOREIGN KEY (updated_by) REFERENCES users(id)
     )");
 } catch (PDOException $e) {
-    // Tables dÃ©jÃ  crÃ©Ã©es
+    // Tables déjà créées
 }
 
-// RÃ©cupÃ©rer les paramÃ¨tres d'apparence
+// Récupérer les paramètres d'apparence
 $appearance_settings = [];
 $stmt = $pdo->query("SELECT section, content FROM site_content WHERE page = 'appearance'");
 while ($row = $stmt->fetch()) {
     $appearance_settings[$row['section']] = $row['content'];
 }
 
-// Valeurs par dÃ©faut
+// Valeurs par défaut
 $defaults = [
-    'site_title' => 'CFWT - Coalition FranÃ§aise de Wars Tycoon',
+    'site_title' => 'CFWT - Coalition Française de Wars Tycoon',
     'site_description' => 'Rejoignez la plus grande coalition francophone de Wars Tycoon',
     'primary_color' => '#dc2626',
     'secondary_color' => '#2563eb',
@@ -223,7 +223,7 @@ foreach ($defaults as $key => $value) {
     }
 }
 
-// RÃ©cupÃ©rer les donnÃ©es
+// Récupérer les données
 $diplomes = $pdo->query("SELECT * FROM diplomes ORDER BY categorie, niveau, code")->fetchAll();
 $announcements = $pdo->query("SELECT a.*, u.username 
     FROM announcements a 
@@ -243,11 +243,11 @@ foreach ($diplomes as $diplome) {
 }
 
 $category_names = [
-    'aerien' => 'âœˆï¸ AÃ©rien',
-    'terrestre' => 'ðŸŽ–ï¸ Terrestre',
-    'aeronaval' => 'ðŸš¢ AÃ©ronaval et Naval',
-    'formateur' => 'ðŸ“š Formateurs',
-    'elite' => 'âš”ï¸ Forces d\'Ã‰lite'
+    'aerien' => '✈️ Aérien',
+    'terrestre' => '🎖️ Terrestre',
+    'aeronaval' => '🚢 Aéronaval et Naval',
+    'formateur' => '📚 Formateurs',
+    'elite' => '⚔️ Forces d\'Élite'
 ];
 
 // Statistiques
@@ -264,7 +264,7 @@ $stats = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ã‰dition Site - CFWT Admin</title>
+    <title>Édition Site - CFWT Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -277,7 +277,7 @@ $stats = [
             <div class="flex justify-between items-center mb-8">
                 <div>
                     <h1 class="text-4xl font-bold text-white mb-2">
-                        <i class="fas fa-paint-brush text-purple-500 mr-3"></i>Ã‰dition du Site
+                        <i class="fas fa-paint-brush text-purple-500 mr-3"></i>Édition du Site
                     </h1>
                     <p class="text-gray-400">Personnalisation et gestion du contenu</p>
                 </div>
@@ -303,7 +303,7 @@ $stats = [
                 <div class="bg-gradient-to-br from-blue-900 to-blue-800 p-6 rounded-lg">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-blue-300 text-sm">Total DiplÃ´mes</p>
+                            <p class="text-blue-300 text-sm">Total Diplômes</p>
                             <p class="text-white text-3xl font-bold"><?php echo $stats['total_diplomes']; ?></p>
                         </div>
                         <i class="fas fa-graduation-cap text-blue-400 text-4xl"></i>
@@ -313,7 +313,7 @@ $stats = [
                 <div class="bg-gradient-to-br from-purple-900 to-purple-800 p-6 rounded-lg">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-purple-300 text-sm">AÃ©rien</p>
+                            <p class="text-purple-300 text-sm">Aérien</p>
                             <p class="text-white text-3xl font-bold"><?php echo $stats['diplomes_aerien']; ?></p>
                         </div>
                         <i class="fas fa-plane text-purple-400 text-4xl"></i>
@@ -345,7 +345,7 @@ $stats = [
             <div class="bg-gray-800 rounded-lg p-6">
                 <div class="flex space-x-4 border-b border-gray-700 mb-6 overflow-x-auto">
                     <button onclick="showTab('diplomes')" id="tab-diplomes" class="tab-button px-6 py-3 font-semibold text-white border-b-2 border-purple-500 whitespace-nowrap">
-                        <i class="fas fa-graduation-cap mr-2"></i>DiplÃ´mes
+                        <i class="fas fa-graduation-cap mr-2"></i>Diplômes
                     </button>
                     <button onclick="showTab('announcements')" id="tab-announcements" class="tab-button px-6 py-3 font-semibold text-gray-400 hover:text-white whitespace-nowrap">
                         <i class="fas fa-bullhorn mr-2"></i>Annonces
@@ -358,12 +358,12 @@ $stats = [
                     </button>
                 </div>
 
-                <!-- Tab: DiplÃ´mes -->
+                <!-- Tab: Diplômes -->
                 <div id="content-diplomes" class="tab-content">
                     <div class="mb-6">
                         <button onclick="document.getElementById('modal-add-diplome').classList.remove('hidden')" 
                                 class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
-                            <i class="fas fa-plus mr-2"></i>Ajouter un diplÃ´me
+                            <i class="fas fa-plus mr-2"></i>Ajouter un diplôme
                         </button>
                     </div>
 
@@ -393,7 +393,7 @@ $stats = [
                                                 <?php if ($diplome['prerequis']): ?>
                                                     <p class="text-yellow-400 text-sm">
                                                         <i class="fas fa-lock mr-2"></i>
-                                                        PrÃ©requis : <?php echo htmlspecialchars($diplome['prerequis']); ?>
+                                                        Prérequis : <?php echo htmlspecialchars($diplome['prerequis']); ?>
                                                     </p>
                                                 <?php endif; ?>
                                             </div>
@@ -420,7 +420,7 @@ $stats = [
                     <div class="mb-6">
                         <button onclick="document.getElementById('modal-create-announcement').classList.remove('hidden')" 
                                 class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
-                            <i class="fas fa-plus mr-2"></i>CrÃ©er une annonce
+                            <i class="fas fa-plus mr-2"></i>Créer une annonce
                         </button>
                     </div>
 
@@ -457,7 +457,7 @@ $stats = [
                                     </div>
                                     <div class="flex space-x-2 ml-4">
                                         <button onclick="toggleAnnouncement(<?php echo $announcement['id']; ?>)" 
-                                                class="text-yellow-400 hover:text-yellow-300 p-2" title="Activer/DÃ©sactiver">
+                                                class="text-yellow-400 hover:text-yellow-300 p-2" title="Activer/Désactiver">
                                             <i class="fas fa-<?php echo $announcement['active'] ? 'eye-slash' : 'eye'; ?>"></i>
                                         </button>
                                         <button onclick="deleteAnnouncement(<?php echo $announcement['id']; ?>, '<?php echo htmlspecialchars($announcement['title']); ?>')" 
@@ -495,7 +495,7 @@ $stats = [
                                            class="w-full p-3 rounded bg-gray-600 text-white border border-gray-500">
                                 </div>
                                 <button type="submit" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
-                                    <i class="fas fa-save mr-2"></i>Mettre Ã  jour
+                                    <i class="fas fa-save mr-2"></i>Mettre à jour
                                 </button>
                             </form>
                         </div>
@@ -515,7 +515,7 @@ $stats = [
                                     <p class="font-semibold"><?php echo phpversion(); ?></p>
                                 </div>
                                 <div>
-                                    <p class="text-sm text-gray-500">Base de donnÃ©es</p>
+                                    <p class="text-sm text-gray-500">Base de données</p>
                                     <p class="font-semibold"><?php echo DB_NAME; ?></p>
                                 </div>
                             </div>
@@ -528,7 +528,7 @@ $stats = [
                     <form method="POST" enctype="multipart/form-data" class="space-y-8">
                         <input type="hidden" name="action" value="update_appearance">
                         
-                        <!-- Informations gÃ©nÃ©rales -->
+                        <!-- Informations générales -->
                         <div class="bg-gray-700 p-6 rounded-lg">
                             <h3 class="text-xl font-bold text-white mb-6">
                                 <i class="fas fa-info-circle text-blue-500 mr-2"></i>Informations du site
@@ -593,7 +593,7 @@ $stats = [
                                                    value="<?php echo htmlspecialchars($appearance_settings['primary_color']); ?>"
                                                    class="w-full p-3 rounded bg-gray-600 text-white border border-gray-500 font-mono"
                                                    readonly>
-                                            <p class="text-gray-400 text-sm mt-1">UtilisÃ© pour les Ã©lÃ©ments principaux</p>
+                                            <p class="text-gray-400 text-sm mt-1">Utilisé pour les éléments principaux</p>
                                         </div>
                                     </div>
                                 </div>
@@ -632,7 +632,7 @@ $stats = [
                             </div>
                             
                             <div class="mt-6 p-4 bg-gray-800 rounded">
-                                <p class="text-gray-400 mb-3"><i class="fas fa-info-circle mr-2"></i>AperÃ§u des couleurs :</p>
+                                <p class="text-gray-400 mb-3"><i class="fas fa-info-circle mr-2"></i>Aperçu des couleurs :</p>
                                 <div class="flex space-x-3">
                                     <div class="flex-1 p-4 rounded text-white font-semibold text-center"
                                          style="background-color: <?php echo htmlspecialchars($appearance_settings['primary_color']); ?>">
@@ -653,13 +653,13 @@ $stats = [
                         <!-- Style du fond -->
                         <div class="bg-gray-700 p-6 rounded-lg">
                             <h3 class="text-xl font-bold text-white mb-6">
-                                <i class="fas fa-image text-yellow-500 mr-2"></i>Style d'arriÃ¨re-plan
+                                <i class="fas fa-image text-yellow-500 mr-2"></i>Style d'arrière-plan
                             </h3>
                             <div class="grid md:grid-cols-3 gap-4">
                                 <?php 
                                 $bg_styles = [
                                     'solid' => ['Couleur unie', 'bg-gray-900'],
-                                    'gradient' => ['DÃ©gradÃ©', 'bg-gradient-to-br from-gray-900 to-gray-800'],
+                                    'gradient' => ['Dégradé', 'bg-gradient-to-br from-gray-900 to-gray-800'],
                                     'pattern' => ['Motif', 'bg-gray-900']
                                 ];
                                 
@@ -692,7 +692,7 @@ $stats = [
                                         <i class="fas fa-chart-bar text-blue-400 text-xl mr-3"></i>
                                         <div>
                                             <p class="text-white font-semibold">Afficher les statistiques sur l'accueil</p>
-                                            <p class="text-gray-400 text-sm">Total membres, diplÃ´mes, lÃ©gions...</p>
+                                            <p class="text-gray-400 text-sm">Total membres, diplômes, légions...</p>
                                         </div>
                                     </div>
                                     <input type="checkbox" name="show_stats_home" value="1" 
@@ -705,7 +705,7 @@ $stats = [
                                         <i class="fas fa-users text-green-400 text-xl mr-3"></i>
                                         <div>
                                             <p class="text-white font-semibold">Afficher les derniers membres</p>
-                                            <p class="text-gray-400 text-sm">Les 5 membres les plus rÃ©cents</p>
+                                            <p class="text-gray-400 text-sm">Les 5 membres les plus récents</p>
                                         </div>
                                     </div>
                                     <input type="checkbox" name="show_latest_members" value="1" 
@@ -718,7 +718,7 @@ $stats = [
                                         <i class="fas fa-tools text-red-400 text-xl mr-3"></i>
                                         <div>
                                             <p class="text-white font-semibold">Mode maintenance</p>
-                                            <p class="text-red-300 text-sm">âš ï¸ DÃ©sactive l'accÃ¨s au site pour les visiteurs</p>
+                                            <p class="text-red-300 text-sm">⚠️ Désactive l'accès au site pour les visiteurs</p>
                                         </div>
                                     </div>
                                     <input type="checkbox" name="maintenance_mode" value="1" 
@@ -728,10 +728,10 @@ $stats = [
                             </div>
                         </div>
 
-                        <!-- PrÃ©visualisation -->
+                        <!-- Prévisualisation -->
                         <div class="bg-gray-700 p-6 rounded-lg">
                             <h3 class="text-xl font-bold text-white mb-6">
-                                <i class="fas fa-eye text-pink-500 mr-2"></i>PrÃ©visualisation
+                                <i class="fas fa-eye text-pink-500 mr-2"></i>Prévisualisation
                             </h3>
                             <div class="bg-gray-900 p-8 rounded-lg">
                                 <div class="max-w-4xl mx-auto">
@@ -760,12 +760,12 @@ $stats = [
                                         <div class="p-4 rounded text-center"
                                              style="background-color: <?php echo htmlspecialchars($appearance_settings['secondary_color']); ?>">
                                             <p class="text-white font-bold text-2xl">35</p>
-                                            <p class="text-white text-sm">DiplÃ´mes</p>
+                                            <p class="text-white text-sm">Diplômes</p>
                                         </div>
                                         <div class="p-4 rounded text-center"
                                              style="background-color: <?php echo htmlspecialchars($appearance_settings['accent_color']); ?>">
                                             <p class="text-white font-bold text-2xl">5</p>
-                                            <p class="text-white text-sm">LÃ©gions</p>
+                                            <p class="text-white text-sm">Légions</p>
                                         </div>
                                     </div>
                                     
@@ -788,7 +788,7 @@ $stats = [
                             </button>
                             <button type="button" onclick="resetAppearance()" 
                                     class="bg-gray-600 text-white px-8 py-4 rounded-lg font-bold hover:bg-gray-700 transition">
-                                <i class="fas fa-undo mr-2"></i>RÃ©initialiser
+                                <i class="fas fa-undo mr-2"></i>Réinitialiser
                             </button>
                         </div>
                     </form>
@@ -797,11 +797,11 @@ $stats = [
         </div>
     </div>
 
-    <!-- Modals prÃ©cÃ©dents (diplÃ´mes et annonces) -->
-    <!-- Modal: Ajouter diplÃ´me -->
+    <!-- Modals précédents (diplômes et annonces) -->
+    <!-- Modal: Ajouter diplôme -->
     <div id="modal-add-diplome" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h2 class="text-2xl font-bold text-white mb-6">Ajouter un diplÃ´me</h2>
+            <h2 class="text-2xl font-bold text-white mb-6">Ajouter un diplôme</h2>
             <form method="POST" class="space-y-4">
                 <input type="hidden" name="action" value="add_diplome">
                 
@@ -813,14 +813,14 @@ $stats = [
                                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                     </div>
                     <div>
-                        <label class="block text-white mb-2">CatÃ©gorie *</label>
+                        <label class="block text-white mb-2">Catégorie *</label>
                         <select name="categorie" required 
                                 class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
-                            <option value="aerien">AÃ©rien</option>
+                            <option value="aerien">Aérien</option>
                             <option value="terrestre">Terrestre</option>
-                            <option value="aeronaval">AÃ©ronaval</option>
+                            <option value="aeronaval">Aéronaval</option>
                             <option value="formateur">Formateur</option>
-                            <option value="elite">Ã‰lite</option>
+                            <option value="elite">Élite</option>
                         </select>
                     </div>
                 </div>
@@ -828,14 +828,14 @@ $stats = [
                 <div>
                     <label class="block text-white mb-2">Nom *</label>
                     <input type="text" name="nom" required maxlength="255"
-                           placeholder="Ex: Pilote Aviation Mobile et ArmÃ©e"
+                           placeholder="Ex: Pilote Aviation Mobile et Armée"
                            class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                 </div>
                 
                 <div>
                     <label class="block text-white mb-2">Description *</label>
                     <textarea name="description" required rows="3"
-                              placeholder="Description du diplÃ´me..."
+                              placeholder="Description du diplôme..."
                               class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600"></textarea>
                 </div>
                 
@@ -852,7 +852,7 @@ $stats = [
                         </select>
                     </div>
                     <div>
-                        <label class="block text-white mb-2">PrÃ©requis (optionnel)</label>
+                        <label class="block text-white mb-2">Prérequis (optionnel)</label>
                         <input type="text" name="prerequis" maxlength="255"
                                placeholder="Ex: PAMA"
                                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
@@ -872,10 +872,10 @@ $stats = [
         </div>
     </div>
 
-    <!-- Modal: Ã‰diter diplÃ´me -->
+    <!-- Modal: Éditer diplôme -->
     <div id="modal-edit-diplome" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <h2 class="text-2xl font-bold text-white mb-6">Modifier le diplÃ´me</h2>
+            <h2 class="text-2xl font-bold text-white mb-6">Modifier le diplôme</h2>
             <form method="POST" class="space-y-4">
                 <input type="hidden" name="action" value="edit_diplome">
                 <input type="hidden" name="diplome_id" id="edit-diplome-id">
@@ -887,14 +887,14 @@ $stats = [
                                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                     </div>
                     <div>
-                        <label class="block text-white mb-2">CatÃ©gorie *</label>
+                        <label class="block text-white mb-2">Catégorie *</label>
                         <select name="categorie" id="edit-categorie" required 
                                 class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
-                            <option value="aerien">AÃ©rien</option>
+                            <option value="aerien">Aérien</option>
                             <option value="terrestre">Terrestre</option>
-                            <option value="aeronaval">AÃ©ronaval</option>
+                            <option value="aeronaval">Aéronaval</option>
                             <option value="formateur">Formateur</option>
-                            <option value="elite">Ã‰lite</option>
+                            <option value="elite">Élite</option>
                         </select>
                     </div>
                 </div>
@@ -924,7 +924,7 @@ $stats = [
                         </select>
                     </div>
                     <div>
-                        <label class="block text-white mb-2">PrÃ©requis (optionnel)</label>
+                        <label class="block text-white mb-2">Prérequis (optionnel)</label>
                         <input type="text" name="prerequis" id="edit-prerequis" maxlength="255"
                                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                     </div>
@@ -943,17 +943,17 @@ $stats = [
         </div>
     </div>
 
-    <!-- Modal: CrÃ©er annonce -->
+    <!-- Modal: Créer annonce -->
     <div id="modal-create-announcement" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full">
-            <h2 class="text-2xl font-bold text-white mb-6">CrÃ©er une annonce</h2>
+            <h2 class="text-2xl font-bold text-white mb-6">Créer une annonce</h2>
             <form method="POST" class="space-y-4">
                 <input type="hidden" name="action" value="create_announcement">
                 
                 <div>
                     <label class="block text-white mb-2">Titre *</label>
                     <input type="text" name="title" required maxlength="255"
-                           placeholder="Ex: Nouvelle mise Ã  jour"
+                           placeholder="Ex: Nouvelle mise à jour"
                            class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                 </div>
                 
@@ -970,14 +970,14 @@ $stats = [
                             class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                         <option value="info">Information (Bleu)</option>
                         <option value="warning">Avertissement (Jaune)</option>
-                        <option value="success">SuccÃ¨s (Vert)</option>
+                        <option value="success">Succès (Vert)</option>
                         <option value="danger">Important (Rouge)</option>
                     </select>
                 </div>
                 
                 <div class="flex space-x-4">
                     <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
-                        <i class="fas fa-plus mr-2"></i>CrÃ©er
+                        <i class="fas fa-plus mr-2"></i>Créer
                     </button>
                     <button type="button" onclick="document.getElementById('modal-create-announcement').classList.add('hidden')" 
                             class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
@@ -1015,7 +1015,7 @@ $stats = [
     }
 
     function deleteDiplome(id, nom) {
-        if (confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer le diplÃ´me "${nom}" ?\n\nAttention : Cette action supprimera Ã©galement toutes les attributions de ce diplÃ´me aux membres.`)) {
+        if (confirm(`Êtes-vous sûr de vouloir supprimer le diplôme "${nom}" ?\n\nAttention : Cette action supprimera également toutes les attributions de ce diplôme aux membres.`)) {
             const form = document.createElement('form');
             form.method = 'POST';
             form.innerHTML = `
@@ -1028,7 +1028,7 @@ $stats = [
     }
 
     function deleteAnnouncement(id, title) {
-        if (confirm(`ÃŠtes-vous sÃ»r de vouloir supprimer l'annonce "${title}" ?`)) {
+        if (confirm(`Êtes-vous sûr de vouloir supprimer l'annonce "${title}" ?`)) {
             const form = document.createElement('form');
             form.method = 'POST';
             form.innerHTML = `
@@ -1052,12 +1052,12 @@ $stats = [
     }
 
     function resetAppearance() {
-        if (confirm('Voulez-vous vraiment rÃ©initialiser l\'apparence aux paramÃ¨tres par dÃ©faut ?')) {
+        if (confirm('Voulez-vous vraiment réinitialiser l\'apparence aux paramètres par défaut ?')) {
             location.reload();
         }
     }
 
-    // Mise Ã  jour en temps rÃ©el des couleurs
+    // Mise à jour en temps réel des couleurs
     document.querySelectorAll('input[type="color"]').forEach(input => {
         input.addEventListener('input', function() {
             this.nextElementSibling.querySelector('input[type="text"]').value = this.value;
