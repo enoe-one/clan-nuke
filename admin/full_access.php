@@ -125,18 +125,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 logAdminAction($pdo, $_SESSION['user_id'], 'Suppression légion', $nom);
                 $success = "Légion supprimée avec succès !";
                 break;
-                    case 'update_legion':
-        $stmt = $pdo->prepare("UPDATE legions SET nom = ?, description = ?, chef_id = ? WHERE id = ?");
-        $stmt->execute([
-            $_POST['nom_legion'],
-            $_POST['description_legion'],
-            $_POST['chef_id'] ?: null,
-            $_POST['legion_id']
-        ]);
+                
+            case 'update_legion':
+                $stmt = $pdo->prepare("UPDATE legions SET nom = ?, description = ?, chef_id = ? WHERE id = ?");
+                $stmt->execute([
+                    $_POST['nom_legion'],
+                    $_POST['description_legion'],
+                    $_POST['chef_id'] ?: null,
+                    $_POST['legion_id']
+                ]);
 
-        logAdminAction($pdo, $_SESSION['user_id'], 'Modification légion', $_POST['nom_legion']);
-        $success = "Légion mise à jour avec succès !";
-        break;
+                logAdminAction($pdo, $_SESSION['user_id'], 'Modification légion', $_POST['nom_legion']);
+                $success = "Légion mise à jour avec succès !";
+                break;
 
             case 'backup_database':
                 $filename = 'backup_' . date('Y-m-d_H-i-s') . '.sql';
@@ -547,6 +548,12 @@ $stats = [
                 <input type="hidden" name="action" value="create_user">
                 
                 <div>
+                    <label class="block text-white mb-2">Nom d'utilisateur *</label>
+                    <input type="text" name="username" required 
+                           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                </div>
+                
+                <div>
                     <label class="block text-white mb-2">Mot de passe *</label>
                     <input type="password" name="password" required 
                            class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
@@ -691,6 +698,93 @@ $stats = [
         }
     }
 
+    function editUser(id) {
+        const users = <?php echo json_encode($users); ?>;
+        const user = users.find(u => u.id == id);
+        if (!user) return alert('Utilisateur introuvable');
+
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <h2 class="text-2xl font-bold text-white mb-6">Modifier l'utilisateur</h2>
+                <form method="POST" class="space-y-4">
+                    <input type="hidden" name="action" value="update_permissions">
+                    <input type="hidden" name="user_id" value="${user.id}">
+
+                    <div>
+                        <label class="block text-white mb-2">Utilisateur</label>
+                        <input type="text" value="${user.username}" disabled
+                               class="w-full p-3 rounded bg-gray-600 text-gray-400 border border-gray-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-white mb-2">Rôle *</label>
+                        <select name="role" required class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                            <option value="recruteur" ${user.role == 'recruteur' ? 'selected' : ''}>Recruteur</option>
+                            <option value="moderateur" ${user.role == 'moderateur' ? 'selected' : ''}>Modérateur</option>
+                            <option value="etat_major" ${user.role == 'etat_major' ? 'selected' : ''}>État-major</option>
+                            <option value="chef" ${user.role == 'chef' ? 'selected' : ''}>Chef</option>
+                            <option value="super_admin" ${user.role == 'super_admin' ? 'selected' : ''}>Super Admin</option>
+                        </select>
+                    </div>
+
+                    <div class="border-t border-gray-700 pt-4">
+                        <h3 class="text-white font-semibold mb-3">Permissions</h3>
+                        <div class="grid md:grid-cols-2 gap-3">
+                            <label class="flex items-center text-gray-300">
+                                <input type="checkbox" name="access_recruitment_player" value="1" ${user.access_recruitment_player ? 'checked' : ''} class="mr-2">
+                                Recrutement joueur
+                            </label>
+                            <label class="flex items-center text-gray-300">
+                                <input type="checkbox" name="access_recruitment_faction" value="1" ${user.access_recruitment_faction ? 'checked' : ''} class="mr-2">
+                                Recrutement faction
+                            </label>
+                            <label class="flex items-center text-gray-300">
+                                <input type="checkbox" name="access_edit_members" value="1" ${user.access_edit_members ? 'checked' : ''} class="mr-2">
+                                Modifier membres
+                            </label>
+                            <label class="flex items-center text-gray-300">
+                                <input type="checkbox" name="access_moderation" value="1" ${user.access_moderation ? 'checked' : ''} class="mr-2">
+                                Modération
+                            </label>
+                            <label class="flex items-center text-gray-300">
+                                <input type="checkbox" name="access_edit_site" value="1" ${user.access_edit_site ? 'checked' : ''} class="mr-2">
+                                Éditer site
+                            </label>
+                            <label class="flex items-center text-gray-300">
+                                <input type="checkbox" name="access_manage_legions" value="1" ${user.access_manage_legions ? 'checked' : ''} class="mr-2">
+                                Gérer légions
+                            </label>
+                            <label class="flex items-center text-gray-300">
+                                <input type="checkbox" name="access_create_accounts" value="1" ${user.access_create_accounts ? 'checked' : ''} class="mr-2">
+                                Créer comptes
+                            </label>
+                            <label class="flex items-center text-gray-300">
+                                <input type="checkbox" name="access_reset_passwords" value="1" ${user.access_reset_passwords ? 'checked' : ''} class="mr-2">
+                                Reset mots de passe
+                            </label>
+                            <label class="flex items-center text-yellow-300">
+                                <input type="checkbox" name="access_full" value="1" ${user.access_full ? 'checked' : ''} class="mr-2">
+                                <strong>Accès complet</strong>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+                            <i class="fas fa-save mr-2"></i>Enregistrer
+                        </button>
+                        <button type="button" onclick="this.closest('.fixed').remove()" 
+                                class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+
     function resetPassword(id) {
         const newPassword = prompt('Entrez le nouveau mot de passe :');
         if (newPassword && newPassword.length >= 5) {
@@ -720,65 +814,58 @@ $stats = [
             form.submit();
         }
     }
+
+    function editLegion(id) {
+        const legions = <?php echo json_encode($legions); ?>;
+        const legion = legions.find(l => l.id == id);
+        if (!legion) return alert('Légion introuvable');
+
+        const modal = document.createElement('div');
+        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full mx-4">
+                <h2 class="text-2xl font-bold text-white mb-6">Modifier la légion</h2>
+                <form method="POST" class="space-y-4">
+                    <input type="hidden" name="action" value="update_legion">
+                    <input type="hidden" name="legion_id" value="${legion.id}">
+
+                    <div>
+                        <label class="block text-white mb-2">Nom de la légion *</label>
+                        <input type="text" name="nom_legion" value="${legion.nom}" required
+                               class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                    </div>
+
+                    <div>
+                        <label class="block text-white mb-2">Description</label>
+                        <textarea name="description_legion" rows="3"
+                                  class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">${legion.description || ''}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-white mb-2">Chef de légion</label>
+                        <select name="chef_id" class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                            <option value="">Aucun</option>
+                            <?php foreach ($users as $user): ?>
+                                <option value="<?php echo $user['id']; ?>">${legion.chef_id == <?php echo $user['id']; ?> ? 'selected' : ''}><?php echo htmlspecialchars($user['username']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
+                            <i class="fas fa-save mr-2"></i>Enregistrer
+                        </button>
+                        <button type="button" onclick="this.closest('.fixed').remove()" 
+                                class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>`;
+        document.body.appendChild(modal);
+    }
     </script>
-function editLegion(id) {
-    const legions = <?php echo json_encode($legions); ?>;
-    const legion = legions.find(l => l.id == id);
-    if (!legion) return alert('Légion introuvable');
 
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-    modal.innerHTML = `
-        <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full mx-4">
-            <h2 class="text-2xl font-bold text-white mb-6">Modifier la légion</h2>
-            <form method="POST" class="space-y-4">
-                <input type="hidden" name="action" value="update_legion">
-                <input type="hidden" name="legion_id" value="${legion.id}">
-
-                <div>
-                    <label class="block text-white mb-2">Nom de la légion *</label>
-                    <input type="text" name="nom_legion" value="${legion.nom}" required
-                           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
-                </div>
-
-                <div>
-                    <label class="block text-white mb-2">Description</label>
-                    <textarea name="description_legion" rows="3"
-                              class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">${legion.description || ''}</textarea>
-                </div>
-
-                <div>
-                    <label class="block text-white mb-2">Chef de légion</label>
-                    <select name="chef_id" class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
-                        <option value="">Aucun</option>
-                        <?php foreach ($users as $user): ?>
-                            <option value="<?php echo $user['id']; ?>"><?php echo htmlspecialchars($user['username']); ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="flex space-x-4">
-                    <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
-                        <i class="fas fa-save mr-2"></i>Enregistrer
-                    </button>
-                    <button type="button" onclick="this.closest('.fixed').remove()" 
-                            class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
-                        Annuler
-                    </button>
-                </div>
-            </form>
-        </div>`;
-    document.body.appendChild(modal);
-}
-</script>
     <?php include '../includes/footer.php'; ?>
 </body>
-</html>Nom d'utilisateur *</label>
-                    <input type="text" name="username" required 
-                           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
-                </div>
-                
-                <div>
-
-                    <label class="block text-white mb-2">
-
+</html>
