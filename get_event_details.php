@@ -46,6 +46,7 @@ $type_colors = [
     'reunion' => 'purple',
     'competition' => 'yellow',
     'entrainement' => 'green',
+    'important' => 'orange',
     'autre' => 'gray'
 ];
 
@@ -55,6 +56,7 @@ $type_icons = [
     'reunion' => 'fa-users',
     'competition' => 'fa-trophy',
     'entrainement' => 'fa-dumbbell',
+    'important' => 'fa-exclamation-triangle',
     'autre' => 'fa-calendar'
 ];
 
@@ -64,6 +66,7 @@ $type_names = [
     'reunion' => 'Réunion',
     'competition' => 'Compétition',
     'entrainement' => 'Entraînement',
+    'important' => 'IMPORTANT',
     'autre' => 'Autre'
 ];
 
