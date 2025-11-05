@@ -5,7 +5,7 @@
  */
 
 $host = 'mysql.railway.internal'; // <-- ton host
-$port = '3306';                             // <-- ton port
+$port = '50858';                             // <-- ton port
 $db   = 'railway';                          // <-- nom de ta base
 $user = 'root';                             // <-- utilisateur
 $pass = 'JwaAIaqRIRzIGarebfqimmiKHDfnARiE';                       // <-- mot de passe
