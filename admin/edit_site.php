@@ -129,45 +129,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = "Apparence mise à jour avec succès !";
                 break;
                 
-            case 'upload_logo':
-                if (isset($_FILES['logo']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
-                    $allowed = ['jpg', 'jpeg', 'png', 'gif', 'svg'];
-                    $filename = $_FILES['logo']['name'];
-                    $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-                    
-                    if (!in_array($ext, $allowed)) {
-                        throw new Exception("Format de fichier non autorisé. Utilisez: " . implode(', ', $allowed));
-                    }
-                    
-                    $upload_dir = '../uploads/';
-                    if (!is_dir($upload_dir)) {
-                        mkdir($upload_dir, 0755, true);
-                    }
-                    
-                    $new_filename = 'logo_' . time() . '.' . $ext;
-                    $upload_path = $upload_dir . $new_filename;
-                    
-                    if (move_uploaded_file($_FILES['logo']['tmp_name'], $upload_path)) {
-                        // Sauvegarder le chemin du logo
-                        $stmt = $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
-                            VALUES ('appearance', 'logo_path', ?, ?, NOW()) 
-                            ON DUPLICATE KEY UPDATE content = ?, updated_by = ?, updated_at = NOW()");
-                        $stmt->execute([$new_filename, $_SESSION['user_id'], $new_filename, $_SESSION['user_id']]);
-                        
-                        logAdminAction($pdo, $_SESSION['user_id'], 'Upload logo', $new_filename);
-                        $success = "Logo uploadé avec succès !";
-                    } else {
-                        throw new Exception("Erreur lors de l'upload du fichier.");
-                    }
-                }
-                break;
-        }
+case 'upload_logo':
+    try {
+        // Définir le chemin fixe de l'icône
+        $fixed_path = 'admin/f565469d-93e6-4bed-85a6-39cbb3d2d70e.png';
+
+        // Sauvegarder le chemin du logo dans la base
+        $stmt = $pdo->prepare("
+            INSERT INTO site_content (page, section, content, updated_by, updated_at) 
+            VALUES ('appearance', 'logo_path', ?, ?, NOW()) 
+            ON DUPLICATE KEY UPDATE content = ?, updated_by = ?, updated_at = NOW()
+        ");
+        $stmt->execute([$fixed_path, $_SESSION['user_id'], $fixed_path, $_SESSION['user_id']]);
+
+        // Journaliser l’action admin
+        logAdminAction($pdo, $_SESSION['user_id'], 'Définir logo', $fixed_path);
+
+        $success = "✅ Logo défini sur l’icône par défaut ($fixed_path)";
     } catch (Exception $e) {
         $error = $e->getMessage();
     } catch (PDOException $e) {
         $error = "Erreur de base de données : " . $e->getMessage();
     }
-}
+    break;
+
 
 // Créer les tables si elles n'existent pas
 try {
@@ -1068,3 +1053,4 @@ $stats = [
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
+
