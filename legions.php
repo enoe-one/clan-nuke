@@ -29,7 +29,7 @@ $legions = $stmt->fetchAll();
             <div class="text-center mb-12">
                 <h1 class="text-5xl font-bold text-white mb-4">
                     <i class="fas fa-flag mr-3 text-red-500"></i>
-                    Coalition Française de Warthunder
+                    Coalition Française de War Tycoon
                 </h1>
                 <div class="bg-gradient-to-r from-yellow-900 to-yellow-800 p-6 rounded-lg inline-block border-2 border-yellow-500">
                     <div class="flex items-center justify-center space-x-4">
@@ -157,3 +157,4 @@ $legions = $stmt->fetchAll();
     <?php include 'includes/footer.php'; ?>
 </body>
 </html>
+
