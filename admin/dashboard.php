@@ -142,6 +142,11 @@ $accepted_factions = $stmt->fetchColumn();
                         <p class="text-3xl font-bold text-red-400">0</p>
                         <p class="text-gray-400">Signalements</p>
                     </div>
+                    <a href="manage_events.php" class="bg-gray-800 p-6 rounded-lg...">
+                    <i class="fas fa-calendar-plus text-blue-500 text-5xl mb-4"></i>
+                    <h3 class="text-xl font-bold text-white mb-2">Gérer les Événements</h3>
+                    <p class="text-gray-400 mb-4">Créer raids, formations et réunions</p>
+                   </a>
                 </div>
             </div>
         </div>
@@ -150,3 +155,4 @@ $accepted_factions = $stmt->fetchColumn();
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
+
