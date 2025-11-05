@@ -27,47 +27,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_POST['niveau'],
                 $_POST['prerequis'] ?: null
             ]);
-            break; // ✅ nécessaire pour fermer le case
+try {
+    switch ($action) {
+        case 'add_diplome':
+            $stmt = $pdo->prepare("INSERT INTO diplomes (code, nom, description, categorie, niveau, prerequis) 
+                VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([
+                $_POST['code'],
+                $_POST['nom'],
+                $_POST['description'],
+                $_POST['categorie'],
+                $_POST['niveau'],
+                $_POST['prerequis'] ?: null
+            ]);
+            logAdminAction($pdo, $_SESSION['user_id'], 'Ajout diplôme', $_POST['nom']);
+            $success = "Diplôme ajouté avec succès !";
+            break;
+                
+        case 'edit_diplome':
+            $stmt = $pdo->prepare("UPDATE diplomes SET code = ?, nom = ?, description = ?, 
+                categorie = ?, niveau = ?, prerequis = ? WHERE id = ?");
+            $stmt->execute([
+                $_POST['code'],
+                $_POST['nom'],
+                $_POST['description'],
+                $_POST['categorie'],
+                $_POST['niveau'],
+                $_POST['prerequis'] ?: null,
+                $_POST['diplome_id']
+            ]);
+            logAdminAction($pdo, $_SESSION['user_id'], 'Modification diplôme', $_POST['nom']);
+            $success = "Diplôme modifié avec succès !";
+            break;
+                
+        case 'delete_diplome':
+            $diplome_id = $_POST['diplome_id'];
+            $stmt = $pdo->prepare("SELECT nom FROM diplomes WHERE id = ?");
+            $stmt->execute([$diplome_id]);
+            $nom = $stmt->fetchColumn();
+                
+            $stmt = $pdo->prepare("DELETE FROM diplomes WHERE id = ?");
+            $stmt->execute([$diplome_id]);
+            logAdminAction($pdo, $_SESSION['user_id'], 'Suppression diplôme', $nom);
+            $success = "Diplôme supprimé avec succès !";
+            break;
 
         // ici tu peux ajouter d'autres case si besoin
-    } // ✅ fermeture du switch
+    } // ✅ fermeture du switch après tous les case
 } catch (Exception $e) {
     $error = $e->getMessage();
 } catch (PDOException $e) {
     $error = "Erreur PDO : " . $e->getMessage();
 } // ✅ fermeture du try-catch
 
-                
-                logAdminAction($pdo, $_SESSION['user_id'], 'Ajout diplôme', $_POST['nom']);
-                $success = "Diplôme ajouté avec succès !";
-                break;
-                
-            case 'edit_diplome':
-                $stmt = $pdo->prepare("UPDATE diplomes SET code = ?, nom = ?, description = ?, 
-                    categorie = ?, niveau = ?, prerequis = ? WHERE id = ?");
-                $stmt->execute([
-                    $_POST['code'],
-                    $_POST['nom'],
-                    $_POST['description'],
-                    $_POST['categorie'],
-                    $_POST['niveau'],
-                    $_POST['prerequis'] ?: null,
-                    $_POST['diplome_id']
-                ]);
-                
-                logAdminAction($pdo, $_SESSION['user_id'], 'Modification diplôme', $_POST['nom']);
-                $success = "Diplôme modifié avec succès !";
-                break;
-                
-            case 'delete_diplome':
-                $diplome_id = $_POST['diplome_id'];
-                $stmt = $pdo->prepare("SELECT nom FROM diplomes WHERE id = ?");
-                $stmt->execute([$diplome_id]);
-                $nom = $stmt->fetchColumn();
-                
-                $stmt = $pdo->prepare("DELETE FROM diplomes WHERE id = ?");
-                $stmt->execute([$diplome_id]);
-                
                 logAdminAction($pdo, $_SESSION['user_id'], 'Suppression diplôme', $nom);
                 $success = "Diplôme supprimé avec succès !";
                 break;
@@ -1063,5 +1075,6 @@ $stats = [
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
+
 
 
