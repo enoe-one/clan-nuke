@@ -125,7 +125,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 logAdminAction($pdo, $_SESSION['user_id'], 'Suppression légion', $nom);
                 $success = "Légion supprimée avec succès !";
                 break;
-                
+                    case 'update_legion':
+        $stmt = $pdo->prepare("UPDATE legions SET nom = ?, description = ?, chef_id = ? WHERE id = ?");
+        $stmt->execute([
+            $_POST['nom_legion'],
+            $_POST['description_legion'],
+            $_POST['chef_id'] ?: null,
+            $_POST['legion_id']
+        ]);
+
+        logAdminAction($pdo, $_SESSION['user_id'], 'Modification légion', $_POST['nom_legion']);
+        $success = "Légion mise à jour avec succès !";
+        break;
+
             case 'backup_database':
                 $filename = 'backup_' . date('Y-m-d_H-i-s') . '.sql';
                 $backup_path = '../backups/';
@@ -718,4 +730,5 @@ $stats = [
                 </div>
                 
                 <div>
+
                     <label class="block text-white mb-2">
