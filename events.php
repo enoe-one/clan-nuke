@@ -214,6 +214,29 @@ $month_name = strftime('%B %Y', $first_day_of_month);
         .event-today {
             animation: pulse-event 2s infinite;
         }
+        @keyframes glow-important {
+            0%, 100% { 
+                box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(249, 115, 22, 0.8);
+                transform: scale(1.02);
+            }
+        }
+        .event-important {
+            animation: glow-important 2s infinite;
+            font-weight: bold;
+        }
+        .important-banner {
+            background: linear-gradient(90deg, #ea580c, #f97316, #ea580c);
+            background-size: 200% 100%;
+            animation: gradient-shift 3s ease infinite;
+        }
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
     </style>
 </head>
 <body class="bg-gray-900">
