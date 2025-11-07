@@ -26,6 +26,11 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$_SESSION['member_id']]);
 $member_diplomes = $stmt->fetchAll();
+
+// 🔹 Récupérer le nombre de messages non lus
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE recipient_id = ? AND is_read = 0");
+$stmt->execute([$_SESSION['member_id']]);
+$unread_count = $stmt->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -118,7 +123,7 @@ $member_diplomes = $stmt->fetchAll();
                         <div class="space-y-2 max-h-64 overflow-y-auto">
                             <?php foreach ($member_diplomes as $diplome): ?>
                                 <div class="bg-gray-700 p-3 rounded">
-<p class="text-white font-semibold text-sm">
+                                    <p class="text-white font-semibold text-sm">
                                         <?php echo htmlspecialchars($diplome['code']); ?> - <?php echo htmlspecialchars($diplome['nom']); ?>
                                     </p>
                                     <p class="text-gray-400 text-xs">
@@ -136,8 +141,8 @@ $member_diplomes = $stmt->fetchAll();
                 </div>
             </div>
 
-            <!-- Actions rapides -->
-            <div class="grid md:grid-cols-2 gap-6">
+            <!-- 🔹 Actions rapides -->
+            <div class="grid md:grid-cols-3 gap-6">
                 <a href="change_password.php" 
                    class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-blue-500">
                     <i class="fas fa-key text-blue-500 text-4xl mb-3"></i>
@@ -151,9 +156,23 @@ $member_diplomes = $stmt->fetchAll();
                     <h3 class="text-xl font-bold text-white mb-2">Rejoindre le Discord</h3>
                     <p class="text-gray-400">Communauté CFWT</p>
                 </a>
+
+                <!-- 🔹 Bouton Messagerie -->
+                <a href="messages.php"
+                   class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-green-500 relative">
+                    <i class="fas fa-envelope text-green-500 text-4xl mb-3"></i>
+                    <h3 class="text-xl font-bold text-white mb-2">Messagerie</h3>
+                    <p class="text-gray-400">Consultez vos messages</p>
+
+                    <?php if ($unread_count > 0): ?>
+                        <span class="absolute top-4 right-4 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                            <?php echo $unread_count > 9 ? '9+' : $unread_count; ?>
+                        </span>
+                    <?php endif; ?>
+                </a>
             </div>
 
-            <!-- Historique d'activité (futur) -->
+            <!-- Historique d'activité -->
             <div class="bg-gray-800 p-6 rounded-lg mt-6">
                 <h2 class="text-2xl font-bold text-white mb-4">
                     <i class="fas fa-history mr-2"></i> Activité récente
@@ -169,4 +188,3 @@ $member_diplomes = $stmt->fetchAll();
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
-           
