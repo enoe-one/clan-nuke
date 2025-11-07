@@ -1,10 +1,11 @@
 <?php
-include_once "includes/get_appearance.php";
-$pdo = new PDO('mysql:host=metro.proxy.rlwy.net;dbname=railway;charset=utf8', 'root', 'JwaAIaqRIRzIGarebfqimmiKHDfnARiE');
-include_once "includes/header.php";
+if (!defined('SITE_URL')) {
+    define('SITE_URL', 'https://' . $_SERVER['HTTP_HOST']);
+}
+
+// Récupérer les paramètres d'apparence
+$appearance = getAppearanceSettings($pdo);
 ?>
-<!DOCTYPE html>
-<html lang="fr">
 <style>
     :root {
         --primary-color: <?php echo htmlspecialchars($appearance['primary_color']); ?>;
