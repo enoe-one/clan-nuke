@@ -1,677 +1,668 @@
-<?php 
-require_once 'config.php';
-
-// Récupérer les paramètres d'apparence pour le style
-$appearance = getAppearanceSettings($pdo);
+<?php
+// Aucune login requis. Dépose ce fichier tel quel pour remplacer game.php
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Centre d'Entraînement - CFWT</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            overflow-x: hidden;
-        }
-        
-        .game-card {
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-        
-        .game-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-        }
-        
-        .game-container {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        /* Animations */
-        @keyframes explosion {
-            0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(2); opacity: 0; }
-        }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        
-        @keyframes slide-in {
-            from { transform: translateX(-100%); }
-            to { transform: translateX(0); }
-        }
-        
-        .explosion {
-            animation: explosion 0.5s ease-out;
-        }
-        
-        .shake {
-            animation: shake 0.3s;
-        }
-        
-        .pulse {
-            animation: pulse 1s infinite;
-        }
-        
-        .enemy {
-            transition: all 0.3s;
-        }
-        
-        .enemy:hover {
-            filter: brightness(1.2);
-        }
-        
-        .bullet {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #fbbf24;
-            border-radius: 50%;
-            box-shadow: 0 0 10px #fbbf24;
-        }
-        
-        .crosshair {
-            cursor: crosshair;
-        }
-        
-        .health-bar {
-            transition: width 0.3s;
-        }
-        
-        .combo-text {
-            animation: slide-in 0.5s;
-        }
-        
-        /* Radar */
-        .radar-dot {
-            animation: pulse 2s infinite;
-        }
-        
-        /* Particules */
-        .particle {
-            position: absolute;
-            pointer-events: none;
-        }
-        
-        /* Mode nuit */
-        .night-mode {
-            background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a15 100%);
-        }
-        
-        /* Écran de sélection */
-        .mode-selector {
-            backdrop-filter: blur(10px);
-            background: rgba(30, 41, 59, 0.8);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Jeu Char Arcade - Hangar et Crédits</title>
+  <style>
+body { margin:0; background:#0a0a0a;font-family:'Segoe UI', Arial, sans-serif; }
+canvas { display:block; margin:0 auto; background:radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0a 100%); }
+#menu {
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  color:#fff; background:linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  animation: menuGlow 3s ease-in-out infinite alternate;
+  z-index:10;
+}
+@keyframes menuGlow {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+h1 {
+  font-size:48px;
+  background:linear-gradient(90deg, #00ff88, #00ccff, #ff00ff);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  text-shadow:0 0 30px rgba(0,255,136,0.5);
+  margin-bottom:30px;
+  animation:titleGlow 2s ease-in-out infinite alternate;
+}
+@keyframes titleGlow {
+  from { filter:drop-shadow(0 0 10px rgba(0,255,136,0.5)); }
+  to { filter:drop-shadow(0 0 30px rgba(0,255,136,0.9)); }
+}
+.btn { 
+  background:linear-gradient(135deg, #e94560 0%, #c72940 100%); 
+  color:#fff; padding:15px 40px; margin:10px; cursor:pointer; font-size:22px;
+  border:none; border-radius:10px; font-weight:bold; text-transform:uppercase;
+  box-shadow:0 4px 15px rgba(233, 69, 96, 0.4);
+  transition:all 0.3s ease;
+  letter-spacing:1px;
+}
+.btn:hover { 
+  background:linear-gradient(135deg, #ff5577 0%, #e94560 100%); 
+  transform:translateY(-2px) scale(1.05);
+  box-shadow:0 6px 25px rgba(233, 69, 96, 0.6);
+}
+.char-select {
+  display:flex; justify-content:center; margin:20px; flex-wrap:wrap; max-width:900px;
+}
+.char-option {
+  width:140px; height:160px; border:3px solid #3a506b; margin:10px; cursor:pointer; border-radius:15px;
+  display:flex; justify-content:center; align-items:center; flex-direction:column; font-weight:bold; font-size:12px; text-align:center;
+  opacity:1; background:linear-gradient(135deg, #1c2841 0%, #0f1419 100%);
+  transition:all 0.3s ease; box-shadow:0 4px 15px rgba(0,0,0,0.5);
+  position:relative; overflow:hidden; padding:10px;
+}
+.char-option::before {
+  content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition:left 0.5s;
+}
+.char-option:hover::before { left:100%; }
+.char-option:hover {
+  transform:translateY(-5px) scale(1.05);
+  border-color:#5cb3ff;
+  box-shadow:0 8px 25px rgba(92, 179, 255, 0.4);
+}
+.char-option.locked { 
+  opacity:0.4; 
+  filter:grayscale(1);
+  cursor:not-allowed;
+}
+.char-option.selected { 
+  border-color:#00ff88; 
+  background:linear-gradient(135deg, #1c4128 0%, #0a1f12 100%);
+  box-shadow:0 0 30px rgba(0, 255, 136, 0.6);
+  animation:pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow:0 0 30px rgba(0, 255, 136, 0.6); }
+  50% { box-shadow:0 0 50px rgba(0, 255, 136, 0.9); }
+}
+.char-option .tank-preview { 
+  width:70px; height:50px; margin-bottom:8px; border-radius:5px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.6);
+}
+.char-stats {
+  font-size:11px;
+  line-height:1.4;
+  color:#aaa;
+}
+.char-stats strong {
+  color:#00ff88;
+}
+#money { 
+  font-size:28px; 
+  margin-top:20px; 
+  background:linear-gradient(90deg, #ffd700, #ffed4e, #ffd700);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  font-weight:bold;
+  text-shadow:0 0 20px rgba(255, 215, 0, 0.5);
+  letter-spacing:2px;
+  animation:moneyShine 2s linear infinite;
+  background-size:200% 100%;
+}
+@keyframes moneyShine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+  </style>
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
-    
-    <div class="min-h-screen py-12">
-        <div class="max-w-7xl mx-auto px-4">
-            <!-- En-tête -->
-            <div class="text-center mb-12">
-                <h1 class="text-5xl font-bold text-white mb-4">
-                    <i class="fas fa-crosshairs text-red-500 mr-3"></i>
-                    Centre d'Entraînement Militaire
-                </h1>
-                <p class="text-gray-400 text-xl">Entraînez vos compétences de combat</p>
-            </div>
-
-            <!-- Sélection du mode -->
-            <div id="mode-selection" class="grid md:grid-cols-3 gap-8 mb-12">
-                <!-- Mode 1: Tir sur cibles -->
-                <div class="game-card bg-gradient-to-br from-red-900 to-red-700 p-8 rounded-lg text-white text-center" 
-                     onclick="startGame('shooting')">
-                    <i class="fas fa-bullseye text-6xl mb-4"></i>
-                    <h3 class="text-2xl font-bold mb-3">Tir de Précision</h3>
-                    <p class="text-red-200 mb-4">Visez et éliminez les cibles qui apparaissent</p>
-                    <div class="flex justify-center space-x-4 text-sm">
-                        <span><i class="fas fa-clock mr-1"></i>60s</span>
-                        <span><i class="fas fa-crosshairs mr-1"></i>Précision</span>
-                    </div>
-                    <button class="mt-6 bg-white text-red-900 px-6 py-3 rounded-lg font-bold hover:bg-red-100 transition">
-                        Commencer
-                    </button>
-                </div>
-
-                <!-- Mode 2: Défense de base -->
-                <div class="game-card bg-gradient-to-br from-blue-900 to-blue-700 p-8 rounded-lg text-white text-center" 
-                     onclick="startGame('defense')">
-                    <i class="fas fa-shield-alt text-6xl mb-4"></i>
-                    <h3 class="text-2xl font-bold mb-3">Défense de Base</h3>
-                    <p class="text-blue-200 mb-4">Protégez votre base contre les ennemis</p>
-                    <div class="flex justify-center space-x-4 text-sm">
-                        <span><i class="fas fa-heart mr-1"></i>3 vies</span>
-                        <span><i class="fas fa-users-slash mr-1"></i>Survie</span>
-                    </div>
-                    <button class="mt-6 bg-white text-blue-900 px-6 py-3 rounded-lg font-bold hover:bg-blue-100 transition">
-                        Commencer
-                    </button>
-                </div>
-
-                <!-- Mode 3: Mission Commando -->
-                <div class="game-card bg-gradient-to-br from-green-900 to-green-700 p-8 rounded-lg text-white text-center" 
-                     onclick="startGame('commando')">
-                    <i class="fas fa-user-ninja text-6xl mb-4"></i>
-                    <h3 class="text-2xl font-bold mb-3">Mission Commando</h3>
-                    <p class="text-green-200 mb-4">Éliminez les ennemis sans être détecté</p>
-                    <div class="flex justify-center space-x-4 text-sm">
-                        <span><i class="fas fa-eye-slash mr-1"></i>Furtif</span>
-                        <span><i class="fas fa-star mr-1"></i>Expert</span>
-                    </div>
-                    <button class="mt-6 bg-white text-green-900 px-6 py-3 rounded-lg font-bold hover:bg-green-100 transition">
-                        Commencer
-                    </button>
-                </div>
-            </div>
-
-            <!-- Zone de jeu -->
-            <div id="game-area" class="hidden">
-                <!-- HUD (Head-Up Display) -->
-                <div class="bg-gray-900 bg-opacity-90 p-6 rounded-lg mb-4">
-                    <div class="flex justify-between items-center flex-wrap gap-4">
-                        <div>
-                            <p class="text-gray-400 text-sm">Score</p>
-                            <p class="text-white text-3xl font-bold" id="score">0</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-400 text-sm">Combo</p>
-                            <p class="text-yellow-400 text-3xl font-bold" id="combo">x1</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-400 text-sm">Temps</p>
-                            <p class="text-white text-3xl font-bold" id="timer">60</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-400 text-sm">Munitions</p>
-                            <p class="text-white text-3xl font-bold" id="ammo">∞</p>
-                        </div>
-                        <div id="health-container">
-                            <p class="text-gray-400 text-sm mb-1">Santé</p>
-                            <div class="w-48 h-6 bg-gray-700 rounded-full overflow-hidden">
-                                <div id="health-bar" class="health-bar h-full bg-gradient-to-r from-green-500 to-green-400" style="width: 100%"></div>
-                            </div>
-                        </div>
-                        <button onclick="pauseGame()" class="bg-yellow-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-yellow-700 transition">
-                            <i class="fas fa-pause mr-2"></i>Pause
-                        </button>
-                    </div>
-                    
-                    <!-- Barre de progression mission -->
-                    <div id="mission-progress" class="mt-4 hidden">
-                        <div class="flex justify-between items-center mb-2">
-                            <p class="text-gray-400 text-sm">Objectif</p>
-                            <p class="text-white text-sm" id="objective-text">0/10 ennemis</p>
-                        </div>
-                        <div class="w-full h-3 bg-gray-700 rounded-full overflow-hidden">
-                            <div id="objective-bar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-300" style="width: 0%"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Terrain de jeu -->
-                <div id="game-canvas" class="game-container crosshair bg-gradient-to-b from-gray-800 to-gray-900 rounded-lg relative" 
-                     style="height: 600px;">
-                    <!-- Contenu généré dynamiquement -->
-                </div>
-
-                <!-- Messages -->
-                <div id="game-messages" class="fixed top-1/4 left-1/2 transform -translate-x-1/2 text-center pointer-events-none">
-                    <div id="combo-message" class="combo-text text-6xl font-bold text-yellow-400 drop-shadow-lg hidden"></div>
-                    <div id="hit-message" class="text-4xl font-bold text-red-500 drop-shadow-lg hidden">HEADSHOT!</div>
-                </div>
-            </div>
-
-            <!-- Écran de fin -->
-            <div id="game-over" class="hidden text-center">
-                <div class="bg-gray-900 bg-opacity-95 p-12 rounded-lg max-w-2xl mx-auto">
-                    <i class="fas fa-trophy text-yellow-500 text-8xl mb-6"></i>
-                    <h2 class="text-4xl font-bold text-white mb-4">Mission Terminée !</h2>
-                    
-                    <div class="grid grid-cols-2 gap-6 mb-8">
-                        <div class="bg-gray-800 p-6 rounded-lg">
-                            <p class="text-gray-400 mb-2">Score Final</p>
-                            <p class="text-yellow-400 text-4xl font-bold" id="final-score">0</p>
-                        </div>
-                        <div class="bg-gray-800 p-6 rounded-lg">
-                            <p class="text-gray-400 mb-2">Précision</p>
-                            <p class="text-green-400 text-4xl font-bold" id="accuracy">0%</p>
-                        </div>
-                        <div class="bg-gray-800 p-6 rounded-lg">
-                            <p class="text-gray-400 mb-2">Meilleur Combo</p>
-                            <p class="text-purple-400 text-4xl font-bold" id="best-combo">x1</p>
-                        </div>
-                        <div class="bg-gray-800 p-6 rounded-lg">
-                            <p class="text-gray-400 mb-2">Ennemis Éliminés</p>
-                            <p class="text-red-400 text-4xl font-bold" id="kills">0</p>
-                        </div>
-                    </div>
-
-                    <!-- Médailles -->
-                    <div id="medals" class="mb-8 hidden">
-                        <p class="text-gray-400 mb-4">Médailles Obtenues</p>
-                        <div class="flex justify-center space-x-4" id="medals-list"></div>
-                    </div>
-
-                    <!-- Classement -->
-                    <div id="rank" class="mb-8">
-                        <p class="text-gray-400 mb-2">Grade Obtenu</p>
-                        <p class="text-white text-3xl font-bold" id="rank-name">Recrue</p>
-                    </div>
-
-                    <div class="flex justify-center space-x-4">
-                        <button onclick="restartGame()" 
-                                class="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-lg font-bold hover:from-green-700 hover:to-green-800 transition">
-                            <i class="fas fa-redo mr-2"></i>Rejouer
-                        </button>
-                        <button onclick="backToMenu()" 
-                                class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-lg font-bold hover:from-blue-700 hover:to-blue-800 transition">
-                            <i class="fas fa-home mr-2"></i>Menu Principal
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Meilleurs scores -->
-            <div class="mt-12 bg-gray-900 bg-opacity-80 p-8 rounded-lg">
-                <h3 class="text-3xl font-bold text-white mb-6 text-center">
-                    <i class="fas fa-medal text-yellow-500 mr-2"></i>
-                    Hall of Fame
-                </h3>
-                <div class="grid md:grid-cols-3 gap-6">
-                    <div>
-                        <p class="text-gray-400 text-center mb-4">Tir de Précision</p>
-                        <div class="space-y-2" id="leaderboard-shooting">
-                            <div class="bg-gray-800 p-3 rounded flex justify-between items-center">
-                                <span class="text-white">🥇 En attente...</span>
-                                <span class="text-yellow-400 font-bold">0</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-gray-400 text-center mb-4">Défense de Base</p>
-                        <div class="space-y-2" id="leaderboard-defense">
-                            <div class="bg-gray-800 p-3 rounded flex justify-between items-center">
-                                <span class="text-white">🥇 En attente...</span>
-                                <span class="text-yellow-400 font-bold">0</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <p class="text-gray-400 text-center mb-4">Mission Commando</p>
-                        <div class="space-y-2" id="leaderboard-commando">
-                            <div class="bg-gray-800 p-3 rounded flex justify-between items-center">
-                                <span class="text-white">🥇 En attente...</span>
-                                <span class="text-yellow-400 font-bold">0</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- HANGAR -->
+<div id="menu">
+  <h1>🎮 HANGAR DE COMBAT 🎮</h1>
+  <div class="char-select">
+    <div class="char-option selected" data-char="0">
+      <div class="tank-preview" style="background:linear-gradient(135deg, #999, #666);"></div>
+      <strong>Recon Tank</strong>
+      <div class="char-stats">Vitesse: 4<br>Vies: 3<br>Tir: Simple<br>Rechargement: 300ms<br><strong>GRATUIT</strong></div>
     </div>
+    <div class="char-option locked" data-char="1" data-price="50">
+      <div class="tank-preview" style="background:linear-gradient(135deg, #2E8B57, #1a5c3a);"></div>
+      <strong>M1 Abrams</strong>
+      <div class="char-stats">Vitesse: 5<br>Vies: 4<br>Tir: Simple<br>Rechargement: 250ms<br><strong>Prix: 50</strong></div>
+    </div>
+    <div class="char-option locked" data-char="2" data-price="70">
+      <div class="tank-preview" style="background:linear-gradient(135deg, #4682B4, #2d5a80);"></div>
+      <strong>T-90</strong>
+      <div class="char-stats">Vitesse: 4<br>Vies: 5<br>Tir: Simple<br>Rechargement: 250ms<br><strong>Prix: 70</strong></div>
+    </div>
+    <div class="char-option locked" data-char="3" data-price="60">
+      <div class="tank-preview" style="background:linear-gradient(135deg, #B22222, #8b0000);"></div>
+      <strong>Leopard 2</strong>
+      <div class="char-stats">Vitesse: 6<br>Vies: 3<br>Tir: Simple<br>Rechargement: 200ms<br><strong>Prix: 60</strong></div>
+    </div>
+    <div class="char-option locked" data-char="4" data-price="80">
+      <div class="tank-preview" style="background:linear-gradient(135deg, #DAA520, #b8860b);"></div>
+      <strong>Challenger 2</strong>
+      <div class="char-stats">Vitesse: 4<br>Vies: 6<br>Tir: Double<br>Rechargement: 350ms<br><strong>Prix: 80</strong></div>
+    </div>
+    <div class="char-option locked" data-char="5" data-price="90">
+      <div class="tank-preview" style="background:linear-gradient(135deg, #800080, #4b0082);"></div>
+      <strong>K2 Black Panther</strong>
+      <div class="char-stats">Vitesse: 5<br>Vies: 5<br>Tir: Double<br>Rechargement: 300ms<br><strong>Prix: 90</strong></div>
+    </div>
+    <div class="char-option locked" data-char="6" data-price="150">
+      <div class="tank-preview" style="background:linear-gradient(135deg, #FF4500, #cc3700);"></div>
+      <strong>Type 99</strong>
+      <div class="char-stats">Vitesse: 6<br>Vies: 8<br>Tir: Triple<br>Rechargement: 250ms<br><strong>Prix: 150</strong></div>
+    </div>
+  </div>
+  <p id="money">💰 Crédits: 0</p>
+  <button class="btn" id="playBtn">⚔️ LANCER LA BATAILLE ⚔️</button>
+</div>
 
-    <?php include 'includes/footer.php'; ?>
+<canvas id="gameCanvas"></canvas>
 
-    <script>
-    // Variables globales
-    let gameMode = null;
-    let gameActive = false;
-    let gamePaused = false;
-    let score = 0;
-    let combo = 1;
-    let maxCombo = 1;
-    let health = 100;
-    let timer = 60;
-    let ammo = Infinity;
-    let enemies = [];
-    let kills = 0;
-    let shots = 0;
-    let hits = 0;
-    let gameInterval = null;
-    let spawnInterval = null;
-    let comboTimeout = null;
-    
-    // Sons (simulation avec messages console pour le moment)
-    const sounds = {
-        shoot: () => console.log('🔫 PEW!'),
-        hit: () => console.log('💥 HIT!'),
-        miss: () => console.log('❌ MISS'),
-        explosion: () => console.log('💣 BOOM!'),
-        combo: () => console.log('🔥 COMBO!')
-    };
+<script>
+// INITIALISATION
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 800;
+canvas.height = 600;
 
-    function startGame(mode) {
-        gameMode = mode;
-        document.getElementById('mode-selection').classList.add('hidden');
-        document.getElementById('game-area').classList.remove('hidden');
-        
-        // Réinitialiser les variables
-        score = 0;
-        combo = 1;
-        maxCombo = 1;
-        health = 100;
-        kills = 0;
-        shots = 0;
-        hits = 0;
-        enemies = [];
-        
-        // Configuration selon le mode
-        if (mode === 'shooting') {
-            timer = 60;
-            document.getElementById('health-container').classList.add('hidden');
-            document.getElementById('mission-progress').classList.add('hidden');
-        } else if (mode === 'defense') {
-            timer = 999;
-            document.getElementById('health-container').classList.remove('hidden');
-            document.getElementById('mission-progress').classList.add('hidden');
-        } else if (mode === 'commando') {
-            timer = 90;
-            document.getElementById('health-container').classList.remove('hidden');
-            document.getElementById('mission-progress').classList.remove('hidden');
+let selectedChar = 0;
+let gameStarted = false;
+let money = 0;
+let frameCount = 0;
+let stars = [];
+for(let i=0; i<100; i++){
+  stars.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    size: Math.random() * 2,
+    speed: Math.random() * 0.5 + 0.2
+  });
+}
+
+const charOptions = document.querySelectorAll('.char-option');
+charOptions.forEach(opt=>{
+  const price = parseInt(opt.dataset.price||0);
+  if(price===0) opt.classList.remove('locked');
+  opt.addEventListener('click', ()=>{
+    const price = parseInt(opt.dataset.price||0);
+    const isLocked = opt.classList.contains('locked');
+    if(!isLocked || price === 0){
+      charOptions.forEach(o=>o.classList.remove('selected'));
+      opt.classList.add('selected');
+      selectedChar = parseInt(opt.dataset.char);
+    } else if(price <= money){
+      money -= price;
+      opt.classList.remove('locked');
+      opt.dataset.price = 0;
+      charOptions.forEach(o=>o.classList.remove('selected'));
+      opt.classList.add('selected');
+      selectedChar = parseInt(opt.dataset.char);
+      document.getElementById('money').textContent = "💰 Crédits: "+money;
+    } else {
+      alert("⚠️ Vous n'avez pas assez de crédits !");
+    }
+  });
+});
+
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  document.getElementById('menu').style.display='none';
+  gameStarted = true;
+  initGame();
+  loop();
+});
+
+const tankModels = [
+  {name:"Recon Tank", color:'#CCCCCC', speed:4, lives:3, shotType:"single", reloadTime:300},
+  {name:"M1 Abrams", color:'#2E8B57', speed:5, lives:4, shotType:"single", reloadTime:250, price:50},
+  {name:"T-90", color:'#4682B4', speed:4, lives:5, shotType:"single", reloadTime:250, price:70},
+  {name:"Leopard 2", color:'#B22222', speed:6, lives:3, shotType:"single", reloadTime:200, price:60},
+  {name:"Challenger 2", color:'#DAA520', speed:4, lives:6, shotType:"double", reloadTime:350, price:80},
+  {name:"K2 Black Panther", color:'#800080', speed:5, lives:5, shotType:"double", reloadTime:300, price:90},
+  {name:"Type 99", color:'#FF4500', speed:6, lives:8, shotType:"triple", reloadTime:250, price:150}
+];
+
+let tank = {x:400, y:500, width:40, height:50, angle:0, speed:5, lives:3, lastShot:0, canShoot:true};
+let keys = {};
+let bullets = [];
+let enemies = [];
+let level = 1;
+let particles = [];
+let explosions = [];
+let enemySpawnTimer = 0;
+let score = 0;
+
+function initGame(){
+  const model = tankModels[selectedChar];
+  tank = {
+    x:400, y:500, width:40, height:50, angle:0, speed:model.speed, lives:model.lives, lastShot:0, canShoot:true
+  };
+  bullets = [];
+  enemies = [];
+  particles = [];
+  explosions = [];
+  frameCount = 0;
+  enemySpawnTimer = 0;
+  spawnInitialEnemies();
+}
+document.addEventListener('keydown', e=>{
+  keys[e.key]=true;
+  if(e.key===' ' && gameStarted && tank.canShoot){
+    e.preventDefault();
+    shootBullet();
+  }
+});
+document.addEventListener('keyup', e=>keys[e.key]=false);
+
+function shootBullet(){
+  const model = tankModels[selectedChar];
+  const now = Date.now();
+  if(now - tank.lastShot >= model.reloadTime){
+    tank.lastShot = now;
+    tank.canShoot = false;
+    if(model.shotType==="single"){
+      bullets.push({x:tank.x, y:tank.y-30, dx:0, dy:-10, life:200, fromEnemy:false});
+      createMuzzleFlash(tank.x, tank.y-30);
+    } 
+    else if(model.shotType==="double"){
+      bullets.push({x:tank.x-12, y:tank.y-30, dx:-1, dy:-10, life:200, fromEnemy:false});
+      bullets.push({x:tank.x+12, y:tank.y-30, dx:1, dy:-10, life:200, fromEnemy:false});
+      createMuzzleFlash(tank.x-12, tank.y-30);
+      createMuzzleFlash(tank.x+12, tank.y-30);
+    } 
+    else if(model.shotType==="triple"){
+      bullets.push({x:tank.x, y:tank.y-30, dx:0, dy:-10, life:200, fromEnemy:false});
+      bullets.push({x:tank.x-15, y:tank.y-30, dx:-1.5, dy:-10, life:200, fromEnemy:false});
+      bullets.push({x:tank.x+15, y:tank.y-30, dx:1.5, dy:-10, life:200, fromEnemy:false});
+      createMuzzleFlash(tank.x, tank.y-30);
+      createMuzzleFlash(tank.x-15, tank.y-30);
+      createMuzzleFlash(tank.x+15, tank.y-30);
+    }
+    setTimeout(()=>{ tank.canShoot = true; }, model.reloadTime);
+  }
+}
+
+function createMuzzleFlash(x, y){
+  for(let i=0; i<12; i++){
+    particles.push({
+      x, y,
+      vx: (Math.random()-0.5)*4,
+      vy: (Math.random()-0.5)*4 - 3,
+      life: 20,
+      maxLife: 20,
+      size: Math.random()*4 + 2,
+      color: `rgba(255,${200+Math.random()*55},${Math.random()*100},`
+    });
+  }
+}
+function createExplosion(x, y, size){
+  explosions.push({x, y, size: 0, maxSize: size, life: 40});
+  for(let i=0; i<30; i++){
+    particles.push({
+      x, y,
+      vx: (Math.random()-0.5)*8,
+      vy: (Math.random()-0.5)*8,
+      life: 40 + Math.random()*30,
+      maxLife: 60,
+      size: Math.random()*5 + 2,
+      color: `rgba(${200+Math.random()*55},${Math.random()*150},0,`
+    });
+  }
+}
+function moveTank(){
+  if(keys['ArrowLeft'] && tank.x>20) tank.x -= tank.speed;
+  if(keys['ArrowRight'] && tank.x<canvas.width-20) tank.x += tank.speed;
+  if(keys['ArrowUp'] && tank.y>20) tank.y -= tank.speed;
+  if(keys['ArrowDown'] && tank.y<canvas.height-25) tank.y += tank.speed;
+}
+
+function spawnEnemy(){
+  const types = ['normal', 'normal', 'normal', 'fast', 'tank'];
+  const type = types[Math.floor(Math.random() * types.length)];
+  if(type === 'fast'){
+    enemies.push({
+      x:Math.random()*(canvas.width-35), y:-50, width:35, height:35, speed:3.5, hp:1, type:"fast", lastShot:0, points:8
+    });
+  } else if(type === 'tank'){
+    enemies.push({
+      x:Math.random()*(canvas.width-50), y:-60, width:50, height:50, speed:1.5, hp:3, type:"tank", lastShot:0, points:15
+    });
+  } else {
+    enemies.push({
+      x:Math.random()*(canvas.width-40), y:-50, width:40, height:40, speed:2.5, hp:1, type:"normal", lastShot:0, points:5
+    });
+  }
+}
+function spawnMiniBoss(){
+  enemies.push({
+    x:Math.random()*(canvas.width-100), y:-100, width:100, height:80, speed:1.8, hp:30, type:"miniBoss", lastShot:0, points:50
+  });
+}
+function spawnBoss(){
+  enemies.push({
+    x:canvas.width/2-150, y:-150, width:300, height:120, speed:1, hp:150, type:"boss", lastShot:0, points:100
+  });
+}
+function spawnInitialEnemies(){
+  for(let i=0;i<5;i++) spawnEnemy();
+}
+function shadeColor(color, percent) {
+  const num = parseInt(color.replace("#",""), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+  const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+  const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+  return "#" + (0x1000000 + R*0x10000 + G*0x100 + B).toString(16).slice(1);
+}
+
+function drawTank(){
+  ctx.save();
+  ctx.translate(tank.x, tank.y);
+  ctx.rotate(tank.angle);
+  ctx.shadowColor = 'rgba(0,0,0,0.5)';
+  ctx.shadowBlur = 15;
+  ctx.shadowOffsetY = 5;
+
+  const bodyGrad = ctx.createLinearGradient(-20,-25,20,25);
+  const color = tankModels[selectedChar].color;
+  bodyGrad.addColorStop(0, color);
+  bodyGrad.addColorStop(0.5, shadeColor(color, 20));
+  bodyGrad.addColorStop(1, shadeColor(color, -30));
+  ctx.fillStyle = bodyGrad;
+  ctx.fillRect(-20,-25,40,50);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillRect(-18,-23,36,4);
+  ctx.fillRect(-18,18,36,4);
+
+  ctx.shadowBlur = 10;
+  const cannonGrad = ctx.createLinearGradient(-6,-10,6,-10);
+  cannonGrad.addColorStop(0, '#0a4a0a');
+  cannonGrad.addColorStop(0.5, '#0d8e0d');
+  cannonGrad.addColorStop(1, '#0a4a0a');
+  ctx.fillStyle = cannonGrad;
+  ctx.fillRect(-6,-10,12,-24);
+
+  ctx.shadowBlur = 0;
+  if(tank.canShoot){
+    ctx.fillStyle = 'rgba(0,255,100,0.6)';
+  } else {
+    ctx.fillStyle = 'rgba(255,100,0,0.4)';
+  }
+  ctx.fillRect(-4,-32,8,3);
+
+  ctx.restore();
+  if(!tank.canShoot){
+    const model = tankModels[selectedChar];
+    const reloadProgress = Math.min(1, (Date.now() - tank.lastShot) / model.reloadTime);
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(tank.x - 25, tank.y + 35, 50, 6);
+    const reloadGrad = ctx.createLinearGradient(tank.x - 25, 0, tank.x + 25, 0);
+    reloadGrad.addColorStop(0, '#ff3333');
+    reloadGrad.addColorStop(0.5, '#ffaa00');
+    reloadGrad.addColorStop(1, '#00ff00');
+    ctx.fillStyle = reloadGrad;
+    ctx.fillRect(tank.x - 25, tank.y + 35, 50 * reloadProgress, 6);
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(tank.x - 25, tank.y + 35, 50, 6);
+    ctx.restore();
+  }
+}
+
+function drawEnemy(e){
+  ctx.save();
+  ctx.translate(e.x + e.width/2, e.y + e.height/2);
+  ctx.rotate(Math.PI);
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetY = 8;
+  let grad = ctx.createRadialGradient(0,0,0,0,0,e.width/1.5);
+  if(e.type==="miniBoss"){ 
+    grad.addColorStop(0,"#FFD700"); grad.addColorStop(0.5,"#FFA500"); grad.addColorStop(1,"#FF6600"); 
+  }
+  else if(e.type==="boss"){ 
+    grad.addColorStop(0,"#ff00ff"); grad.addColorStop(0.5,"#8800ff"); grad.addColorStop(1,"#440088"); 
+  }
+  else if(e.type==="fast"){
+    grad.addColorStop(0,"#00ff00"); grad.addColorStop(0.5,"#00cc00"); grad.addColorStop(1,"#006600"); 
+  }
+  else if(e.type==="tank"){
+    grad.addColorStop(0,"#ffaa00"); grad.addColorStop(0.5,"#ff6600"); grad.addColorStop(1,"#cc3300"); 
+  }
+  else { 
+    grad.addColorStop(0,"#ff3333"); grad.addColorStop(0.5,"#cc0000"); grad.addColorStop(1,"#660000"); 
+  }
+  ctx.fillStyle = grad;
+  ctx.fillRect(-e.width/2,-e.height/2,e.width,e.height);
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.fillRect(-e.width/2 + 5,-e.height/2 + 5,e.width - 10,e.height/4);
+  if(e.hp && e.hp > 1){
+    ctx.shadowBlur = 0;
+    const maxHp = e.type==="boss"?150:(e.type==="miniBoss"?30:3);
+    const hpPercent = e.hp/maxHp;
+    ctx.fillStyle="rgba(0,0,0,0.7)";
+    ctx.fillRect(-e.width/2,-e.height/2-15,e.width,8);
+    const hpGrad = ctx.createLinearGradient(-e.width/2,-e.height/2-15,e.width/2,-e.height/2-15);
+    if(hpPercent > 0.5){
+      hpGrad.addColorStop(0,"#00ff00");
+      hpGrad.addColorStop(1,"#88ff00");
+    } else if(hpPercent > 0.2){
+      hpGrad.addColorStop(0,"#ffaa00");
+      hpGrad.addColorStop(1,"#ff8800");
+    } else {
+      hpGrad.addColorStop(0,"#ff0000");
+      hpGrad.addColorStop(1,"#aa0000");
+    }
+    ctx.fillStyle = hpGrad;
+    ctx.fillRect(-e.width/2,-e.height/2-15,e.width*hpPercent,8);
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-e.width/2,-e.height/2-15,e.width,8);
+  }
+  ctx.restore();
+}
+function moveEnemies(){
+  for(let i = enemies.length - 1; i >= 0; i--){
+    const e = enemies[i]; e.y += e.speed;
+    if((e.type==="miniBoss" || e.type==="boss" || e.type==="tank") && e.y > 0) { enemyShoot(e); }
+    if(e.y > canvas.height + 100){ enemies.splice(i, 1); }
+  }
+}
+function enemyShoot(e){
+  const now = Date.now();
+  const shootDelay = e.type==="boss"?800:(e.type==="miniBoss"?1000:1500);
+  if(now - e.lastShot > shootDelay){
+    const bulletsCount = e.type==="boss"?3:(e.type==="miniBoss"?2:1);
+    for(let i=0;i<bulletsCount;i++){
+      bullets.push({
+        x: e.x + e.width/2 + (i-1)*20,
+        y: e.y + e.height,
+        dx: (Math.random()-0.5)*2,
+        dy: 5 + Math.random(),
+        life:200,
+        fromEnemy:true
+      });
+    }
+    e.lastShot = now;
+  }
+}
+
+function update(){
+  if(!gameStarted) return;
+  frameCount++;
+  moveTank();
+  for(let i = bullets.length - 1; i >= 0; i--){
+    const b = bullets[i]; b.x += b.dx; b.y += b.dy; b.life--;
+    if(b.life<=0 || b.y < -10 || b.y > canvas.height+10){ bullets.splice(i,1); }
+  }
+  moveEnemies();
+  enemySpawnTimer++;
+  if(enemySpawnTimer > Math.max(30, 60 - level*2)){
+    spawnEnemy();
+    enemySpawnTimer = 0;
+  }
+  if(frameCount % 1000 === 0){ spawnMiniBoss(); }
+  if(frameCount % 2000 === 0){ spawnBoss(); }
+  for(let i = particles.length - 1; i >= 0; i--){
+    const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--;
+    if(p.life <= 0){ particles.splice(i,1); }
+  }
+  for(let i = explosions.length - 1; i >= 0; i--){
+    const exp = explosions[i]; exp.size += exp.maxSize/40; exp.life--;
+    if(exp.life <= 0){ explosions.splice(i,1); }
+  }
+  for(let bi = bullets.length - 1; bi >= 0; bi--){
+    const b = bullets[bi];
+    if(b.fromEnemy) {
+      if(b.x > tank.x-20 && b.x < tank.x+20 && b.y > tank.y-25 && b.y < tank.y+25){
+        tank.lives--; bullets.splice(bi,1); createExplosion(b.x, b.y, 25);
+        if(tank.lives <= 0){ gameOver(); return; }
+      }
+      continue;
+    }
+    for(let ei = enemies.length - 1; ei >= 0; ei--){
+      const e = enemies[ei];
+      if(b.x > e.x && b.x < e.x + e.width && b.y > e.y && b.y < e.y + e.height){
+        e.hp--; bullets.splice(bi,1); createExplosion(b.x, b.y, 20);
+        if(e.hp <= 0){
+          createExplosion(e.x + e.width/2, e.y + e.height/2, e.width);
+          money += e.points || 5;
+          score += e.points || 5;
+          enemies.splice(ei,1);
         }
-        
-        updateHUD();
-        gameActive = true;
-        gamePaused = false;
-        
-        // Démarrer le jeu
-        gameInterval = setInterval(gameLoop, 1000);
-        startSpawning();
-        
-        // Événements de clic
-        const canvas = document.getElementById('game-canvas');
-        canvas.addEventListener('click', handleClick);
+        break;
+      }
     }
+  }
+  for(let ei = enemies.length - 1; ei >= 0; ei--){
+    const e = enemies[ei];
+    if(tank.x > e.x-20 && tank.x < e.x+e.width+20 && tank.y > e.y-25 && tank.y < e.y+e.height+25){
+      tank.lives--; createExplosion(e.x + e.width/2, e.y + e.height/2, e.width); enemies.splice(ei,1);
+      if(tank.lives <= 0){ gameOver(); return; }
+    }
+  }
+  charOptions.forEach(opt=>{
+    const price = parseInt(opt.dataset.price||0);
+    if(price>0 && price<=money) opt.classList.remove('locked');
+  });
+  stars.forEach(s=>{
+    s.y += s.speed;
+    if(s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
+  });
+  level = Math.floor(frameCount/1000) + 1;
+}
 
-    function gameLoop() {
-        if (gamePaused || !gameActive) return;
-        
-        if (gameMode === 'shooting' || gameMode === 'commando') {
-            timer--;
-            if (timer <= 0) {
-                endGame();
-            }
-        }
-        
-        updateHUD();
-        moveEnemies();
-    }
+function gameOver(){
+  gameStarted = false;
+  setTimeout(()=>{
+    alert(`💀 GAME OVER!\n\n🎯 Score: ${score}\n💰 Crédits gagnés: ${money}\n🏆 Niveau atteint: ${level}\n\nRetour au hangar...`);
+    document.getElementById('menu').style.display='flex';
+    document.getElementById('money').textContent = "💰 Crédits: "+money;
+  }, 100);
+}
 
-    function startSpawning() {
-        const spawnRate = gameMode === 'commando' ? 2000 : 1500;
-        spawnInterval = setInterval(() => {
-            if (!gamePaused && gameActive) {
-                spawnEnemy();
-            }
-        }, spawnRate);
+function draw(){
+  const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width);
+  grad.addColorStop(0, '#1a1a3e'); grad.addColorStop(0.5, '#0f1419'); grad.addColorStop(1, '#050508');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width,canvas.height);
+  stars.forEach(s=>{
+    ctx.fillStyle = `rgba(255,255,255,${s.size/2})`;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.strokeStyle = 'rgba(58, 80, 107, 0.15)'; ctx.lineWidth = 1;
+  for(let i=0; i<canvas.width; i+=50){
+    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke();
+  }
+  for(let i=0; i<canvas.height; i+=50){
+    ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(0,255,136,0.2)'; ctx.lineWidth = 2; ctx.setLineDash([10, 10]);
+  ctx.beginPath(); ctx.moveTo(canvas.width/2, 0); ctx.lineTo(canvas.width/2, canvas.height); ctx.stroke();
+  ctx.setLineDash([]);
+  explosions.forEach(exp=>{
+    const alpha = exp.life/40; ctx.save(); ctx.globalAlpha = alpha;
+    const expGrad = ctx.createRadialGradient(exp.x,exp.y,0,exp.x,exp.y,exp.size);
+    expGrad.addColorStop(0, 'rgba(255,255,255,1)');
+    expGrad.addColorStop(0.2, 'rgba(255,200,100,1)');
+    expGrad.addColorStop(0.5, 'rgba(255,100,0,0.8)');
+    expGrad.addColorStop(0.8, 'rgba(255,50,0,0.4)');
+    expGrad.addColorStop(1, 'rgba(100,0,0,0)');
+    ctx.fillStyle = expGrad; ctx.beginPath(); ctx.arc(exp.x, exp.y, exp.size, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = `rgba(255,150,0,${alpha})`; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(exp.x, exp.y, exp.size * 1.2, 0, Math.PI*2); ctx.stroke(); ctx.restore();
+  });
+  drawTank();
+  bullets.forEach(b=>{
+    ctx.save();
+    if(b.fromEnemy){
+      ctx.shadowColor = 'rgba(255,100,0,1)'; ctx.shadowBlur = 20;
+      const trailGrad = ctx.createLinearGradient(b.x, b.y-10, b.x, b.y+10);
+      trailGrad.addColorStop(0, 'rgba(255,150,0,0)'); trailGrad.addColorStop(0.5, 'rgba(255,100,0,0.6)'); trailGrad.addColorStop(1, 'rgba(255,50,0,0)');
+      ctx.fillStyle = trailGrad; ctx.fillRect(b.x-4, b.y-15, 8, 20);
+      const bulletGrad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, 6);
+      bulletGrad.addColorStop(0, '#ffff00'); bulletGrad.addColorStop(0.5, '#ffaa00'); bulletGrad.addColorStop(1, '#ff5500');
+      ctx.fillStyle = bulletGrad;
+    } else {
+      ctx.shadowColor = 'rgba(0,255,255,1)'; ctx.shadowBlur = 20;
+      const trailGrad = ctx.createLinearGradient(b.x, b.y+10, b.x, b.y-10);
+      trailGrad.addColorStop(0, 'rgba(0,200,255,0)'); trailGrad.addColorStop(0.5, 'rgba(0,255,255,0.6)'); trailGrad.addColorStop(1, 'rgba(100,255,255,0)');
+      ctx.fillStyle = trailGrad; ctx.fillRect(b.x-4, b.y-5, 8, 20);
+      const bulletGrad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, 6);
+      bulletGrad.addColorStop(0, '#ffffff'); bulletGrad.addColorStop(0.5, '#00ffff'); bulletGrad.addColorStop(1, '#0088ff');
+      ctx.fillStyle = bulletGrad;
     }
+    ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill(); ctx.restore();
+  });
+  particles.forEach(p=>{
+    ctx.save(); const alpha = p.life/p.maxLife; ctx.globalAlpha = alpha;
+    const particleGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size*2);
+    particleGrad.addColorStop(0, p.color + '1)'); particleGrad.addColorStop(0.5, p.color + (alpha*0.5) + ')'); particleGrad.addColorStop(1, p.color + '0)');
+    ctx.fillStyle = particleGrad; ctx.beginPath(); ctx.arc(p.x, p.y, p.size*2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = p.color + alpha + ')'; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  });
+  enemies.forEach(drawEnemy);
+  ctx.save();
+  const hudGrad = ctx.createLinearGradient(0, 0, 0, 100);
+  hudGrad.addColorStop(0, 'rgba(10,10,30,0.9)');
+  hudGrad.addColorStop(1, 'rgba(10,10,30,0.7)');
+  ctx.fillStyle = hudGrad; ctx.fillRect(5, 5, 250, 90);
+  ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 2; ctx.strokeRect(5, 5, 250, 90);
+  ctx.fillStyle = '#00ff88';
+  ctx.fillRect(5, 5, 15, 3); ctx.fillRect(5, 5, 3, 15); ctx.fillRect(240, 5, 15, 3);
+  ctx.fillRect(252, 5, 3, 15); ctx.fillRect(5, 92, 15, 3); ctx.fillRect(5, 80, 3, 15);
+  ctx.fillRect(240, 92, 15, 3); ctx.fillRect(252, 80, 3, 15);
+  ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 10; ctx.font = "bold 18px 'Segoe UI'";
+  ctx.fillStyle="#ff3366"; ctx.fillText("♥".repeat(Math.max(0, tank.lives)), 20, 30);
+  ctx.fillStyle="#00ff88"; ctx.font = "bold 16px 'Segoe UI'"; ctx.fillText("Vies: " + tank.lives, 20, 50);
+  ctx.fillStyle="#00ccff"; ctx.fillText("🎯 Score: " + score, 20, 72);
+  ctx.fillStyle="#ffd700"; ctx.font = "bold 16px 'Segoe UI'"; ctx.fillText("💰 " + money, 150, 30);
+  ctx.fillStyle="#ff6600"; ctx.fillText("👾 x" + enemies.length, 150, 52);
+  ctx.fillStyle="#ff00ff"; ctx.fillText("⚔️ Niveau " + level, 150, 74);
+  const model = tankModels[selectedChar];
+  const reloadPercent = tank.canShoot ? 100 : Math.min(100, ((Date.now() - tank.lastShot) / model.reloadTime) * 100);
+  ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(270, 10, 520, 25);
+  const reloadColor = tank.canShoot ? '#00ff00' : '#ff3333';
+  const weaponGrad = ctx.createLinearGradient(270, 0, 790, 0);
+  weaponGrad.addColorStop(0, reloadColor); weaponGrad.addColorStop(1, reloadColor + '66');
+  ctx.fillStyle = weaponGrad; ctx.fillRect(270, 10, 520 * (reloadPercent/100), 25);
+  ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 2; ctx.strokeRect(270, 10, 520, 25);
+  ctx.fillStyle = '#ffffff'; ctx.font = "bold 14px 'Segoe UI'";
+  const weaponText = tank.canShoot ? "🔫 ARME PRÊTE" : "⏳ RECHARGEMENT " + Math.floor(reloadPercent) + "%";
+  ctx.fillText(weaponText, 450, 28);
+  ctx.restore();
+}
 
-    function spawnEnemy() {
-        const canvas = document.getElementById('game-canvas');
-        const enemy = document.createElement('div');
-        
-        const types = [
-            { icon: 'fa-user-secret', color: 'text-red-500', points: 10, speed: 2 },
-            { icon: 'fa-user-ninja', color: 'text-purple-500', points: 20, speed: 3 },
-            { icon: 'fa-user-astronaut', color: 'text-blue-500', points: 15, speed: 2.5 }
-        ];
-        
-        const type = types[Math.floor(Math.random() * types.length)];
-        
-        enemy.className = `enemy absolute text-5xl ${type.color} cursor-crosshair`;
-        enemy.innerHTML = `<i class="fas ${type.icon}"></i>`;
-        enemy.style.left = Math.random() * (canvas.offsetWidth - 60) + 'px';
-        enemy.style.top = Math.random() * (canvas.offsetHeight - 60) + 'px';
-        
-        enemy.dataset.points = type.points;
-        enemy.dataset.speed = type.speed;
-        enemy.dataset.id = Date.now() + Math.random();
-        
-        canvas.appendChild(enemy);
-        enemies.push(enemy);
-        
-        // Animation d'apparition
-        enemy.style.transform = 'scale(0)';
-        setTimeout(() => {
-            enemy.style.transform = 'scale(1)';
-        }, 10);
-    }
-
-    function moveEnemies() {
-        if (gameMode !== 'defense') return;
-        
-        enemies.forEach(enemy => {
-            const currentTop = parseFloat(enemy.style.top);
-            const speed = parseFloat(enemy.dataset.speed);
-            const newTop = currentTop + speed;
-            
-            if (newTop > document.getElementById('game-canvas').offsetHeight) {
-                // Ennemi a atteint la base
-                takeDamage(10);
-                enemy.remove();
-                enemies = enemies.filter(e => e !== enemy);
-            } else {
-                enemy.style.top = newTop + 'px';
-            }
-        });
-    }
-
-    function handleClick(e) {
-        if (!gameActive || gamePaused) return;
-        
-        shots++;
-        sounds.shoot();
-        
-        // Effet de tir
-        createBulletTrail(e.clientX, e.clientY);
-        
-        // Vérifier si on a touché un ennemi
-        const clickedEnemy = e.target.closest('.enemy');
-        
-        if (clickedEnemy) {
-            hitEnemy(clickedEnemy);
-        } else {
-            missShot();
-        }
-    }
-
-    function hitEnemy(enemy) {
-        hits++;
-        kills++;
-        const points = parseInt(enemy.dataset.points);
-        score += points * combo;
-        
-        // Augmenter le combo
-        combo++;
-        if (combo > maxCombo) maxCombo = combo;
-        
-        // Réinitialiser le timeout de combo
-        clearTimeout(comboTimeout);
-        comboTimeout = setTimeout(() => {
-            combo = 1;
-        }, 3000);
-        
-        // Afficher combo
-        if (combo >= 5) {
-            showComboMessage(combo);
-            sounds.combo();
-        }
-        
-        // Animation d'explosion
-        createExplosion(enemy);
-        sounds.hit();
-        
-        // Retirer l'ennemi
-        enemy.remove();
-        enemies = enemies.filter(e => e !== enemy);
-        
-        updateHUD();
-    }
-
-    function missShot() {
-        combo = Math.max(1, combo - 1);
-        sounds.miss();
-        updateHUD();
-    }
-
-    function takeDamage(amount) {
-        health = Math.max(0, health - amount);
-        updateHUD();
-        
-        // Animation de secousse
-        document.getElementById('game-canvas').classList.add('shake');
-        setTimeout(() => {
-            document.getElementById('game-canvas').classList.remove('shake');
-        }, 300);
-        
-        if (health <= 0) {
-            endGame();
-        }
-    }
-
-    function createExplosion(element) {
-        const explosion = document.createElement('div');
-        explosion.className = 'explosion absolute text-6xl text-red-500 pointer-events-none';
-        explosion.innerHTML = '<i class="fas fa-burst"></i>';
-        explosion.style.left = element.style.left;
-        explosion.style.top = element.style.top;
-        
-        document.getElementById('game-canvas').appendChild(explosion);
-        setTimeout(() => explosion.remove(), 500);
-    }
-
-    function createBulletTrail(x, y) {
-        const bullet = document.createElement('div');
-        bullet.className = 'bullet';
-        bullet.style.left = x + 'px';
-        bullet.style.top = y + 'px';
-        
-        document.body.appendChild(bullet);
-        setTimeout(() => bullet.remove(), 100);
-    }
-
-    function showComboMessage(comboValue) {
-        const message = document.getElementById('combo-message');
-        message.textContent = `${comboValue}x COMBO!`;
-        message.classList.remove('hidden');
-        
-        setTimeout(() => {
-            message.classList.add('hidden');
-        }, 1000);
-    }
-
-    function updateHUD() {
-        document.getElementById('score').textContent = score;
-        document.getElementById('combo').textContent = 'x' + combo;
-        document.getElementById('timer').textContent = timer;
-        
-        if (gameMode !== 'shooting') {
-            const healthBar = document.getElementById('health-bar');
-            healthBar.style.width = health + '%';
-            
-            if (health < 30) {
-                healthBar.className = 'health-bar h-full bg-gradient-to-r from-red-500 to-red-400';
-            } else if (health < 60) {
-                healthBar.className = 'health-bar h-full bg-gradient-to-r from-yellow-500 to-yellow-400';
-            }
-        }
-        
-        if (gameMode === 'commando') {
-            const progress = Math.min(100, (kills / 20) * 100);
-            document.getElementById('objective-bar').style.width = progress + '%';
-            document.getElementById('objective-text').textContent = `${kills}/20 ennemis`;
-        }
-    }
-
-    function pauseGame() {
-        gamePaused = !gamePaused;
-        const btn = event.target.closest('button');
-        
-        if (gamePaused) {
-            btn.innerHTML = '<i class="fas fa-play mr-2"></i>Reprendre';
-            btn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
-            btn.classList.add('bg-green-600', 'hover:bg-green-700');
-        } else {
-            btn.innerHTML = '<i class="fas fa-pause mr-2"></i>Pause';
-            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
-            btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
-        }
-    }
-
-    function endGame() {
-        gameActive = false;
-        clearInterval(gameInterval);
-        clearInterval(spawnInterval);
-        
-        // Calculer les stats
-        const accuracy = shots > 0 ? Math.round((hits / shots) * 100) : 0;
-        
-        // Déterminer le grade
-        let rank = 'Recrue';
-        if (score > 5000) rank = 'Général';
-        else if (score > 3000) rank = 'Colonel';
-        else if (score > 2000) rank = 'Commandant';
-        else if (score > 1000) rank = 'Capitaine';
-        else if (score > 500) rank = 'Sergent';
-        
-        // Afficher l'écran de fin
-        document.getElementById('game-area').classList.add('hidden');
-        document.getElementById('game-over').classList.remove('hidden');
-        
-        document.getElementById('final-score').textContent = score;
-        document.getElementById('accuracy').textContent = accuracy + '%';
-        document.getElementById('best-combo').textContent = 'x' + maxCombo;
-        document.getElementById('kills').textContent = kills;
-        document.getElementById('rank-name').textContent = rank;
-        
-        // Médailles
-        const medals = [];
-        if (accuracy >= 90) medals.push({ icon: 'fa-crosshairs', name: 'Tireur d\'élite', color: 'text-yellow-400' });
-        if (maxCombo >= 10) medals.push({ icon: 'fa-fire', name: 'Combo Master', color: 'text-red-400' });
-        if (kills >= 50) medals.push({ icon: 'fa-skull', name: 'Exterminateur', color: 'text-purple-400' });
-        if (score >= 3000) medals.push({ icon: 'fa-trophy', name: 'Champion', color: 'text-yellow-400' });
-        
-        if (medals.length > 0) {
-            document.getElementById('medals').classList.remove('hidden');
-            const medalsList = document.getElementById('medals-list');
-            medalsList.innerHTML = medals.map(m => 
-                `<div class="text-center">
-                    <i class="fas ${m.icon} ${m.color} text-4xl mb-2"></i>
-                    <p class="text-white text-sm">${m.name}</p>
-                </div>`
-            ).join('');
-        }
-    }
-
-    function restartGame() {
-        document.getElementById('game-over').classList.add('hidden');
-        document.getElementById('game-canvas').innerHTML = '';
-        startGame(gameMode);
-    }
-
-    function backToMenu() {
-        document.getElementById('game-over').classList.add('hidden');
-        document.getElementById('game-canvas').innerHTML = '';
-        document.getElementById('mode-selection').classList.remove('hidden');
-        gameMode = null;
-    }
-    </script>
+function loop(){
+  if(!gameStarted) return;
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+</script>
 </body>
 </html>
