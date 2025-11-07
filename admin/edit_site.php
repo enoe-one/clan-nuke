@@ -161,6 +161,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 break;
+                
+            case 'use_existing_logo':
+                $existing_logo = $_POST['existing_logo'] ?? '';
+                
+                // Vérifier que le fichier existe
+                if (file_exists('../uploads/' . $existing_logo)) {
+                    $stmt = $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
+                        VALUES ('appearance', 'logo_path', ?, ?, NOW()) 
+                        ON DUPLICATE KEY UPDATE content = ?, updated_by = ?, updated_at = NOW()");
+                    $stmt->execute([$existing_logo, $_SESSION['user_id'], $existing_logo, $_SESSION['user_id']]);
+                    
+                    logAdminAction($pdo, $_SESSION['user_id'], 'Utilisation logo existant', $existing_logo);
+                    $success = "Logo mis à jour avec succès !";
+                } else {
+                    $error = "Le fichier logo n'existe pas.";
+                }
+                break;
         }
     } catch (Exception $e) {
         $error = $e->getMessage();
@@ -168,22 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Erreur de base de données : " . $e->getMessage();
     }
 }
-case 'use_existing_logo':
-    $existing_logo = $_POST['existing_logo'] ?? '';
-    
-    // Vérifier que le fichier existe
-    if (file_exists('../uploads/' . $existing_logo)) {
-        $stmt = $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
-            VALUES ('appearance', 'logo_path', ?, ?, NOW()) 
-            ON DUPLICATE KEY UPDATE content = ?, updated_by = ?, updated_at = NOW()");
-        $stmt->execute([$existing_logo, $_SESSION['user_id'], $existing_logo, $_SESSION['user_id']]);
-        
-        logAdminAction($pdo, $_SESSION['user_id'], 'Utilisation logo existant', $existing_logo);
-        $success = "Logo mis à jour avec succès !";
-    } else {
-        $error = "Le fichier logo n'existe pas.";
-    }
-    break;
+
 // Créer les tables si elles n'existent pas
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS announcements (
@@ -563,77 +565,78 @@ $stats = [
                             </div>
                         </div>
 
-<!-- Logo -->
-<div class="bg-gray-700 p-6 rounded-lg">
-    <h3 class="text-xl font-bold text-white mb-6">
-        <i class="fas fa-image text-green-500 mr-2"></i>Logo du site
-    </h3>
-    
-    <?php if ($appearance_settings['logo_path']): ?>
-        <div class="mb-4">
-            <p class="text-gray-400 mb-2">Logo actuel :</p>
-            <img src="../uploads/<?php echo htmlspecialchars($appearance_settings['logo_path']); ?>" 
-                 alt="Logo" class="max-h-32 bg-white p-4 rounded">
-        </div>
-    <?php endif; ?>
-    
-    <!-- Option 1: Télécharger un nouveau fichier -->
-    <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center mb-4">
-        <i class="fas fa-cloud-upload-alt text-4xl text-gray-500 mb-3"></i>
-        <p class="text-gray-400 mb-2">Télécharger un nouveau logo (JPG, PNG, SVG, GIF)</p>
-        <input type="file" name="logo" accept="image/*" 
-               class="hidden" id="logo-input"
-               onchange="this.form.action.value='upload_logo'; this.form.submit();">
-        <label for="logo-input" 
-               class="inline-block bg-blue-600 text-white px-6 py-2 rounded cursor-pointer hover:bg-blue-700 transition">
-            Choisir un fichier
-        </label>
-        <p class="text-gray-500 text-sm mt-2">Max 5MB</p>
-    </div>
-    
-    <!-- Option 2: Utiliser un fichier existant -->
-    <div class="border-2 border-gray-600 rounded-lg p-6">
-        <h4 class="text-white font-semibold mb-3">
-            <i class="fas fa-folder-open text-yellow-500 mr-2"></i>
-            Ou utiliser un fichier existant
-        </h4>
-        
-        <?php
-        $existing_logo = 'f565469d-93e6-4bed-85a6-39cbb3d2d70e.png';
-        $existing_logo_path = '../uploads/' . $existing_logo;
-        ?>
-        
-        <?php if (file_exists($existing_logo_path)): ?>
-            <div class="bg-gray-800 p-4 rounded-lg">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="flex items-center space-x-3">
-                        <img src="../uploads/<?php echo htmlspecialchars($existing_logo); ?>" 
-                             alt="Logo disponible" class="h-16 w-16 object-contain bg-white p-2 rounded">
-                        <div>
-                            <p class="text-white font-semibold">Logo par défaut</p>
-                            <p class="text-gray-400 text-sm"><?php echo htmlspecialchars($existing_logo); ?></p>
+                        <!-- Logo -->
+                        <div class="bg-gray-700 p-6 rounded-lg">
+                            <h3 class="text-xl font-bold text-white mb-6">
+                                <i class="fas fa-image text-green-500 mr-2"></i>Logo du site
+                            </h3>
+                            
+                            <?php if ($appearance_settings['logo_path']): ?>
+                                <div class="mb-4">
+                                    <p class="text-gray-400 mb-2">Logo actuel :</p>
+                                    <img src="../uploads/<?php echo htmlspecialchars($appearance_settings['logo_path']); ?>" 
+                                         alt="Logo" class="max-h-32 bg-white p-4 rounded">
+                                </div>
+                            <?php endif; ?>
+                            
+                            <!-- Option 1: Télécharger un nouveau fichier -->
+                            <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center mb-4">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-500 mb-3"></i>
+                                <p class="text-gray-400 mb-2">Télécharger un nouveau logo (JPG, PNG, SVG, GIF)</p>
+                                <input type="file" name="logo" accept="image/*" 
+                                       class="hidden" id="logo-input"
+                                       onchange="this.form.action.value='upload_logo'; this.form.submit();">
+                                <label for="logo-input" 
+                                       class="inline-block bg-blue-600 text-white px-6 py-2 rounded cursor-pointer hover:bg-blue-700 transition">
+                                    Choisir un fichier
+                                </label>
+                                <p class="text-gray-500 text-sm mt-2">Max 5MB</p>
+                            </div>
+                            
+                            <!-- Option 2: Utiliser un fichier existant -->
+                            <div class="border-2 border-gray-600 rounded-lg p-6">
+                                <h4 class="text-white font-semibold mb-3">
+                                    <i class="fas fa-folder-open text-yellow-500 mr-2"></i>
+                                    Ou utiliser un fichier existant
+                                </h4>
+                                
+                                <?php
+                                $existing_logo = 'f565469d-93e6-4bed-85a6-39cbb3d2d70e.png';
+                                $existing_logo_path = '../uploads/' . $existing_logo;
+                                ?>
+                                
+                                <?php if (file_exists($existing_logo_path)): ?>
+                                    <div class="bg-gray-800 p-4 rounded-lg">
+                                        <div class="flex items-center justify-between mb-3">
+                                            <div class="flex items-center space-x-3">
+                                                <img src="../uploads/<?php echo htmlspecialchars($existing_logo); ?>" 
+                                                     alt="Logo disponible" class="h-16 w-16 object-contain bg-white p-2 rounded">
+                                                <div>
+                                                    <p class="text-white font-semibold">Logo par défaut</p>
+                                                    <p class="text-gray-400 text-sm"><?php echo htmlspecialchars($existing_logo); ?></p>
+                                                </div>
+                                            </div>
+                                            <button type="button" 
+                                                    onclick="useExistingLogo('<?php echo htmlspecialchars($existing_logo); ?>')"
+                                                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                                                <i class="fas fa-check mr-2"></i>Utiliser
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="bg-red-900/20 border border-red-500/50 rounded p-4">
+                                        <p class="text-red-400">
+                                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                                            Le fichier logo par défaut est introuvable
+                                        </p>
+                                        <p class="text-gray-400 text-sm mt-1">
+                                            Chemin: uploads/<?php echo htmlspecialchars($existing_logo); ?>
+                                        </p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                    </div>
-                    <button type="button" 
-                            onclick="useExistingLogo('<?php echo htmlspecialchars($existing_logo); ?>')"
-                            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-                        <i class="fas fa-check mr-2"></i>Utiliser
-                    </button>
-                </div>
-            </div>
-        <?php else: ?>
-            <div class="bg-red-900/20 border border-red-500/50 rounded p-4">
-                <p class="text-red-400">
-                    <i class="fas fa-exclamation-triangle mr-2"></i>
-                    Le fichier logo par défaut est introuvable
-                </p>
-                <p class="text-gray-400 text-sm mt-1">
-                    Chemin: uploads/<?php echo htmlspecialchars($existing_logo); ?>
-                </p>
-            </div>
-        <?php endif; ?>
-    </div>
-</div>
+
                         <!-- Couleurs -->
                         <div class="bg-gray-700 p-6 rounded-lg">
                             <h3 class="text-xl font-bold text-white mb-6">
@@ -855,7 +858,6 @@ $stats = [
         </div>
     </div>
 
-    <!-- Modals précédents (diplômes et annonces) -->
     <!-- Modal: Ajouter diplôme -->
     <div id="modal-add-diplome" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -1115,6 +1117,19 @@ $stats = [
         }
     }
 
+    function useExistingLogo(filename) {
+        if (confirm('Voulez-vous utiliser ce logo pour le site ?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.innerHTML = `
+                <input type="hidden" name="action" value="use_existing_logo">
+                <input type="hidden" name="existing_logo" value="${filename}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
     // Mise à jour en temps réel des couleurs
     document.querySelectorAll('input[type="color"]').forEach(input => {
         input.addEventListener('input', function() {
@@ -1126,4 +1141,3 @@ $stats = [
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
-
