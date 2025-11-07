@@ -1,20 +1,29 @@
 <?php
 // Aucune login requis. Dépose ce fichier tel quel pour remplacer game.php
 ?>
+<?php
+// Pour utiliser le header du site, inclure le fichier header.php ici
+include_once "header.php";
+?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <title>Jeu Char Arcade - Hangar et Crédits</title>
   <style>
-body { margin:0; background:#0a0a0a;font-family:'Segoe UI', Arial, sans-serif; }
-canvas { display:block; margin:0 auto; background:radial-gradient(circle at 50% 50%, #1a1a2e 0%, #0a0a0a 100%); }
+body { margin:0; background:#0a0a0a;font-family:'Segoe UI', Arial, sans-serif; min-height:100vh; }
+#wrapper-arcade { /* Pour l'intégration avec le layout du site, ici le wrapper laisse place au header et centre le contenu.*/
+  margin:auto; max-width:1100px; width:100%; padding-top:40px; display:flex; flex-direction:column; align-items:center; box-sizing:border-box;
+}
 #menu {
-  position:absolute; top:0; left:0; width:100%; height:100%;
+  width:100%; min-height:630px;
   display:flex; flex-direction:column; justify-content:center; align-items:center;
   color:#fff; background:linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
   animation: menuGlow 3s ease-in-out infinite alternate;
-  z-index:10;
+  border-radius:40px; box-shadow:0 10px 40px #16213e44;
+  margin-bottom:35px;
+  margin-top:35px;
+  overflow-x:auto;
 }
 @keyframes menuGlow {
   from { background-position: 0% 50%; }
@@ -28,6 +37,7 @@ h1 {
   background-clip:text;
   text-shadow:0 0 30px rgba(0,255,136,0.5);
   margin-bottom:30px;
+  margin-top:20px;
   animation:titleGlow 2s ease-in-out infinite alternate;
 }
 @keyframes titleGlow {
@@ -41,7 +51,9 @@ h1 {
   box-shadow:0 4px 15px rgba(233, 69, 96, 0.4);
   transition:all 0.3s ease;
   letter-spacing:1px;
+  outline:none;
 }
+.btn:focus { outline:2px solid #e94560; }
 .btn:hover { 
   background:linear-gradient(135deg, #ff5577 0%, #e94560 100%); 
   transform:translateY(-2px) scale(1.05);
@@ -112,8 +124,61 @@ h1 {
   0% { background-position: 0% 50%; }
   100% { background-position: 200% 50%; }
 }
+@media screen and (max-width:900px){
+  #wrapper-arcade { max-width:100%; }
+  #menu { max-width:99vw; padding:10px; }
+  .char-select { flex-wrap:wrap; max-width:99vw;}
+  .char-option { width:120px; height:140px; margin:6px; }
+}
   </style>
 </head>
+<body>
+<div id="wrapper-arcade">
+  <div id="menu">
+    <h1>🎮 HANGAR DE COMBAT 🎮</h1>
+    <div class="char-select">
+      <div class="char-option selected" data-char="0">
+        <div class="tank-preview" style="background:linear-gradient(135deg, #999, #666);"></div>
+        <strong>Recon Tank</strong>
+        <div class="char-stats">Vitesse: 4<br>Vies: 3<br>Tir: Simple<br>Rechargement: 300ms<br><strong>GRATUIT</strong></div>
+      </div>
+      <div class="char-option locked" data-char="1" data-price="50">
+        <div class="tank-preview" style="background:linear-gradient(135deg, #2E8B57, #1a5c3a);"></div>
+        <strong>M1 Abrams</strong>
+        <div class="char-stats">Vitesse: 5<br>Vies: 4<br>Tir: Simple<br>Rechargement: 250ms<br><strong>Prix: 50</strong></div>
+      </div>
+      <div class="char-option locked" data-char="2" data-price="70">
+        <div class="tank-preview" style="background:linear-gradient(135deg, #4682B4, #2d5a80);"></div>
+        <strong>T-90</strong>
+        <div class="char-stats">Vitesse: 4<br>Vies: 5<br>Tir: Simple<br>Rechargement: 250ms<br><strong>Prix: 70</strong></div>
+      </div>
+      <div class="char-option locked" data-char="3" data-price="60">
+        <div class="tank-preview" style="background:linear-gradient(135deg, #B22222, #8b0000);"></div>
+        <strong>Leopard 2</strong>
+        <div class="char-stats">Vitesse: 6<br>Vies: 3<br>Tir: Simple<br>Rechargement: 200ms<br><strong>Prix: 60</strong></div>
+      </div>
+      <div class="char-option locked" data-char="4" data-price="80">
+        <div class="tank-preview" style="background:linear-gradient(135deg, #DAA520, #b8860b);"></div>
+        <strong>Challenger 2</strong>
+        <div class="char-stats">Vitesse: 4<br>Vies: 6<br>Tir: Double<br>Rechargement: 350ms<br><strong>Prix: 80</strong></div>
+      </div>
+      <div class="char-option locked" data-char="5" data-price="90">
+        <div class="tank-preview" style="background:linear-gradient(135deg, #800080, #4b0082);"></div>
+        <strong>K2 Black Panther</strong>
+        <div class="char-stats">Vitesse: 5<br>Vies: 5<br>Tir: Double<br>Rechargement: 300ms<br><strong>Prix: 90</strong></div>
+      </div>
+      <div class="char-option locked" data-char="6" data-price="150">
+        <div class="tank-preview" style="background:linear-gradient(135deg, #FF4500, #cc3700);"></div>
+        <strong>Type 99</strong>
+        <div class="char-stats">Vitesse: 6<br>Vies: 8<br>Tir: Triple<br>Rechargement: 250ms<br><strong>Prix: 150</strong></div>
+      </div>
+    </div>
+    <p id="money">💰 Crédits: 0</p>
+    <button class="btn" id="playBtn">⚔️ LANCER LA BATAILLE ⚔️</button>
+  </div>
+  <!-- Pour garantir que le canvas est toujours visible dans la page, il est intégré dans le wrapper -->
+  <canvas id="gameCanvas"></canvas>
+</div>
 <body>
 <!-- HANGAR -->
 <div id="menu">
@@ -666,3 +731,4 @@ function loop(){
 </script>
 </body>
 </html>
+
