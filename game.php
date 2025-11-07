@@ -1,9 +1,5 @@
 <?php
-// Aucune login requis. Dépose ce fichier tel quel pour remplacer game.php
-?>
-<?php
-// Pour utiliser le header du site, inclure le fichier header.php ici
-include_once "../includes/header.php";
+include_once "includes/header.php";
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -731,6 +727,7 @@ function loop(){
 </script>
 </body>
 </html>
+
 
 
 
