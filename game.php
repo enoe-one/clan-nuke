@@ -1,7 +1,8 @@
-<?php
-include_once "includes/get_appearance.php";
-$pdo = new PDO('mysql:host=metro.proxy.rlwy.net;dbname=railway;charset=utf8', 'root', 'JwaAIaqRIRzIGarebfqimmiKHDfnARiE');
-include_once "includes/header.php";
+<?php 
+require_once 'config.php';
+
+// Récupérer les paramètres d'apparence
+$appearance = getAppearanceSettings($pdo);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -729,6 +730,7 @@ function loop(){
 </script>
 </body>
 </html>
+
 
 
 
