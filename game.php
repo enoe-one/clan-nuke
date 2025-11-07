@@ -1,4 +1,6 @@
 <?php
+include_once "includes/get_appearance.php";
+$pdo = new PDO('mysql:host=metro.proxy.rlwy.net;dbname=railway;charset=utf8', 'root', 'JwaAIaqRIRzIGarebfqimmiKHDfnARiE');
 include_once "includes/header.php";
 ?>
 <!DOCTYPE html>
@@ -727,6 +729,7 @@ function loop(){
 </script>
 </body>
 </html>
+
 
 
 
