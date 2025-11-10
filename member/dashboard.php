@@ -27,10 +27,25 @@ $stmt = $pdo->prepare("
 $stmt->execute([$_SESSION['member_id']]);
 $member_diplomes = $stmt->fetchAll();
 
-// 🔹 Récupérer le nombre de messages non lus
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE recipient_id = ? AND is_read = 0");
-$stmt->execute([$_SESSION['member_id']]);
-$unread_count = $stmt->fetchColumn();
+// Récupérer le nombre de messages non lus
+$unread_count = 0;
+try {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE recipient_id = ? AND is_read = 0");
+    $stmt->execute([$_SESSION['member_id']]);
+    $unread_count = $stmt->fetchColumn();
+} catch (PDOException $e) {
+    // Table messages n'existe pas encore
+}
+
+// Récupérer le nombre de demandes de diplômes en attente
+$pending_requests = 0;
+try {
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM diplome_requests WHERE member_id = ? AND status = 'pending'");
+    $stmt->execute([$_SESSION['member_id']]);
+    $pending_requests = $stmt->fetchColumn();
+} catch (PDOException $e) {
+    // Table n'existe pas encore
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -141,8 +156,8 @@ $unread_count = $stmt->fetchColumn();
                 </div>
             </div>
 
-            <!-- 🔹 Actions rapides -->
-            <div class="grid md:grid-cols-3 gap-6">
+            <!-- Actions rapides -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <a href="change_password.php" 
                    class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-blue-500">
                     <i class="fas fa-key text-blue-500 text-4xl mb-3"></i>
@@ -157,18 +172,34 @@ $unread_count = $stmt->fetchColumn();
                     <p class="text-gray-400">Communauté CFWT</p>
                 </a>
 
-                <!-- 🔹 Bouton Messagerie -->
+                <!-- Bouton Messagerie -->
                 <a href="messages.php"
                    class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-green-500 relative">
-                    <i class="fas fa-envelope text-green-500 text-4xl mb-3"></i>
-                    <h3 class="text-xl font-bold text-white mb-2">Messagerie</h3>
-                    <p class="text-gray-400">Consultez vos messages</p>
-
                     <?php if ($unread_count > 0): ?>
-                        <span class="absolute top-4 right-4 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                        <span class="absolute top-4 right-4 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
                             <?php echo $unread_count > 9 ? '9+' : $unread_count; ?>
                         </span>
                     <?php endif; ?>
+                    <i class="fas fa-envelope text-green-500 text-4xl mb-3"></i>
+                    <h3 class="text-xl font-bold text-white mb-2">Messagerie</h3>
+                    <p class="text-gray-400">
+                        <?php echo $unread_count > 0 ? "$unread_count nouveau(x)" : 'Consultez vos messages'; ?>
+                    </p>
+                </a>
+
+                <!-- Demandes de diplômes -->
+                <a href="../diplomes.php"
+                   class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-cyan-500 relative">
+                    <?php if ($pending_requests > 0): ?>
+                        <span class="absolute top-4 right-4 bg-yellow-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
+                            <?php echo $pending_requests; ?>
+                        </span>
+                    <?php endif; ?>
+                    <i class="fas fa-graduation-cap text-cyan-500 text-4xl mb-3"></i>
+                    <h3 class="text-xl font-bold text-white mb-2">Demander un diplôme</h3>
+                    <p class="text-gray-400">
+                        <?php echo $pending_requests > 0 ? "$pending_requests en attente" : 'Voir les diplômes'; ?>
+                    </p>
                 </a>
             </div>
 
