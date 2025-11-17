@@ -173,7 +173,7 @@ try {
                 </a>
 
                 <!-- Bouton Messagerie -->
-                <a href="messages.php"
+                <a href=".../messages.php"
                    class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-green-500 relative">
                     <?php if ($unread_count > 0): ?>
                         <span class="absolute top-4 right-4 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
@@ -219,3 +219,4 @@ try {
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
+
