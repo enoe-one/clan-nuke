@@ -37,8 +37,8 @@ if ($appearance['background_style'] == 'gradient') {
     <meta name="description" content="<?php echo htmlspecialchars($appearance['site_description']); ?>">
     <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="css/all.min.css">
-</head>
     <meta name="google-site-verification" content="vLwQTeKKiHStTkVgExen8F9nnXXr6OWfmft95-wAbSU" />
+</head>
 <body class="<?php echo $background_class; ?>">
     <?php include 'includes/header.php'; ?>
     
@@ -146,6 +146,7 @@ if ($appearance['background_style'] == 'gradient') {
     <?php include 'includes/footer.php'; ?>
 </body>
 </html>
+
 
 
 
