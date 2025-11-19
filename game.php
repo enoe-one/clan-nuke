@@ -1,738 +1,817 @@
 <?php 
 require_once 'config.php';
 
-// Récupérer les paramètres d'apparence
+// Récupérer les paramètres d'apparence pour le style
 $appearance = getAppearanceSettings($pdo);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Jeu Char Arcade - Hangar et Crédits</title>
-  <style>
-body { margin:0; background:#0a0a0a;font-family:'Segoe UI', Arial, sans-serif; min-height:100vh; }
-#wrapper-arcade { /* Pour l'intégration avec le layout du site, ici le wrapper laisse place au header et centre le contenu.*/
-  margin:auto; max-width:1100px; width:100%; padding-top:40px; display:flex; flex-direction:column; align-items:center; box-sizing:border-box;
-}
-#menu {
-  width:100%; min-height:630px;
-  display:flex; flex-direction:column; justify-content:center; align-items:center;
-  color:#fff; background:linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
-  animation: menuGlow 3s ease-in-out infinite alternate;
-  border-radius:40px; box-shadow:0 10px 40px #16213e44;
-  margin-bottom:35px;
-  margin-top:35px;
-  overflow-x:auto;
-}
-@keyframes menuGlow {
-  from { background-position: 0% 50%; }
-  to { background-position: 100% 50%; }
-}
-h1 {
-  font-size:48px;
-  background:linear-gradient(90deg, #00ff88, #00ccff, #ff00ff);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
-  text-shadow:0 0 30px rgba(0,255,136,0.5);
-  margin-bottom:30px;
-  margin-top:20px;
-  animation:titleGlow 2s ease-in-out infinite alternate;
-}
-@keyframes titleGlow {
-  from { filter:drop-shadow(0 0 10px rgba(0,255,136,0.5)); }
-  to { filter:drop-shadow(0 0 30px rgba(0,255,136,0.9)); }
-}
-.btn { 
-  background:linear-gradient(135deg, #e94560 0%, #c72940 100%); 
-  color:#fff; padding:15px 40px; margin:10px; cursor:pointer; font-size:22px;
-  border:none; border-radius:10px; font-weight:bold; text-transform:uppercase;
-  box-shadow:0 4px 15px rgba(233, 69, 96, 0.4);
-  transition:all 0.3s ease;
-  letter-spacing:1px;
-  outline:none;
-}
-.btn:focus { outline:2px solid #e94560; }
-.btn:hover { 
-  background:linear-gradient(135deg, #ff5577 0%, #e94560 100%); 
-  transform:translateY(-2px) scale(1.05);
-  box-shadow:0 6px 25px rgba(233, 69, 96, 0.6);
-}
-.char-select {
-  display:flex; justify-content:center; margin:20px; flex-wrap:wrap; max-width:900px;
-}
-.char-option {
-  width:140px; height:160px; border:3px solid #3a506b; margin:10px; cursor:pointer; border-radius:15px;
-  display:flex; justify-content:center; align-items:center; flex-direction:column; font-weight:bold; font-size:12px; text-align:center;
-  opacity:1; background:linear-gradient(135deg, #1c2841 0%, #0f1419 100%);
-  transition:all 0.3s ease; box-shadow:0 4px 15px rgba(0,0,0,0.5);
-  position:relative; overflow:hidden; padding:10px;
-}
-.char-option::before {
-  content:''; position:absolute; top:0; left:-100%; width:100%; height:100%;
-  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-  transition:left 0.5s;
-}
-.char-option:hover::before { left:100%; }
-.char-option:hover {
-  transform:translateY(-5px) scale(1.05);
-  border-color:#5cb3ff;
-  box-shadow:0 8px 25px rgba(92, 179, 255, 0.4);
-}
-.char-option.locked { 
-  opacity:0.4; 
-  filter:grayscale(1);
-  cursor:not-allowed;
-}
-.char-option.selected { 
-  border-color:#00ff88; 
-  background:linear-gradient(135deg, #1c4128 0%, #0a1f12 100%);
-  box-shadow:0 0 30px rgba(0, 255, 136, 0.6);
-  animation:pulse 1.5s ease-in-out infinite;
-}
-@keyframes pulse {
-  0%, 100% { box-shadow:0 0 30px rgba(0, 255, 136, 0.6); }
-  50% { box-shadow:0 0 50px rgba(0, 255, 136, 0.9); }
-}
-.char-option .tank-preview { 
-  width:70px; height:50px; margin-bottom:8px; border-radius:5px;
-  box-shadow:0 4px 10px rgba(0,0,0,0.6);
-}
-.char-stats {
-  font-size:11px;
-  line-height:1.4;
-  color:#aaa;
-}
-.char-stats strong {
-  color:#00ff88;
-}
-#money { 
-  font-size:28px; 
-  margin-top:20px; 
-  background:linear-gradient(90deg, #ffd700, #ffed4e, #ffd700);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-  background-clip:text;
-  font-weight:bold;
-  text-shadow:0 0 20px rgba(255, 215, 0, 0.5);
-  letter-spacing:2px;
-  animation:moneyShine 2s linear infinite;
-  background-size:200% 100%;
-}
-@keyframes moneyShine {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
-}
-@media screen and (max-width:900px){
-  #wrapper-arcade { max-width:100%; }
-  #menu { max-width:99vw; padding:10px; }
-  .char-select { flex-wrap:wrap; max-width:99vw;}
-  .char-option { width:120px; height:140px; margin:6px; }
-}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Defense - CFWT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+   <link rel="stylesheet" href="css/all.min.css">   
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            overflow-x: hidden;
+        }
+        
+        .tower {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .tower:hover {
+            transform: scale(1.1);
+            filter: brightness(1.3);
+        }
+        
+        .enemy-unit {
+            transition: all 0.1s linear;
+        }
+        
+        .projectile {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #fbbf24;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #fbbf24;
+            transition: all 0.1s linear;
+        }
+        
+        @keyframes explosion {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        .explosion {
+            animation: explosion 0.5s ease-out;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .tower-range {
+            border: 2px dashed rgba(59, 130, 246, 0.4);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: pulse 2s infinite;
+        }
+        
+        .game-cell {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+        }
+        
+        .game-cell:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .game-cell.path {
+            background: rgba(139, 92, 46, 0.3);
+        }
+        
+        .game-cell.base {
+            background: radial-gradient(circle, rgba(34, 197, 94, 0.3), transparent);
+        }
+        
+        .health-bar {
+            transition: width 0.3s;
+        }
+        
+        .wave-alert {
+            animation: slideDown 0.5s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .tower-menu {
+            backdrop-filter: blur(10px);
+            background: rgba(17, 24, 39, 0.95);
+        }
+    </style>
 </head>
 <body>
-<div id="wrapper-arcade">
-  <div id="menu">
-    <h1>🎮 HANGAR DE COMBAT 🎮</h1>
-    <div class="char-select">
-      <div class="char-option selected" data-char="0">
-        <div class="tank-preview" style="background:linear-gradient(135deg, #999, #666);"></div>
-        <strong>Recon Tank</strong>
-        <div class="char-stats">Vitesse: 4<br>Vies: 3<br>Tir: Simple<br>Rechargement: 300ms<br><strong>GRATUIT</strong></div>
-      </div>
-      <div class="char-option locked" data-char="1" data-price="50">
-        <div class="tank-preview" style="background:linear-gradient(135deg, #2E8B57, #1a5c3a);"></div>
-        <strong>M1 Abrams</strong>
-        <div class="char-stats">Vitesse: 5<br>Vies: 4<br>Tir: Simple<br>Rechargement: 250ms<br><strong>Prix: 50</strong></div>
-      </div>
-      <div class="char-option locked" data-char="2" data-price="70">
-        <div class="tank-preview" style="background:linear-gradient(135deg, #4682B4, #2d5a80);"></div>
-        <strong>T-90</strong>
-        <div class="char-stats">Vitesse: 4<br>Vies: 5<br>Tir: Simple<br>Rechargement: 250ms<br><strong>Prix: 70</strong></div>
-      </div>
-      <div class="char-option locked" data-char="3" data-price="60">
-        <div class="tank-preview" style="background:linear-gradient(135deg, #B22222, #8b0000);"></div>
-        <strong>Leopard 2</strong>
-        <div class="char-stats">Vitesse: 6<br>Vies: 3<br>Tir: Simple<br>Rechargement: 200ms<br><strong>Prix: 60</strong></div>
-      </div>
-      <div class="char-option locked" data-char="4" data-price="80">
-        <div class="tank-preview" style="background:linear-gradient(135deg, #DAA520, #b8860b);"></div>
-        <strong>Challenger 2</strong>
-        <div class="char-stats">Vitesse: 4<br>Vies: 6<br>Tir: Double<br>Rechargement: 350ms<br><strong>Prix: 80</strong></div>
-      </div>
-      <div class="char-option locked" data-char="5" data-price="90">
-        <div class="tank-preview" style="background:linear-gradient(135deg, #800080, #4b0082);"></div>
-        <strong>K2 Black Panther</strong>
-        <div class="char-stats">Vitesse: 5<br>Vies: 5<br>Tir: Double<br>Rechargement: 300ms<br><strong>Prix: 90</strong></div>
-      </div>
-      <div class="char-option locked" data-char="6" data-price="150">
-        <div class="tank-preview" style="background:linear-gradient(135deg, #FF4500, #cc3700);"></div>
-        <strong>Type 99</strong>
-        <div class="char-stats">Vitesse: 6<br>Vies: 8<br>Tir: Triple<br>Rechargement: 250ms<br><strong>Prix: 150</strong></div>
-      </div>
-    </div>
-    <p id="money">💰 Crédits: 0</p>
-    <button class="btn" id="playBtn">⚔️ LANCER LA BATAILLE ⚔️</button>
-  </div>
-  <!-- Pour garantir que le canvas est toujours visible dans la page, il est intégré dans le wrapper -->
-  <canvas id="gameCanvas"></canvas>
-</div>
-<body>
-<!-- HANGAR -->
-<div id="menu">
-  <h1>🎮 HANGAR DE COMBAT 🎮</h1>
-  <div class="char-select">
-    <div class="char-option selected" data-char="0">
-      <div class="tank-preview" style="background:linear-gradient(135deg, #999, #666);"></div>
-      <strong>Recon Tank</strong>
-      <div class="char-stats">Vitesse: 4<br>Vies: 3<br>Tir: Simple<br>Rechargement: 300ms<br><strong>GRATUIT</strong></div>
-    </div>
-    <div class="char-option locked" data-char="1" data-price="50">
-      <div class="tank-preview" style="background:linear-gradient(135deg, #2E8B57, #1a5c3a);"></div>
-      <strong>M1 Abrams</strong>
-      <div class="char-stats">Vitesse: 5<br>Vies: 4<br>Tir: Simple<br>Rechargement: 250ms<br><strong>Prix: 50</strong></div>
-    </div>
-    <div class="char-option locked" data-char="2" data-price="70">
-      <div class="tank-preview" style="background:linear-gradient(135deg, #4682B4, #2d5a80);"></div>
-      <strong>T-90</strong>
-      <div class="char-stats">Vitesse: 4<br>Vies: 5<br>Tir: Simple<br>Rechargement: 250ms<br><strong>Prix: 70</strong></div>
-    </div>
-    <div class="char-option locked" data-char="3" data-price="60">
-      <div class="tank-preview" style="background:linear-gradient(135deg, #B22222, #8b0000);"></div>
-      <strong>Leopard 2</strong>
-      <div class="char-stats">Vitesse: 6<br>Vies: 3<br>Tir: Simple<br>Rechargement: 200ms<br><strong>Prix: 60</strong></div>
-    </div>
-    <div class="char-option locked" data-char="4" data-price="80">
-      <div class="tank-preview" style="background:linear-gradient(135deg, #DAA520, #b8860b);"></div>
-      <strong>Challenger 2</strong>
-      <div class="char-stats">Vitesse: 4<br>Vies: 6<br>Tir: Double<br>Rechargement: 350ms<br><strong>Prix: 80</strong></div>
-    </div>
-    <div class="char-option locked" data-char="5" data-price="90">
-      <div class="tank-preview" style="background:linear-gradient(135deg, #800080, #4b0082);"></div>
-      <strong>K2 Black Panther</strong>
-      <div class="char-stats">Vitesse: 5<br>Vies: 5<br>Tir: Double<br>Rechargement: 300ms<br><strong>Prix: 90</strong></div>
-    </div>
-    <div class="char-option locked" data-char="6" data-price="150">
-      <div class="tank-preview" style="background:linear-gradient(135deg, #FF4500, #cc3700);"></div>
-      <strong>Type 99</strong>
-      <div class="char-stats">Vitesse: 6<br>Vies: 8<br>Tir: Triple<br>Rechargement: 250ms<br><strong>Prix: 150</strong></div>
-    </div>
-  </div>
-  <p id="money">💰 Crédits: 0</p>
-  <button class="btn" id="playBtn">⚔️ LANCER LA BATAILLE ⚔️</button>
-</div>
+    <?php include 'includes/header.php'; ?>
+    
+    <div class="min-h-screen py-12">
+        <div class="max-w-7xl mx-auto px-4">
+            <!-- En-tête -->
+            <div class="text-center mb-8">
+                <h1 class="text-5xl font-bold text-white mb-4">
+                    <i class="fas fa-fort-awesome text-green-500 mr-3"></i>
+                    Base Defense
+                </h1>
+                <p class="text-gray-400 text-xl">Protégez votre base contre les vagues d'ennemis !</p>
+            </div>
 
-<canvas id="gameCanvas"></canvas>
+            <!-- Écran d'accueil -->
+            <div id="start-screen" class="text-center">
+                <div class="bg-gray-900 bg-opacity-90 p-12 rounded-lg max-w-3xl mx-auto">
+                    <i class="fas fa-shield-alt text-green-500 text-8xl mb-6"></i>
+                    <h2 class="text-4xl font-bold text-white mb-6">Comment Jouer ?</h2>
+                    
+                    <div class="grid md:grid-cols-3 gap-6 mb-8 text-left">
+                        <div class="bg-gray-800 p-6 rounded-lg">
+                            <i class="fas fa-tower-broadcast text-blue-400 text-3xl mb-3"></i>
+                            <h3 class="text-white font-bold mb-2">1. Construisez des Tours</h3>
+                            <p class="text-gray-400 text-sm">Placez des tours stratégiquement pour défendre votre base</p>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-lg">
+                            <i class="fas fa-users-slash text-red-400 text-3xl mb-3"></i>
+                            <h3 class="text-white font-bold mb-2">2. Éliminez les Ennemis</h3>
+                            <p class="text-gray-400 text-sm">Empêchez les ennemis d'atteindre votre base</p>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-lg">
+                            <i class="fas fa-level-up-alt text-yellow-400 text-3xl mb-3"></i>
+                            <h3 class="text-white font-bold mb-2">3. Améliorez</h3>
+                            <p class="text-gray-400 text-sm">Utilisez vos ressources pour améliorer vos tours</p>
+                        </div>
+                    </div>
 
-<script>
-// INITIALISATION
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-canvas.width = 800;
-canvas.height = 600;
+                    <div class="bg-gray-800 p-6 rounded-lg mb-8">
+                        <h3 class="text-white font-bold mb-4">Types de Tours</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <i class="fas fa-gun text-gray-400 text-2xl mb-2"></i>
+                                <p class="text-white font-bold">Basique</p>
+                                <p class="text-green-400">50 💰</p>
+                                <p class="text-gray-400">Attaque rapide</p>
+                            </div>
+                            <div>
+                                <i class="fas fa-crosshairs text-red-400 text-2xl mb-2"></i>
+                                <p class="text-white font-bold">Sniper</p>
+                                <p class="text-green-400">100 💰</p>
+                                <p class="text-gray-400">Longue portée</p>
+                            </div>
+                            <div>
+                                <i class="fas fa-bomb text-orange-400 text-2xl mb-2"></i>
+                                <p class="text-white font-bold">Canon</p>
+                                <p class="text-green-400">150 💰</p>
+                                <p class="text-gray-400">Dégâts de zone</p>
+                            </div>
+                            <div>
+                                <i class="fas fa-rocket text-purple-400 text-2xl mb-2"></i>
+                                <p class="text-white font-bold">Missile</p>
+                                <p class="text-green-400">200 💰</p>
+                                <p class="text-gray-400">Très puissant</p>
+                            </div>
+                        </div>
+                    </div>
 
-let selectedChar = 0;
-let gameStarted = false;
-let money = 0;
-let frameCount = 0;
-let stars = [];
-for(let i=0; i<100; i++){
-  stars.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    size: Math.random() * 2,
-    speed: Math.random() * 0.5 + 0.2
-  });
-}
+                    <button onclick="startGame()" 
+                            class="bg-gradient-to-r from-green-600 to-green-700 text-white px-12 py-4 rounded-lg font-bold text-xl hover:from-green-700 hover:to-green-800 transition">
+                        <i class="fas fa-play mr-2"></i>Commencer la Partie
+                    </button>
+                </div>
+            </div>
 
-const charOptions = document.querySelectorAll('.char-option');
-charOptions.forEach(opt=>{
-  const price = parseInt(opt.dataset.price||0);
-  if(price===0) opt.classList.remove('locked');
-  opt.addEventListener('click', ()=>{
-    const price = parseInt(opt.dataset.price||0);
-    const isLocked = opt.classList.contains('locked');
-    if(!isLocked || price === 0){
-      charOptions.forEach(o=>o.classList.remove('selected'));
-      opt.classList.add('selected');
-      selectedChar = parseInt(opt.dataset.char);
-    } else if(price <= money){
-      money -= price;
-      opt.classList.remove('locked');
-      opt.dataset.price = 0;
-      charOptions.forEach(o=>o.classList.remove('selected'));
-      opt.classList.add('selected');
-      selectedChar = parseInt(opt.dataset.char);
-      document.getElementById('money').textContent = "💰 Crédits: "+money;
-    } else {
-      alert("⚠️ Vous n'avez pas assez de crédits !");
+            <!-- Zone de jeu -->
+            <div id="game-area" class="hidden">
+                <!-- HUD -->
+                <div class="bg-gray-900 bg-opacity-90 p-6 rounded-lg mb-4">
+                    <div class="flex justify-between items-center flex-wrap gap-4">
+                        <div>
+                            <p class="text-gray-400 text-sm">Vague</p>
+                            <p class="text-white text-3xl font-bold"><span id="wave">1</span>/20</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-sm">Argent</p>
+                            <p class="text-yellow-400 text-3xl font-bold">💰 <span id="money">500</span></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-sm">Vie de la Base</p>
+                            <div class="w-48 h-6 bg-gray-700 rounded-full overflow-hidden mt-2">
+                                <div id="base-health" class="health-bar h-full bg-gradient-to-r from-green-500 to-green-400" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-sm">Score</p>
+                            <p class="text-purple-400 text-3xl font-bold" id="score">0</p>
+                        </div>
+                        <button onclick="startWave()" id="start-wave-btn"
+                                class="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-lg font-bold hover:from-red-700 hover:to-red-800 transition">
+                            <i class="fas fa-play mr-2"></i>Lancer la Vague
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Alerte de vague -->
+                <div id="wave-alert" class="hidden fixed top-1/4 left-1/2 transform -translate-x-1/2 z-50">
+                    <div class="wave-alert bg-red-600 text-white px-12 py-6 rounded-lg text-center shadow-2xl">
+                        <p class="text-5xl font-bold mb-2">VAGUE <span id="wave-number">1</span></p>
+                        <p class="text-xl"><span id="enemy-count">10</span> ennemis en approche !</p>
+                    </div>
+                </div>
+
+                <!-- Menu des tours -->
+                <div class="bg-gray-900 bg-opacity-90 p-4 rounded-lg mb-4">
+                    <p class="text-gray-400 text-sm mb-3">Sélectionnez une tour à construire :</p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="selectTower('basic')" 
+                                class="tower-menu flex-1 min-w-[150px] bg-gray-800 hover:bg-gray-700 p-4 rounded-lg text-white transition border-2 border-transparent"
+                                id="tower-basic">
+                            <i class="fas fa-gun text-gray-400 text-3xl mb-2"></i>
+                            <p class="font-bold">Basique</p>
+                            <p class="text-yellow-400 text-sm">💰 50</p>
+                            <p class="text-gray-400 text-xs mt-1">Dégâts: 10 | Portée: 100</p>
+                        </button>
+                        <button onclick="selectTower('sniper')" 
+                                class="tower-menu flex-1 min-w-[150px] bg-gray-800 hover:bg-gray-700 p-4 rounded-lg text-white transition border-2 border-transparent"
+                                id="tower-sniper">
+                            <i class="fas fa-crosshairs text-red-400 text-3xl mb-2"></i>
+                            <p class="font-bold">Sniper</p>
+                            <p class="text-yellow-400 text-sm">💰 100</p>
+                            <p class="text-gray-400 text-xs mt-1">Dégâts: 30 | Portée: 200</p>
+                        </button>
+                        <button onclick="selectTower('cannon')" 
+                                class="tower-menu flex-1 min-w-[150px] bg-gray-800 hover:bg-gray-700 p-4 rounded-lg text-white transition border-2 border-transparent"
+                                id="tower-cannon">
+                            <i class="fas fa-bomb text-orange-400 text-3xl mb-2"></i>
+                            <p class="font-bold">Canon</p>
+                            <p class="text-yellow-400 text-sm">💰 150</p>
+                            <p class="text-gray-400 text-xs mt-1">Dégâts: 50 (Zone) | Portée: 120</p>
+                        </button>
+                        <button onclick="selectTower('missile')" 
+                                class="tower-menu flex-1 min-w-[150px] bg-gray-800 hover:bg-gray-700 p-4 rounded-lg text-white transition border-2 border-transparent"
+                                id="tower-missile">
+                            <i class="fas fa-rocket text-purple-400 text-3xl mb-2"></i>
+                            <p class="font-bold">Missile</p>
+                            <p class="text-yellow-400 text-sm">💰 200</p>
+                            <p class="text-gray-400 text-xs mt-1">Dégâts: 100 | Portée: 150</p>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Terrain de jeu -->
+                <div id="game-grid" class="bg-gray-800 rounded-lg p-2 relative" style="width: 100%; height: 600px;">
+                    <!-- Grille générée dynamiquement -->
+                </div>
+            </div>
+
+            <!-- Écran Game Over -->
+            <div id="game-over-screen" class="hidden text-center">
+                <div class="bg-gray-900 bg-opacity-95 p-12 rounded-lg max-w-2xl mx-auto">
+                    <i id="game-over-icon" class="fas fa-skull-crossbones text-red-500 text-8xl mb-6"></i>
+                    <h2 id="game-over-title" class="text-4xl font-bold text-white mb-4">Mission Échouée</h2>
+                    
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div class="bg-gray-800 p-6 rounded-lg">
+                            <p class="text-gray-400 mb-2">Score Final</p>
+                            <p class="text-yellow-400 text-4xl font-bold" id="final-score">0</p>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-lg">
+                            <p class="text-gray-400 mb-2">Vague Atteinte</p>
+                            <p class="text-blue-400 text-4xl font-bold" id="final-wave">0</p>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-lg">
+                            <p class="text-gray-400 mb-2">Ennemis Éliminés</p>
+                            <p class="text-red-400 text-4xl font-bold" id="total-kills">0</p>
+                        </div>
+                        <div class="bg-gray-800 p-6 rounded-lg">
+                            <p class="text-gray-400 mb-2">Tours Construites</p>
+                            <p class="text-green-400 text-4xl font-bold" id="total-towers">0</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center space-x-4">
+                        <button onclick="restartGame()" 
+                                class="bg-gradient-to-r from-green-600 to-green-700 text-white px-8 py-4 rounded-lg font-bold hover:from-green-700 hover:to-green-800 transition">
+                            <i class="fas fa-redo mr-2"></i>Rejouer
+                        </button>
+                        <button onclick="backToStart()" 
+                                class="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-lg font-bold hover:from-blue-700 hover:to-blue-800 transition">
+                            <i class="fas fa-home mr-2"></i>Menu Principal
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <?php include 'includes/footer.php'; ?>
+
+    <script>
+    // Configuration du jeu
+    const GRID_SIZE = 15;
+    const CELL_SIZE = 40;
+    const TOWER_TYPES = {
+        basic: { cost: 50, damage: 10, range: 100, fireRate: 1000, icon: 'fa-gun', color: 'text-gray-400' },
+        sniper: { cost: 100, damage: 30, range: 200, fireRate: 2000, icon: 'fa-crosshairs', color: 'text-red-400' },
+        cannon: { cost: 150, damage: 50, range: 120, fireRate: 1500, icon: 'fa-bomb', color: 'text-orange-400', splash: 50 },
+        missile: { cost: 200, damage: 100, range: 150, fireRate: 2500, icon: 'fa-rocket', color: 'text-purple-400' }
+    };
+
+    // Variables du jeu
+    let gameState = {
+        wave: 1,
+        money: 500,
+        baseHealth: 100,
+        score: 0,
+        selectedTower: null,
+        towers: [],
+        enemies: [],
+        projectiles: [],
+        kills: 0,
+        waveActive: false,
+        path: []
+    };
+
+    let gameLoop = null;
+
+    function startGame() {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-area').classList.remove('hidden');
+        
+        // Initialiser le jeu
+        initializeGrid();
+        generatePath();
+        
+        // Démarrer la boucle du jeu
+        gameLoop = setInterval(update, 50);
     }
-  });
-});
 
-document.getElementById('playBtn').addEventListener('click', ()=>{
-  document.getElementById('menu').style.display='none';
-  gameStarted = true;
-  initGame();
-  loop();
-});
-
-const tankModels = [
-  {name:"Recon Tank", color:'#CCCCCC', speed:4, lives:3, shotType:"single", reloadTime:300},
-  {name:"M1 Abrams", color:'#2E8B57', speed:5, lives:4, shotType:"single", reloadTime:250, price:50},
-  {name:"T-90", color:'#4682B4', speed:4, lives:5, shotType:"single", reloadTime:250, price:70},
-  {name:"Leopard 2", color:'#B22222', speed:6, lives:3, shotType:"single", reloadTime:200, price:60},
-  {name:"Challenger 2", color:'#DAA520', speed:4, lives:6, shotType:"double", reloadTime:350, price:80},
-  {name:"K2 Black Panther", color:'#800080', speed:5, lives:5, shotType:"double", reloadTime:300, price:90},
-  {name:"Type 99", color:'#FF4500', speed:6, lives:8, shotType:"triple", reloadTime:250, price:150}
-];
-
-let tank = {x:400, y:500, width:40, height:50, angle:0, speed:5, lives:3, lastShot:0, canShoot:true};
-let keys = {};
-let bullets = [];
-let enemies = [];
-let level = 1;
-let particles = [];
-let explosions = [];
-let enemySpawnTimer = 0;
-let score = 0;
-
-function initGame(){
-  const model = tankModels[selectedChar];
-  tank = {
-    x:400, y:500, width:40, height:50, angle:0, speed:model.speed, lives:model.lives, lastShot:0, canShoot:true
-  };
-  bullets = [];
-  enemies = [];
-  particles = [];
-  explosions = [];
-  frameCount = 0;
-  enemySpawnTimer = 0;
-  spawnInitialEnemies();
-}
-document.addEventListener('keydown', e=>{
-  keys[e.key]=true;
-  if(e.key===' ' && gameStarted && tank.canShoot){
-    e.preventDefault();
-    shootBullet();
-  }
-});
-document.addEventListener('keyup', e=>keys[e.key]=false);
-
-function shootBullet(){
-  const model = tankModels[selectedChar];
-  const now = Date.now();
-  if(now - tank.lastShot >= model.reloadTime){
-    tank.lastShot = now;
-    tank.canShoot = false;
-    if(model.shotType==="single"){
-      bullets.push({x:tank.x, y:tank.y-30, dx:0, dy:-10, life:200, fromEnemy:false});
-      createMuzzleFlash(tank.x, tank.y-30);
-    } 
-    else if(model.shotType==="double"){
-      bullets.push({x:tank.x-12, y:tank.y-30, dx:-1, dy:-10, life:200, fromEnemy:false});
-      bullets.push({x:tank.x+12, y:tank.y-30, dx:1, dy:-10, life:200, fromEnemy:false});
-      createMuzzleFlash(tank.x-12, tank.y-30);
-      createMuzzleFlash(tank.x+12, tank.y-30);
-    } 
-    else if(model.shotType==="triple"){
-      bullets.push({x:tank.x, y:tank.y-30, dx:0, dy:-10, life:200, fromEnemy:false});
-      bullets.push({x:tank.x-15, y:tank.y-30, dx:-1.5, dy:-10, life:200, fromEnemy:false});
-      bullets.push({x:tank.x+15, y:tank.y-30, dx:1.5, dy:-10, life:200, fromEnemy:false});
-      createMuzzleFlash(tank.x, tank.y-30);
-      createMuzzleFlash(tank.x-15, tank.y-30);
-      createMuzzleFlash(tank.x+15, tank.y-30);
-    }
-    setTimeout(()=>{ tank.canShoot = true; }, model.reloadTime);
-  }
-}
-
-function createMuzzleFlash(x, y){
-  for(let i=0; i<12; i++){
-    particles.push({
-      x, y,
-      vx: (Math.random()-0.5)*4,
-      vy: (Math.random()-0.5)*4 - 3,
-      life: 20,
-      maxLife: 20,
-      size: Math.random()*4 + 2,
-      color: `rgba(255,${200+Math.random()*55},${Math.random()*100},`
-    });
-  }
-}
-function createExplosion(x, y, size){
-  explosions.push({x, y, size: 0, maxSize: size, life: 40});
-  for(let i=0; i<30; i++){
-    particles.push({
-      x, y,
-      vx: (Math.random()-0.5)*8,
-      vy: (Math.random()-0.5)*8,
-      life: 40 + Math.random()*30,
-      maxLife: 60,
-      size: Math.random()*5 + 2,
-      color: `rgba(${200+Math.random()*55},${Math.random()*150},0,`
-    });
-  }
-}
-function moveTank(){
-  if(keys['ArrowLeft'] && tank.x>20) tank.x -= tank.speed;
-  if(keys['ArrowRight'] && tank.x<canvas.width-20) tank.x += tank.speed;
-  if(keys['ArrowUp'] && tank.y>20) tank.y -= tank.speed;
-  if(keys['ArrowDown'] && tank.y<canvas.height-25) tank.y += tank.speed;
-}
-
-function spawnEnemy(){
-  const types = ['normal', 'normal', 'normal', 'fast', 'tank'];
-  const type = types[Math.floor(Math.random() * types.length)];
-  if(type === 'fast'){
-    enemies.push({
-      x:Math.random()*(canvas.width-35), y:-50, width:35, height:35, speed:3.5, hp:1, type:"fast", lastShot:0, points:8
-    });
-  } else if(type === 'tank'){
-    enemies.push({
-      x:Math.random()*(canvas.width-50), y:-60, width:50, height:50, speed:1.5, hp:3, type:"tank", lastShot:0, points:15
-    });
-  } else {
-    enemies.push({
-      x:Math.random()*(canvas.width-40), y:-50, width:40, height:40, speed:2.5, hp:1, type:"normal", lastShot:0, points:5
-    });
-  }
-}
-function spawnMiniBoss(){
-  enemies.push({
-    x:Math.random()*(canvas.width-100), y:-100, width:100, height:80, speed:1.8, hp:30, type:"miniBoss", lastShot:0, points:50
-  });
-}
-function spawnBoss(){
-  enemies.push({
-    x:canvas.width/2-150, y:-150, width:300, height:120, speed:1, hp:150, type:"boss", lastShot:0, points:100
-  });
-}
-function spawnInitialEnemies(){
-  for(let i=0;i<5;i++) spawnEnemy();
-}
-function shadeColor(color, percent) {
-  const num = parseInt(color.replace("#",""), 16);
-  const amt = Math.round(2.55 * percent);
-  const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-  const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
-  const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-  return "#" + (0x1000000 + R*0x10000 + G*0x100 + B).toString(16).slice(1);
-}
-
-function drawTank(){
-  ctx.save();
-  ctx.translate(tank.x, tank.y);
-  ctx.rotate(tank.angle);
-  ctx.shadowColor = 'rgba(0,0,0,0.5)';
-  ctx.shadowBlur = 15;
-  ctx.shadowOffsetY = 5;
-
-  const bodyGrad = ctx.createLinearGradient(-20,-25,20,25);
-  const color = tankModels[selectedChar].color;
-  bodyGrad.addColorStop(0, color);
-  bodyGrad.addColorStop(0.5, shadeColor(color, 20));
-  bodyGrad.addColorStop(1, shadeColor(color, -30));
-  ctx.fillStyle = bodyGrad;
-  ctx.fillRect(-20,-25,40,50);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.fillRect(-18,-23,36,4);
-  ctx.fillRect(-18,18,36,4);
-
-  ctx.shadowBlur = 10;
-  const cannonGrad = ctx.createLinearGradient(-6,-10,6,-10);
-  cannonGrad.addColorStop(0, '#0a4a0a');
-  cannonGrad.addColorStop(0.5, '#0d8e0d');
-  cannonGrad.addColorStop(1, '#0a4a0a');
-  ctx.fillStyle = cannonGrad;
-  ctx.fillRect(-6,-10,12,-24);
-
-  ctx.shadowBlur = 0;
-  if(tank.canShoot){
-    ctx.fillStyle = 'rgba(0,255,100,0.6)';
-  } else {
-    ctx.fillStyle = 'rgba(255,100,0,0.4)';
-  }
-  ctx.fillRect(-4,-32,8,3);
-
-  ctx.restore();
-  if(!tank.canShoot){
-    const model = tankModels[selectedChar];
-    const reloadProgress = Math.min(1, (Date.now() - tank.lastShot) / model.reloadTime);
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    ctx.fillRect(tank.x - 25, tank.y + 35, 50, 6);
-    const reloadGrad = ctx.createLinearGradient(tank.x - 25, 0, tank.x + 25, 0);
-    reloadGrad.addColorStop(0, '#ff3333');
-    reloadGrad.addColorStop(0.5, '#ffaa00');
-    reloadGrad.addColorStop(1, '#00ff00');
-    ctx.fillStyle = reloadGrad;
-    ctx.fillRect(tank.x - 25, tank.y + 35, 50 * reloadProgress, 6);
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(tank.x - 25, tank.y + 35, 50, 6);
-    ctx.restore();
-  }
-}
-
-function drawEnemy(e){
-  ctx.save();
-  ctx.translate(e.x + e.width/2, e.y + e.height/2);
-  ctx.rotate(Math.PI);
-  ctx.shadowColor = 'rgba(0,0,0,0.6)';
-  ctx.shadowBlur = 20;
-  ctx.shadowOffsetY = 8;
-  let grad = ctx.createRadialGradient(0,0,0,0,0,e.width/1.5);
-  if(e.type==="miniBoss"){ 
-    grad.addColorStop(0,"#FFD700"); grad.addColorStop(0.5,"#FFA500"); grad.addColorStop(1,"#FF6600"); 
-  }
-  else if(e.type==="boss"){ 
-    grad.addColorStop(0,"#ff00ff"); grad.addColorStop(0.5,"#8800ff"); grad.addColorStop(1,"#440088"); 
-  }
-  else if(e.type==="fast"){
-    grad.addColorStop(0,"#00ff00"); grad.addColorStop(0.5,"#00cc00"); grad.addColorStop(1,"#006600"); 
-  }
-  else if(e.type==="tank"){
-    grad.addColorStop(0,"#ffaa00"); grad.addColorStop(0.5,"#ff6600"); grad.addColorStop(1,"#cc3300"); 
-  }
-  else { 
-    grad.addColorStop(0,"#ff3333"); grad.addColorStop(0.5,"#cc0000"); grad.addColorStop(1,"#660000"); 
-  }
-  ctx.fillStyle = grad;
-  ctx.fillRect(-e.width/2,-e.height/2,e.width,e.height);
-  ctx.fillStyle = 'rgba(255,255,255,0.2)';
-  ctx.fillRect(-e.width/2 + 5,-e.height/2 + 5,e.width - 10,e.height/4);
-  if(e.hp && e.hp > 1){
-    ctx.shadowBlur = 0;
-    const maxHp = e.type==="boss"?150:(e.type==="miniBoss"?30:3);
-    const hpPercent = e.hp/maxHp;
-    ctx.fillStyle="rgba(0,0,0,0.7)";
-    ctx.fillRect(-e.width/2,-e.height/2-15,e.width,8);
-    const hpGrad = ctx.createLinearGradient(-e.width/2,-e.height/2-15,e.width/2,-e.height/2-15);
-    if(hpPercent > 0.5){
-      hpGrad.addColorStop(0,"#00ff00");
-      hpGrad.addColorStop(1,"#88ff00");
-    } else if(hpPercent > 0.2){
-      hpGrad.addColorStop(0,"#ffaa00");
-      hpGrad.addColorStop(1,"#ff8800");
-    } else {
-      hpGrad.addColorStop(0,"#ff0000");
-      hpGrad.addColorStop(1,"#aa0000");
-    }
-    ctx.fillStyle = hpGrad;
-    ctx.fillRect(-e.width/2,-e.height/2-15,e.width*hpPercent,8);
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(-e.width/2,-e.height/2-15,e.width,8);
-  }
-  ctx.restore();
-}
-function moveEnemies(){
-  for(let i = enemies.length - 1; i >= 0; i--){
-    const e = enemies[i]; e.y += e.speed;
-    if((e.type==="miniBoss" || e.type==="boss" || e.type==="tank") && e.y > 0) { enemyShoot(e); }
-    if(e.y > canvas.height + 100){ enemies.splice(i, 1); }
-  }
-}
-function enemyShoot(e){
-  const now = Date.now();
-  const shootDelay = e.type==="boss"?800:(e.type==="miniBoss"?1000:1500);
-  if(now - e.lastShot > shootDelay){
-    const bulletsCount = e.type==="boss"?3:(e.type==="miniBoss"?2:1);
-    for(let i=0;i<bulletsCount;i++){
-      bullets.push({
-        x: e.x + e.width/2 + (i-1)*20,
-        y: e.y + e.height,
-        dx: (Math.random()-0.5)*2,
-        dy: 5 + Math.random(),
-        life:200,
-        fromEnemy:true
-      });
-    }
-    e.lastShot = now;
-  }
-}
-
-function update(){
-  if(!gameStarted) return;
-  frameCount++;
-  moveTank();
-  for(let i = bullets.length - 1; i >= 0; i--){
-    const b = bullets[i]; b.x += b.dx; b.y += b.dy; b.life--;
-    if(b.life<=0 || b.y < -10 || b.y > canvas.height+10){ bullets.splice(i,1); }
-  }
-  moveEnemies();
-  enemySpawnTimer++;
-  if(enemySpawnTimer > Math.max(30, 60 - level*2)){
-    spawnEnemy();
-    enemySpawnTimer = 0;
-  }
-  if(frameCount % 1000 === 0){ spawnMiniBoss(); }
-  if(frameCount % 2000 === 0){ spawnBoss(); }
-  for(let i = particles.length - 1; i >= 0; i--){
-    const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.life--;
-    if(p.life <= 0){ particles.splice(i,1); }
-  }
-  for(let i = explosions.length - 1; i >= 0; i--){
-    const exp = explosions[i]; exp.size += exp.maxSize/40; exp.life--;
-    if(exp.life <= 0){ explosions.splice(i,1); }
-  }
-  for(let bi = bullets.length - 1; bi >= 0; bi--){
-    const b = bullets[bi];
-    if(b.fromEnemy) {
-      if(b.x > tank.x-20 && b.x < tank.x+20 && b.y > tank.y-25 && b.y < tank.y+25){
-        tank.lives--; bullets.splice(bi,1); createExplosion(b.x, b.y, 25);
-        if(tank.lives <= 0){ gameOver(); return; }
-      }
-      continue;
-    }
-    for(let ei = enemies.length - 1; ei >= 0; ei--){
-      const e = enemies[ei];
-      if(b.x > e.x && b.x < e.x + e.width && b.y > e.y && b.y < e.y + e.height){
-        e.hp--; bullets.splice(bi,1); createExplosion(b.x, b.y, 20);
-        if(e.hp <= 0){
-          createExplosion(e.x + e.width/2, e.y + e.height/2, e.width);
-          money += e.points || 5;
-          score += e.points || 5;
-          enemies.splice(ei,1);
+    function initializeGrid() {
+        const grid = document.getElementById('game-grid');
+        grid.innerHTML = '';
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${CELL_SIZE}px)`;
+        grid.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${CELL_SIZE}px)`;
+        
+        for (let y = 0; y < GRID_SIZE; y++) {
+            for (let x = 0; x < GRID_SIZE; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'game-cell';
+                cell.dataset.x = x;
+                cell.dataset.y = y;
+                cell.style.width = CELL_SIZE + 'px';
+                cell.style.height = CELL_SIZE + 'px';
+                cell.onclick = () => placeTower(x, y);
+                grid.appendChild(cell);
+            }
         }
-        break;
-      }
     }
-  }
-  for(let ei = enemies.length - 1; ei >= 0; ei--){
-    const e = enemies[ei];
-    if(tank.x > e.x-20 && tank.x < e.x+e.width+20 && tank.y > e.y-25 && tank.y < e.y+e.height+25){
-      tank.lives--; createExplosion(e.x + e.width/2, e.y + e.height/2, e.width); enemies.splice(ei,1);
-      if(tank.lives <= 0){ gameOver(); return; }
+
+    function generatePath() {
+        // Créer un chemin simple de gauche à droite avec quelques virages
+        gameState.path = [];
+        let x = 0, y = Math.floor(GRID_SIZE / 2);
+        
+        while (x < GRID_SIZE) {
+            gameState.path.push({ x, y });
+            
+            const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+            if (cell) cell.classList.add('path');
+            
+            // Ajouter quelques virages aléatoires
+            if (Math.random() < 0.2 && x < GRID_SIZE - 3) {
+                const direction = Math.random() < 0.5 ? -1 : 1;
+                if (y + direction >= 0 && y + direction < GRID_SIZE) {
+                    y += direction;
+                }
+            }
+            x++;
+        }
+        
+        // Marquer la base
+        const baseCell = document.querySelector(`[data-x="${GRID_SIZE-1}"][data-y="${y}"]`);
+        if (baseCell) {
+            baseCell.classList.add('base');
+            baseCell.innerHTML = '<i class="fas fa-flag text-green-500 text-2xl"></i>';
+        }
     }
-  }
-  charOptions.forEach(opt=>{
-    const price = parseInt(opt.dataset.price||0);
-    if(price>0 && price<=money) opt.classList.remove('locked');
-  });
-  stars.forEach(s=>{
-    s.y += s.speed;
-    if(s.y > canvas.height) { s.y = 0; s.x = Math.random() * canvas.width; }
-  });
-  level = Math.floor(frameCount/1000) + 1;
-}
 
-function gameOver(){
-  gameStarted = false;
-  setTimeout(()=>{
-    alert(`💀 GAME OVER!\n\n🎯 Score: ${score}\n💰 Crédits gagnés: ${money}\n🏆 Niveau atteint: ${level}\n\nRetour au hangar...`);
-    document.getElementById('menu').style.display='flex';
-    document.getElementById('money').textContent = "💰 Crédits: "+money;
-  }, 100);
-}
-
-function draw(){
-  const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 0, canvas.width/2, canvas.height/2, canvas.width);
-  grad.addColorStop(0, '#1a1a3e'); grad.addColorStop(0.5, '#0f1419'); grad.addColorStop(1, '#050508');
-  ctx.fillStyle = grad; ctx.fillRect(0,0,canvas.width,canvas.height);
-  stars.forEach(s=>{
-    ctx.fillStyle = `rgba(255,255,255,${s.size/2})`;
-    ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI*2); ctx.fill();
-  });
-  ctx.strokeStyle = 'rgba(58, 80, 107, 0.15)'; ctx.lineWidth = 1;
-  for(let i=0; i<canvas.width; i+=50){
-    ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke();
-  }
-  for(let i=0; i<canvas.height; i+=50){
-    ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke();
-  }
-  ctx.strokeStyle = 'rgba(0,255,136,0.2)'; ctx.lineWidth = 2; ctx.setLineDash([10, 10]);
-  ctx.beginPath(); ctx.moveTo(canvas.width/2, 0); ctx.lineTo(canvas.width/2, canvas.height); ctx.stroke();
-  ctx.setLineDash([]);
-  explosions.forEach(exp=>{
-    const alpha = exp.life/40; ctx.save(); ctx.globalAlpha = alpha;
-    const expGrad = ctx.createRadialGradient(exp.x,exp.y,0,exp.x,exp.y,exp.size);
-    expGrad.addColorStop(0, 'rgba(255,255,255,1)');
-    expGrad.addColorStop(0.2, 'rgba(255,200,100,1)');
-    expGrad.addColorStop(0.5, 'rgba(255,100,0,0.8)');
-    expGrad.addColorStop(0.8, 'rgba(255,50,0,0.4)');
-    expGrad.addColorStop(1, 'rgba(100,0,0,0)');
-    ctx.fillStyle = expGrad; ctx.beginPath(); ctx.arc(exp.x, exp.y, exp.size, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = `rgba(255,150,0,${alpha})`; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(exp.x, exp.y, exp.size * 1.2, 0, Math.PI*2); ctx.stroke(); ctx.restore();
-  });
-  drawTank();
-  bullets.forEach(b=>{
-    ctx.save();
-    if(b.fromEnemy){
-      ctx.shadowColor = 'rgba(255,100,0,1)'; ctx.shadowBlur = 20;
-      const trailGrad = ctx.createLinearGradient(b.x, b.y-10, b.x, b.y+10);
-      trailGrad.addColorStop(0, 'rgba(255,150,0,0)'); trailGrad.addColorStop(0.5, 'rgba(255,100,0,0.6)'); trailGrad.addColorStop(1, 'rgba(255,50,0,0)');
-      ctx.fillStyle = trailGrad; ctx.fillRect(b.x-4, b.y-15, 8, 20);
-      const bulletGrad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, 6);
-      bulletGrad.addColorStop(0, '#ffff00'); bulletGrad.addColorStop(0.5, '#ffaa00'); bulletGrad.addColorStop(1, '#ff5500');
-      ctx.fillStyle = bulletGrad;
-    } else {
-      ctx.shadowColor = 'rgba(0,255,255,1)'; ctx.shadowBlur = 20;
-      const trailGrad = ctx.createLinearGradient(b.x, b.y+10, b.x, b.y-10);
-      trailGrad.addColorStop(0, 'rgba(0,200,255,0)'); trailGrad.addColorStop(0.5, 'rgba(0,255,255,0.6)'); trailGrad.addColorStop(1, 'rgba(100,255,255,0)');
-      ctx.fillStyle = trailGrad; ctx.fillRect(b.x-4, b.y-5, 8, 20);
-      const bulletGrad = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, 6);
-      bulletGrad.addColorStop(0, '#ffffff'); bulletGrad.addColorStop(0.5, '#00ffff'); bulletGrad.addColorStop(1, '#0088ff');
-      ctx.fillStyle = bulletGrad;
+    function selectTower(type) {
+        // Désélectionner l'ancienne tour
+        document.querySelectorAll('.tower-menu').forEach(btn => {
+            btn.classList.remove('border-blue-500');
+        });
+        
+        // Sélectionner la nouvelle
+        const btn = document.getElementById(`tower-${type}`);
+        if (btn) {
+            btn.classList.add('border-blue-500');
+            gameState.selectedTower = type;
+        }
     }
-    ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill(); ctx.restore();
-  });
-  particles.forEach(p=>{
-    ctx.save(); const alpha = p.life/p.maxLife; ctx.globalAlpha = alpha;
-    const particleGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size*2);
-    particleGrad.addColorStop(0, p.color + '1)'); particleGrad.addColorStop(0.5, p.color + (alpha*0.5) + ')'); particleGrad.addColorStop(1, p.color + '0)');
-    ctx.fillStyle = particleGrad; ctx.beginPath(); ctx.arc(p.x, p.y, p.size*2, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = p.color + alpha + ')'; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
-  });
-  enemies.forEach(drawEnemy);
-  ctx.save();
-  const hudGrad = ctx.createLinearGradient(0, 0, 0, 100);
-  hudGrad.addColorStop(0, 'rgba(10,10,30,0.9)');
-  hudGrad.addColorStop(1, 'rgba(10,10,30,0.7)');
-  ctx.fillStyle = hudGrad; ctx.fillRect(5, 5, 250, 90);
-  ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 2; ctx.strokeRect(5, 5, 250, 90);
-  ctx.fillStyle = '#00ff88';
-  ctx.fillRect(5, 5, 15, 3); ctx.fillRect(5, 5, 3, 15); ctx.fillRect(240, 5, 15, 3);
-  ctx.fillRect(252, 5, 3, 15); ctx.fillRect(5, 92, 15, 3); ctx.fillRect(5, 80, 3, 15);
-  ctx.fillRect(240, 92, 15, 3); ctx.fillRect(252, 80, 3, 15);
-  ctx.shadowColor = 'rgba(0,0,0,0.8)'; ctx.shadowBlur = 10; ctx.font = "bold 18px 'Segoe UI'";
-  ctx.fillStyle="#ff3366"; ctx.fillText("♥".repeat(Math.max(0, tank.lives)), 20, 30);
-  ctx.fillStyle="#00ff88"; ctx.font = "bold 16px 'Segoe UI'"; ctx.fillText("Vies: " + tank.lives, 20, 50);
-  ctx.fillStyle="#00ccff"; ctx.fillText("🎯 Score: " + score, 20, 72);
-  ctx.fillStyle="#ffd700"; ctx.font = "bold 16px 'Segoe UI'"; ctx.fillText("💰 " + money, 150, 30);
-  ctx.fillStyle="#ff6600"; ctx.fillText("👾 x" + enemies.length, 150, 52);
-  ctx.fillStyle="#ff00ff"; ctx.fillText("⚔️ Niveau " + level, 150, 74);
-  const model = tankModels[selectedChar];
-  const reloadPercent = tank.canShoot ? 100 : Math.min(100, ((Date.now() - tank.lastShot) / model.reloadTime) * 100);
-  ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(270, 10, 520, 25);
-  const reloadColor = tank.canShoot ? '#00ff00' : '#ff3333';
-  const weaponGrad = ctx.createLinearGradient(270, 0, 790, 0);
-  weaponGrad.addColorStop(0, reloadColor); weaponGrad.addColorStop(1, reloadColor + '66');
-  ctx.fillStyle = weaponGrad; ctx.fillRect(270, 10, 520 * (reloadPercent/100), 25);
-  ctx.strokeStyle = '#00ff88'; ctx.lineWidth = 2; ctx.strokeRect(270, 10, 520, 25);
-  ctx.fillStyle = '#ffffff'; ctx.font = "bold 14px 'Segoe UI'";
-  const weaponText = tank.canShoot ? "🔫 ARME PRÊTE" : "⏳ RECHARGEMENT " + Math.floor(reloadPercent) + "%";
-  ctx.fillText(weaponText, 450, 28);
-  ctx.restore();
-}
 
-function loop(){
-  if(!gameStarted) return;
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-</script>
+    function placeTower(x, y) {
+        if (!gameState.selectedTower) {
+            alert('Sélectionnez d\'abord un type de tour !');
+            return;
+        }
+        
+        const towerType = TOWER_TYPES[gameState.selectedTower];
+        
+        // Vérifier l'argent
+        if (gameState.money < towerType.cost) {
+            alert('Pas assez d\'argent !');
+            return;
+        }
+        
+        // Vérifier si c'est le chemin ou une tour existante
+        const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+        if (cell.classList.contains('path') || cell.querySelector('.tower')) {
+            alert('Impossible de placer une tour ici !');
+            return;
+        }
+        
+        // Placer la tour
+        gameState.money -= towerType.cost;
+        
+        const tower = {
+            x, y,
+            type: gameState.selectedTower,
+            ...towerType,
+            lastFire: 0
+        };
+        
+        gameState.towers.push(tower);
+        
+        // Afficher la tour
+        const towerEl = document.createElement('div');
+        towerEl.className = `tower absolute ${towerType.color}`;
+        towerEl.style.left = x * CELL_SIZE + 'px';
+        towerEl.style.top = y * CELL_SIZE + 'px';
+        towerEl.style.width = CELL_SIZE + 'px';
+        towerEl.style.height = CELL_SIZE + 'px';
+        towerEl.style.display = 'flex';
+        towerEl.style.alignItems = 'center';
+        towerEl.style.justifyContent = 'center';
+        towerEl.innerHTML = `<i class="fas ${towerType.icon} text-2xl"></i>`;
+        towerEl.dataset.towerId = gameState.towers.length - 1;
+        
+        document.getElementById('game-grid').appendChild(towerEl);
+        
+        updateHUD();
+    }
+
+    function startWave() {
+        if (gameState.waveActive) return;
+        
+        gameState.waveActive = true;
+        document.getElementById('start-wave-btn').disabled = true;
+        document.getElementById('start-wave-btn').classList.add('opacity-50');
+        
+        // Afficher l'alerte
+        const enemyCount = 10 + (gameState.wave * 2);
+        document.getElementById('wave-number').textContent = gameState.wave;
+        document.getElementById('enemy-count').textContent = enemyCount;
+        document.getElementById('wave-alert').classList.remove('hidden');
+        
+        setTimeout(() => {
+            document.getElementById('wave-alert').classList.add('hidden');
+        }, 2000);
+        
+        // Spawner les ennemis
+        for (let i = 0; i < enemyCount; i++) {
+            setTimeout(() => spawnEnemy(), i * 1000);
+        }
+    }
+
+    function spawnEnemy() {
+        const startPos = gameState.path[0];
+        const enemy = {
+            x: startPos.x * CELL_SIZE + CELL_SIZE / 2,
+            y: startPos.y * CELL_SIZE + CELL_SIZE / 2,
+            pathIndex: 0,
+            health: 50 + (gameState.wave * 10),
+            maxHealth: 50 + (gameState.wave * 10),
+            speed: 1 + (gameState.wave * 0.1),
+            reward: 10 + gameState.wave
+        };
+        
+        gameState.enemies.push(enemy);
+        
+        // Créer l'élément visuel
+        const enemyEl = document.createElement('div');
+        enemyEl.className = 'enemy-unit absolute text-red-500';
+        enemyEl.style.left = enemy.x + 'px';
+        enemyEl.style.top = enemy.y + 'px';
+        enemyEl.innerHTML = '<i class="fas fa-user-secret text-2xl"></i>';
+        enemyEl.dataset.enemyId = gameState.enemies.length - 1;
+        
+        document.getElementById('game-grid').appendChild(enemyEl);
+    }
+
+    function update() {
+        updateEnemies();
+        updateTowers();
+        updateProjectiles();
+    }
+
+    function updateEnemies() {
+        gameState.enemies.forEach((enemy, index) => {
+            if (enemy.health <= 0) return;
+            
+            // Déplacement le long du chemin
+            if (enemy.pathIndex < gameState.path.length - 1) {
+                const target = gameState.path[enemy.pathIndex + 1];
+                const targetX = target.x * CELL_SIZE + CELL_SIZE / 2;
+                const targetY = target.y * CELL_SIZE + CELL_SIZE / 2;
+                
+                const dx = targetX - enemy.x;
+                const dy = targetY - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < enemy.speed) {
+                    enemy.pathIndex++;
+                } else {
+                    enemy.x += (dx / distance) * enemy.speed;
+                    enemy.y += (dy / distance) * enemy.speed;
+                }
+                
+                // Mettre à jour la position visuelle
+                const enemyEl = document.querySelector(`[data-enemy-id="${index}"]`);
+                if (enemyEl) {
+                    enemyEl.style.left = enemy.x + 'px';
+                    enemyEl.style.top = enemy.y + 'px';
+                }
+            } else {
+                // Ennemi a atteint la base
+                gameState.baseHealth -= 10;
+                killEnemy(index);
+                
+                if (gameState.baseHealth <= 0) {
+                    endGame(false);
+                }
+            }
+        });
+        
+        // Vérifier si la vague est terminée
+        if (gameState.waveActive && gameState.enemies.every(e => e.health <= 0)) {
+            gameState.waveActive = false;
+            gameState.wave++;
+            gameState.money += 100;
+            
+            document.getElementById('start-wave-btn').disabled = false;
+            document.getElementById('start-wave-btn').classList.remove('opacity-50');
+            
+            if (gameState.wave > 20) {
+                endGame(true);
+            }
+        }
+        
+        updateHUD();
+    }
+
+    function updateTowers() {
+        const now = Date.now();
+        
+        gameState.towers.forEach(tower => {
+            if (now - tower.lastFire < tower.fireRate) return;
+            
+            // Trouver l'ennemi le plus proche dans la portée
+            let target = null;
+            let minDist = Infinity;
+            
+            gameState.enemies.forEach((enemy, index) => {
+                if (enemy.health <= 0) return;
+                
+                const dx = enemy.x - (tower.x * CELL_SIZE + CELL_SIZE / 2);
+                const dy = enemy.y - (tower.y * CELL_SIZE + CELL_SIZE / 2);
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < tower.range && dist < minDist) {
+                    minDist = dist;
+                    target = { enemy, index };
+                }
+            });
+            
+            if (target) {
+                tower.lastFire = now;
+                fireProjectile(tower, target.enemy, target.index);
+            }
+        });
+    }
+
+    function fireProjectile(tower, enemy, enemyIndex) {
+        const projectile = {
+            x: tower.x * CELL_SIZE + CELL_SIZE / 2,
+            y: tower.y * CELL_SIZE + CELL_SIZE / 2,
+            targetX: enemy.x,
+            targetY: enemy.y,
+            damage: tower.damage,
+            speed: 5,
+            enemyIndex,
+            splash: tower.splash || 0
+        };
+        
+        gameState.projectiles.push(projectile);
+        
+        // Créer l'élément visuel
+        const projEl = document.createElement('div');
+        projEl.className = 'projectile';
+        projEl.style.left = projectile.x + 'px';
+        projEl.style.top = projectile.y + 'px';
+        projEl.dataset.projId = gameState.projectiles.length - 1;
+        
+        document.getElementById('game-grid').appendChild(projEl);
+    }
+
+    function updateProjectiles() {
+        gameState.projectiles.forEach((proj, index) => {
+            const dx = proj.targetX - proj.x;
+            const dy = proj.targetY - proj.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < proj.speed) {
+                // Impact
+                hitEnemy(proj.enemyIndex, proj.damage, proj.splash, proj.targetX, proj.targetY);
+                
+                // Retirer le projectile
+                const projEl = document.querySelector(`[data-proj-id="${index}"]`);
+                if (projEl) projEl.remove();
+                proj.x = -1000; // Marquer comme supprimé
+            } else {
+                // Déplacer le projectile
+                proj.x += (dx / distance) * proj.speed;
+                proj.y += (dy / distance) * proj.speed;
+                
+                const projEl = document.querySelector(`[data-proj-id="${index}"]`);
+                if (projEl) {
+                    projEl.style.left = proj.x + 'px';
+                    projEl.style.top = proj.y + 'px';
+                }
+            }
+        });
+        
+        // Nettoyer les projectiles supprimés
+        gameState.projectiles = gameState.projectiles.filter(p => p.x > -100);
+    }
+
+    function hitEnemy(enemyIndex, damage, splash, x, y) {
+        if (splash > 0) {
+            // Dégâts de zone
+            gameState.enemies.forEach((enemy, index) => {
+                if (enemy.health <= 0) return;
+                
+                const dx = enemy.x - x;
+                const dy = enemy.y - y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < splash) {
+                    enemy.health -= damage;
+                    if (enemy.health <= 0) {
+                        killEnemy(index);
+                    }
+                }
+            });
+            
+            // Animation d'explosion
+            createExplosion(x, y);
+        } else {
+            // Dégâts simples
+            const enemy = gameState.enemies[enemyIndex];
+            if (enemy && enemy.health > 0) {
+                enemy.health -= damage;
+                if (enemy.health <= 0) {
+                    killEnemy(enemyIndex);
+                }
+            }
+        }
+    }
+
+    function killEnemy(index) {
+        const enemy = gameState.enemies[index];
+        if (!enemy || enemy.health <= 0) {
+            const enemyEl = document.querySelector(`[data-enemy-id="${index}"]`);
+            if (enemyEl && enemyEl.parentElement) {
+                createExplosion(enemy.x, enemy.y);
+                enemyEl.remove();
+            }
+            return;
+        }
+        
+        enemy.health = 0;
+        gameState.money += enemy.reward;
+        gameState.score += enemy.reward * 10;
+        gameState.kills++;
+        
+        // Retirer l'élément visuel
+        const enemyEl = document.querySelector(`[data-enemy-id="${index}"]`);
+        if (enemyEl) {
+            createExplosion(enemy.x, enemy.y);
+            enemyEl.remove();
+        }
+    }
+
+    function createExplosion(x, y) {
+        const explosion = document.createElement('div');
+        explosion.className = 'explosion absolute text-4xl text-orange-500 pointer-events-none';
+        explosion.innerHTML = '<i class="fas fa-burst"></i>';
+        explosion.style.left = x + 'px';
+        explosion.style.top = y + 'px';
+        explosion.style.transform = 'translate(-50%, -50%)';
+        
+        document.getElementById('game-grid').appendChild(explosion);
+        setTimeout(() => explosion.remove(), 500);
+    }
+
+    function updateHUD() {
+        document.getElementById('wave').textContent = gameState.wave;
+        document.getElementById('money').textContent = gameState.money;
+        document.getElementById('score').textContent = gameState.score;
+        
+        const healthPercent = Math.max(0, (gameState.baseHealth / 100) * 100);
+        const healthBar = document.getElementById('base-health');
+        healthBar.style.width = healthPercent + '%';
+        
+        if (healthPercent < 30) {
+            healthBar.className = 'health-bar h-full bg-gradient-to-r from-red-500 to-red-400';
+        } else if (healthPercent < 60) {
+            healthBar.className = 'health-bar h-full bg-gradient-to-r from-yellow-500 to-yellow-400';
+        } else {
+            healthBar.className = 'health-bar h-full bg-gradient-to-r from-green-500 to-green-400';
+        }
+    }
+
+    function endGame(victory) {
+        clearInterval(gameLoop);
+        
+        document.getElementById('game-area').classList.add('hidden');
+        document.getElementById('game-over-screen').classList.remove('hidden');
+        
+        if (victory) {
+            document.getElementById('game-over-icon').className = 'fas fa-trophy text-yellow-500 text-8xl mb-6';
+            document.getElementById('game-over-title').textContent = 'Victoire !';
+        } else {
+            document.getElementById('game-over-icon').className = 'fas fa-skull-crossbones text-red-500 text-8xl mb-6';
+            document.getElementById('game-over-title').textContent = 'Mission Échouée';
+        }
+        
+        document.getElementById('final-score').textContent = gameState.score;
+        document.getElementById('final-wave').textContent = gameState.wave;
+        document.getElementById('total-kills').textContent = gameState.kills;
+        document.getElementById('total-towers').textContent = gameState.towers.length;
+    }
+
+    function restartGame() {
+        // Réinitialiser l'état
+        gameState = {
+            wave: 1,
+            money: 500,
+            baseHealth: 100,
+            score: 0,
+            selectedTower: null,
+            towers: [],
+            enemies: [],
+            projectiles: [],
+            kills: 0,
+            waveActive: false,
+            path: []
+        };
+        
+        document.getElementById('game-over-screen').classList.add('hidden');
+        document.getElementById('game-area').classList.remove('hidden');
+        
+        // Nettoyer la grille
+        document.getElementById('game-grid').innerHTML = '';
+        
+        // Réinitialiser
+        initializeGrid();
+        generatePath();
+        updateHUD();
+        
+        document.getElementById('start-wave-btn').disabled = false;
+        document.getElementById('start-wave-btn').classList.remove('opacity-50');
+        
+        // Redémarrer la boucle
+        gameLoop = setInterval(update, 50);
+    }
+
+    function backToStart() {
+        // Réinitialiser l'état
+        gameState = {
+            wave: 1,
+            money: 500,
+            baseHealth: 100,
+            score: 0,
+            selectedTower: null,
+            towers: [],
+            enemies: [],
+            projectiles: [],
+            kills: 0,
+            waveActive: false,
+            path: []
+        };
+        
+        clearInterval(gameLoop);
+        
+        document.getElementById('game-over-screen').classList.add('hidden');
+        document.getElementById('start-screen').classList.remove('hidden');
+        
+        // Nettoyer la grille
+        document.getElementById('game-grid').innerHTML = '';
+    }
+    </script>
 </body>
 </html>
-
-
-
-
-
-
