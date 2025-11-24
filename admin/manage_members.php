@@ -17,6 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         switch ($action) {
             case 'create_member':
+                // Validation des champs requis
+                if (empty($_POST['discord_pseudo']) || empty($_POST['roblox_pseudo']) || 
+                    empty($_POST['grade']) || empty($_POST['rang'])) {
+                    throw new Exception("Tous les champs obligatoires doivent être remplis.");
+                }
+                
                 // Vérifier si le pseudo existe déjà
                 $stmt = $pdo->prepare("SELECT id FROM members WHERE discord_pseudo = ? OR roblox_pseudo = ?");
                 $stmt->execute([$_POST['discord_pseudo'], $_POST['roblox_pseudo']]);
@@ -30,13 +36,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     (discord_pseudo, roblox_pseudo, password, kdr, grade, rang, legion_id, must_change_password) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                 $stmt->execute([
-                    $_POST['discord_pseudo'],
-                    $_POST['roblox_pseudo'],
+                    trim($_POST['discord_pseudo']),
+                    trim($_POST['roblox_pseudo']),
                     $password,
-                    $_POST['kdr'] ?: 0,
-                    $_POST['grade'],
-                    $_POST['rang'],
-                    $_POST['legion_id'] ?: null,
+                    floatval($_POST['kdr'] ?: 0),
+                    trim($_POST['grade']),
+                    trim($_POST['rang']),
+                    !empty($_POST['legion_id']) ? intval($_POST['legion_id']) : null,
                     isset($_POST['must_change_password']) ? 1 : 0
                 ]);
                 
@@ -45,18 +51,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'edit_member':
-                $member_id = $_POST['member_id'];
+                // Validation des champs requis
+                if (empty($_POST['member_id']) || empty($_POST['discord_pseudo']) || 
+                    empty($_POST['roblox_pseudo']) || empty($_POST['grade']) || empty($_POST['rang'])) {
+                    throw new Exception("Tous les champs obligatoires doivent être remplis.");
+                }
+                
+                $member_id = intval($_POST['member_id']);
+                
+                // Vérifier que le membre existe
+                $stmt = $pdo->prepare("SELECT id FROM members WHERE id = ?");
+                $stmt->execute([$member_id]);
+                if (!$stmt->fetch()) {
+                    throw new Exception("Membre introuvable.");
+                }
                 
                 $stmt = $pdo->prepare("UPDATE members SET 
                     discord_pseudo = ?, roblox_pseudo = ?, kdr = ?, grade = ?, rang = ?, legion_id = ?
                     WHERE id = ?");
                 $stmt->execute([
-                    $_POST['discord_pseudo'],
-                    $_POST['roblox_pseudo'],
-                    $_POST['kdr'],
-                    $_POST['grade'],
-                    $_POST['rang'],
-                    $_POST['legion_id'] ?: null,
+                    trim($_POST['discord_pseudo']),
+                    trim($_POST['roblox_pseudo']),
+                    floatval($_POST['kdr']),
+                    trim($_POST['grade']),
+                    trim($_POST['rang']),
+                    !empty($_POST['legion_id']) ? intval($_POST['legion_id']) : null,
                     $member_id
                 ]);
                 
@@ -65,10 +84,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'delete_member':
-                $member_id = $_POST['member_id'];
+                if (empty($_POST['member_id'])) {
+                    throw new Exception("ID membre manquant.");
+                }
+                
+                $member_id = intval($_POST['member_id']);
                 $stmt = $pdo->prepare("SELECT discord_pseudo FROM members WHERE id = ?");
                 $stmt->execute([$member_id]);
                 $pseudo = $stmt->fetchColumn();
+                
+                if (!$pseudo) {
+                    throw new Exception("Membre introuvable.");
+                }
                 
                 $stmt = $pdo->prepare("DELETE FROM members WHERE id = ?");
                 $stmt->execute([$member_id]);
@@ -78,7 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'reset_password':
-                $member_id = $_POST['member_id'];
+                if (empty($_POST['member_id'])) {
+                    throw new Exception("ID membre manquant.");
+                }
+                
+                $member_id = intval($_POST['member_id']);
                 $new_password = $_POST['new_password'] ?: 'Coalition';
                 
                 $stmt = $pdo->prepare("UPDATE members SET password = ?, must_change_password = 1 WHERE id = ?");
@@ -89,8 +120,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'add_diplome':
-                $member_id = $_POST['member_id'];
-                $diplome_id = $_POST['diplome_id'];
+                if (empty($_POST['member_id']) || empty($_POST['diplome_id'])) {
+                    throw new Exception("Données manquantes.");
+                }
+                
+                $member_id = intval($_POST['member_id']);
+                $diplome_id = intval($_POST['diplome_id']);
                 
                 // Vérifier si le diplôme n'est pas déjà attribué
                 $stmt = $pdo->prepare("SELECT id FROM member_diplomes WHERE member_id = ? AND diplome_id = ?");
@@ -112,7 +147,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'remove_diplome':
-                $member_diplome_id = $_POST['member_diplome_id'];
+                if (empty($_POST['member_diplome_id'])) {
+                    throw new Exception("ID manquant.");
+                }
+                
+                $member_diplome_id = intval($_POST['member_diplome_id']);
                 
                 $stmt = $pdo->prepare("DELETE FROM member_diplomes WHERE id = ?");
                 $stmt->execute([$member_diplome_id]);
@@ -125,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $member_ids = $_POST['member_ids'] ?? [];
                 $new_grade = $_POST['bulk_grade'];
                 
-                if (!empty($member_ids)) {
+                if (!empty($member_ids) && !empty($new_grade)) {
                     $placeholders = str_repeat('?,', count($member_ids) - 1) . '?';
                     $stmt = $pdo->prepare("UPDATE members SET grade = ? WHERE id IN ($placeholders)");
                     $stmt->execute(array_merge([$new_grade], $member_ids));
@@ -139,6 +178,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = $e->getMessage();
     } catch (PDOException $e) {
         $error = "Erreur de base de données : " . $e->getMessage();
+        error_log("PDO Error in manage_members.php: " . $e->getMessage());
     }
 }
 
@@ -229,7 +269,7 @@ $rangs = getRangs();
                     <p class="text-gray-400">Gérer tous les membres de la coalition</p>
                 </div>
                 <div class="flex space-x-4">
-                    <button onclick="document.getElementById('modal-create-member').classList.remove('hidden')" 
+                    <button onclick="openCreateMemberModal()" 
                             class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
                         <i class="fas fa-user-plus mr-2"></i>Nouveau Membre
                     </button>
@@ -376,11 +416,11 @@ $rangs = getRangs();
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <div id="menu-<?php echo $member['id']; ?>" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-10 border border-gray-700">
-                                        <button onclick="editMember(<?php echo htmlspecialchars(json_encode($member)); ?>)" 
+                                        <button onclick='editMember(<?php echo json_encode($member); ?>)' 
                                                 class="w-full text-left px-4 py-2 text-white hover:bg-gray-700 rounded-t-lg">
                                             <i class="fas fa-edit mr-2"></i>Modifier
                                         </button>
-                                        <button onclick="manageDiplomes(<?php echo $member['id']; ?>, '<?php echo htmlspecialchars($member['discord_pseudo']); ?>')" 
+                                        <button onclick="manageDiplomes(<?php echo $member['id']; ?>, '<?php echo addslashes($member['discord_pseudo']); ?>')" 
                                                 class="w-full text-left px-4 py-2 text-white hover:bg-gray-700">
                                             <i class="fas fa-graduation-cap mr-2"></i>Diplômes
                                         </button>
@@ -388,7 +428,7 @@ $rangs = getRangs();
                                                 class="w-full text-left px-4 py-2 text-yellow-400 hover:bg-gray-700">
                                             <i class="fas fa-key mr-2"></i>Reset MDP
                                         </button>
-                                        <button onclick="deleteMember(<?php echo $member['id']; ?>, '<?php echo htmlspecialchars($member['discord_pseudo']); ?>')" 
+                                        <button onclick="deleteMember(<?php echo $member['id']; ?>, '<?php echo addslashes($member['discord_pseudo']); ?>')" 
                                                 class="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 rounded-b-lg">
                                             <i class="fas fa-trash mr-2"></i>Supprimer
                                         </button>
@@ -484,11 +524,11 @@ $rangs = getRangs();
                                         <?php echo $member['diplome_count']; ?>
                                     </td>
                                     <td class="px-4 py-3 text-center">
-                                        <button onclick="editMember(<?php echo htmlspecialchars(json_encode($member)); ?>)" 
+                                        <button onclick='editMember(<?php echo json_encode($member); ?>)' 
                                                 class="text-blue-400 hover:text-blue-300 mx-1" title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button onclick="manageDiplomes(<?php echo $member['id']; ?>, '<?php echo htmlspecialchars($member['discord_pseudo']); ?>')" 
+                                        <button onclick="manageDiplomes(<?php echo $member['id']; ?>, '<?php echo addslashes($member['discord_pseudo']); ?>')" 
                                                 class="text-green-400 hover:text-green-300 mx-1" title="Diplômes">
                                             <i class="fas fa-graduation-cap"></i>
                                         </button>
@@ -496,7 +536,7 @@ $rangs = getRangs();
                                                 class="text-yellow-400 hover:text-yellow-300 mx-1" title="Reset MDP">
                                             <i class="fas fa-key"></i>
                                         </button>
-                                        <button onclick="deleteMember(<?php echo $member['id']; ?>, '<?php echo htmlspecialchars($member['discord_pseudo']); ?>')" 
+                                        <button onclick="deleteMember(<?php echo $member['id']; ?>, '<?php echo addslashes($member['discord_pseudo']); ?>')" 
                                                 class="text-red-400 hover:text-red-300 mx-1" title="Supprimer">
                                             <i class="fas fa-trash"></i>
                                         </button>
@@ -521,25 +561,25 @@ $rangs = getRangs();
     <div id="modal-create-member" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <h2 class="text-2xl font-bold text-white mb-6">Créer un nouveau membre</h2>
-            <form method="POST" class="space-y-4">
+            <form method="POST" class="space-y-4" onsubmit="return validateCreateForm()">
                 <input type="hidden" name="action" value="create_member">
                 
                 <div class="grid md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-white mb-2">Pseudo Discord *</label>
-                        <input type="text" name="discord_pseudo" required maxlength="100"
+                        <input type="text" name="discord_pseudo" id="create-discord-pseudo" required maxlength="100"
                                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                     </div>
                     <div>
                         <label class="block text-white mb-2">Pseudo Roblox *</label>
-                        <input type="text" name="roblox_pseudo" required maxlength="100"
+                        <input type="text" name="roblox_pseudo" id="create-roblox-pseudo" required maxlength="100"
                                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                     </div>
                 </div>
                 
                 <div>
                     <label class="block text-white mb-2">Mot de passe (laisser vide = "Coalition")</label>
-                    <input type="password" name="password" maxlength="255"
+                    <input type="password" name="password" id="create-password" maxlength="255"
                            placeholder="Laisser vide pour mot de passe par défaut"
                            class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                 </div>
@@ -547,7 +587,7 @@ $rangs = getRangs();
                 <div class="grid md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-white mb-2">Grade *</label>
-                        <select name="grade" required 
+                        <select name="grade" id="create-grade" required 
                                 class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                             <?php foreach ($grades as $grade): ?>
                                 <option value="<?php echo htmlspecialchars($grade); ?>"><?php echo htmlspecialchars($grade); ?></option>
@@ -556,7 +596,7 @@ $rangs = getRangs();
                     </div>
                     <div>
                         <label class="block text-white mb-2">Rang *</label>
-                        <select name="rang" required 
+                        <select name="rang" id="create-rang" required 
                                 class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                             <?php foreach ($rangs as $rang): ?>
                                 <option value="<?php echo htmlspecialchars($rang); ?>"><?php echo htmlspecialchars($rang); ?></option>
@@ -565,14 +605,14 @@ $rangs = getRangs();
                     </div>
                     <div>
                         <label class="block text-white mb-2">KDR</label>
-                        <input type="number" name="kdr" step="0.01" min="0" value="0"
+                        <input type="number" name="kdr" id="create-kdr" step="0.01" min="0" value="0"
                                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                     </div>
                 </div>
                 
                 <div>
                     <label class="block text-white mb-2">Légion (optionnel)</label>
-                    <select name="legion_id" class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                    <select name="legion_id" id="create-legion-id" class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                         <option value="">Aucune légion</option>
                         <?php foreach ($legions as $legion): ?>
                             <option value="<?php echo $legion['id']; ?>"><?php echo htmlspecialchars($legion['nom']); ?></option>
@@ -591,7 +631,7 @@ $rangs = getRangs();
                     <button type="submit" class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition">
                         <i class="fas fa-user-plus mr-2"></i>Créer le membre
                     </button>
-                    <button type="button" onclick="document.getElementById('modal-create-member').classList.add('hidden')" 
+                    <button type="button" onclick="closeCreateMemberModal()" 
                             class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
                         Annuler
                     </button>
@@ -604,7 +644,7 @@ $rangs = getRangs();
     <div id="modal-edit-member" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <h2 class="text-2xl font-bold text-white mb-6">Modifier le membre</h2>
-            <form method="POST" class="space-y-4">
+            <form method="POST" class="space-y-4" onsubmit="return validateEditForm()">
                 <input type="hidden" name="action" value="edit_member">
                 <input type="hidden" name="member_id" id="edit-member-id">
                 
@@ -661,7 +701,7 @@ $rangs = getRangs();
                     <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition">
                         <i class="fas fa-save mr-2"></i>Enregistrer
                     </button>
-                    <button type="button" onclick="document.getElementById('modal-edit-member').classList.add('hidden')" 
+                    <button type="button" onclick="closeEditMemberModal()" 
                             class="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
                         Annuler
                     </button>
@@ -683,7 +723,7 @@ $rangs = getRangs();
                         <i class="fas fa-check-circle text-green-500 mr-2"></i>Diplômes obtenus
                     </h3>
                     <div id="diplomes-attribues" class="space-y-2 max-h-96 overflow-y-auto">
-                        <!-- Rempli par JavaScript -->
+                        <p class="text-gray-400 text-center py-4">Chargement...</p>
                     </div>
                 </div>
                 
@@ -692,45 +732,41 @@ $rangs = getRangs();
                     <h3 class="text-xl font-bold text-white mb-4">
                         <i class="fas fa-plus-circle text-blue-500 mr-2"></i>Attribuer un diplôme
                     </h3>
-                    <form method="POST" id="form-add-diplome">
-                        <input type="hidden" name="action" value="add_diplome">
-                        <input type="hidden" name="member_id" id="diplomes-member-id">
-                        
-                        <div class="space-y-4">
-                            <?php foreach ($diplomes_by_category as $category => $cat_diplomes): ?>
-                                <div>
-                                    <h4 class="text-white font-semibold mb-2">
-                                        <?php 
-                                        echo $category == 'aerien' ? '✈️ Aérien' : 
-                                             ($category == 'terrestre' ? '🎖️ Terrestre' : 
-                                             ($category == 'aeronaval' ? '🚢 Aéronaval' : 
-                                             ($category == 'formateur' ? '📚 Formateurs' : '⚔️ Élite')));
-                                        ?>
-                                    </h4>
-                                    <div class="space-y-2">
-                                        <?php foreach ($cat_diplomes as $diplome): ?>
-                                            <button type="button" 
-                                                    onclick="addDiplomeToMember(<?php echo $diplome['id']; ?>)"
-                                                    class="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition">
-                                                <div class="flex items-center justify-between">
-                                                    <div>
-                                                        <p class="text-white font-semibold"><?php echo htmlspecialchars($diplome['nom']); ?></p>
-                                                        <p class="text-gray-400 text-sm"><?php echo htmlspecialchars($diplome['code']); ?> - Niveau <?php echo $diplome['niveau']; ?></p>
-                                                    </div>
-                                                    <i class="fas fa-plus text-blue-400"></i>
+                    <div class="space-y-4 max-h-96 overflow-y-auto">
+                        <input type="hidden" id="diplomes-member-id">
+                        <?php foreach ($diplomes_by_category as $category => $cat_diplomes): ?>
+                            <div>
+                                <h4 class="text-white font-semibold mb-2">
+                                    <?php 
+                                    echo $category == 'aerien' ? '✈️ Aérien' : 
+                                         ($category == 'terrestre' ? '🎖️ Terrestre' : 
+                                         ($category == 'aeronaval' ? '🚢 Aéronaval' : 
+                                         ($category == 'formateur' ? '📚 Formateurs' : '⚔️ Élite')));
+                                    ?>
+                                </h4>
+                                <div class="space-y-2">
+                                    <?php foreach ($cat_diplomes as $diplome): ?>
+                                        <button type="button" 
+                                                onclick="addDiplomeToMember(<?php echo $diplome['id']; ?>)"
+                                                class="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded transition">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <p class="text-white font-semibold"><?php echo htmlspecialchars($diplome['nom']); ?></p>
+                                                    <p class="text-gray-400 text-sm"><?php echo htmlspecialchars($diplome['code']); ?> - Niveau <?php echo $diplome['niveau']; ?></p>
                                                 </div>
-                                            </button>
-                                        <?php endforeach; ?>
-                                    </div>
+                                                <i class="fas fa-plus text-blue-400"></i>
+                                            </div>
+                                        </button>
+                                    <?php endforeach; ?>
                                 </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </form>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
             
             <div class="mt-6">
-                <button type="button" onclick="document.getElementById('modal-manage-diplomes').classList.add('hidden')" 
+                <button type="button" onclick="closeDiplomesModal()" 
                         class="w-full bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition">
                     Fermer
                 </button>
@@ -740,6 +776,56 @@ $rangs = getRangs();
 
     <script>
     let currentMemberId = null;
+
+    // Fonctions de gestion des modals
+    function openCreateMemberModal() {
+        document.getElementById('modal-create-member').classList.remove('hidden');
+    }
+
+    function closeCreateMemberModal() {
+        document.getElementById('modal-create-member').classList.add('hidden');
+        // Reset form
+        document.getElementById('create-discord-pseudo').value = '';
+        document.getElementById('create-roblox-pseudo').value = '';
+        document.getElementById('create-password').value = '';
+        document.getElementById('create-kdr').value = '0';
+    }
+
+    function closeEditMemberModal() {
+        document.getElementById('modal-edit-member').classList.add('hidden');
+    }
+
+    function closeDiplomesModal() {
+        document.getElementById('modal-manage-diplomes').classList.add('hidden');
+        currentMemberId = null;
+    }
+
+    // Validation des formulaires
+    function validateCreateForm() {
+        const discordPseudo = document.getElementById('create-discord-pseudo').value.trim();
+        const robloxPseudo = document.getElementById('create-roblox-pseudo').value.trim();
+        const grade = document.getElementById('create-grade').value;
+        const rang = document.getElementById('create-rang').value;
+
+        if (!discordPseudo || !robloxPseudo || !grade || !rang) {
+            alert('Veuillez remplir tous les champs obligatoires.');
+            return false;
+        }
+        return true;
+    }
+
+    function validateEditForm() {
+        const discordPseudo = document.getElementById('edit-discord-pseudo').value.trim();
+        const robloxPseudo = document.getElementById('edit-roblox-pseudo').value.trim();
+        const grade = document.getElementById('edit-grade').value;
+        const rang = document.getElementById('edit-rang').value;
+
+        if (!discordPseudo || !robloxPseudo || !grade || !rang) {
+            alert('Veuillez remplir tous les champs obligatoires.');
+            return false;
+        }
+        return true;
+    }
 
     function toggleView(view) {
         const gridView = document.getElementById('view-grid');
@@ -828,11 +914,17 @@ $rangs = getRangs();
         document.getElementById('diplomes-member-name').textContent = 'Membre : ' + memberName;
         
         // Charger les diplômes du membre
+        const container = document.getElementById('diplomes-attribues');
+        container.innerHTML = '<p class="text-gray-400 text-center py-4">Chargement...</p>';
+        
         fetch(`get_member_diplomes.php?member_id=${memberId}`)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Erreur réseau');
+                }
+                return response.json();
+            })
             .then(data => {
-                const container = document.getElementById('diplomes-attribues');
-                
                 if (data.length === 0) {
                     container.innerHTML = '<p class="text-gray-400 text-center py-4">Aucun diplôme obtenu</p>';
                 } else {
@@ -844,7 +936,7 @@ $rangs = getRangs();
                                 <p class="text-gray-500 text-xs">Obtenu le ${diplome.obtained_at}</p>
                             </div>
                             <button onclick="removeDiplomeFromMember(${diplome.member_diplome_id})" 
-                                    class="text-red-400 hover:text-red-300 p-2">
+                                    class="text-red-400 hover:text-red-300 p-2" title="Retirer">
                                 <i class="fas fa-times"></i>
                             </button>
                         </div>
@@ -853,14 +945,18 @@ $rangs = getRangs();
             })
             .catch(error => {
                 console.error('Erreur:', error);
-                document.getElementById('diplomes-attribues').innerHTML = 
-                    '<p class="text-red-400">Erreur lors du chargement</p>';
+                container.innerHTML = '<p class="text-red-400 text-center py-4">Erreur lors du chargement des diplômes</p>';
             });
         
         document.getElementById('modal-manage-diplomes').classList.remove('hidden');
     }
 
     function addDiplomeToMember(diplomeId) {
+        if (!currentMemberId) {
+            alert('Erreur: Aucun membre sélectionné');
+            return;
+        }
+        
         const form = document.createElement('form');
         form.method = 'POST';
         form.innerHTML = `
@@ -884,9 +980,17 @@ $rangs = getRangs();
             form.submit();
         }
     }
+
+    // Fermer les modals avec Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeCreateMemberModal();
+            closeEditMemberModal();
+            closeDiplomesModal();
+        }
+    });
     </script>
 
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
-
