@@ -250,7 +250,7 @@ $rangs = getRangs();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion des Membres - CFWT Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href=".../css/all.min.css">
+    <link rel="stylesheet" href="css/all.min.css">
     <style>
         .member-card:hover { transform: translateY(-2px); transition: all 0.2s; }
     </style>
@@ -994,4 +994,5 @@ $rangs = getRangs();
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
+
 
