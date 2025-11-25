@@ -410,30 +410,6 @@ $rangs = getRangs();
                                         <?php echo htmlspecialchars($member['roblox_pseudo']); ?>
                                     </p>
                                 </div>
-                                <div class="relative">
-                                    <button onclick="toggleMenu('menu-<?php echo $member['id']; ?>')" 
-                                            class="text-gray-400 hover:text-white p-2">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <div id="menu-<?php echo $member['id']; ?>" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-10 border border-gray-700">
-                                        <button onclick='editMember(<?php echo htmlspecialchars(json_encode($member), ENT_QUOTES, 'UTF-8'); ?>)' 
-                                                class="w-full text-left px-4 py-2 text-white hover:bg-gray-700 rounded-t-lg">
-                                            <i class="fas fa-edit mr-2"></i>Modifier
-                                        </button>
-                                        <button onclick="manageDiplomes(<?php echo $member['id']; ?>, <?php echo htmlspecialchars(json_encode($member['discord_pseudo']), ENT_QUOTES, 'UTF-8'); ?>)" 
-                                                class="w-full text-left px-4 py-2 text-white hover:bg-gray-700">
-                                            <i class="fas fa-graduation-cap mr-2"></i>Diplômes
-                                        </button>
-                                        <button onclick="resetMemberPassword(<?php echo $member['id']; ?>)" 
-                                                class="w-full text-left px-4 py-2 text-yellow-400 hover:bg-gray-700">
-                                            <i class="fas fa-key mr-2"></i>Reset MDP
-                                        </button>
-                                        <button onclick="deleteMember(<?php echo $member['id']; ?>, <?php echo htmlspecialchars(json_encode($member['discord_pseudo']), ENT_QUOTES, 'UTF-8'); ?>)" 
-                                                class="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 rounded-b-lg">
-                                            <i class="fas fa-trash mr-2"></i>Supprimer
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
 
                             <div class="space-y-2 mb-4">
@@ -476,6 +452,30 @@ $rangs = getRangs();
                                         <?php echo date('d/m/Y', strtotime($member['created_at'])); ?>
                                     </span>
                                 </div>
+                            </div>
+                            
+                            <!-- Boutons d'action visibles -->
+                            <div class="border-t border-gray-600 mt-3 pt-3 flex justify-between gap-2">
+                                <button onclick='editMember(<?php echo htmlspecialchars(json_encode($member), ENT_QUOTES, 'UTF-8'); ?>)' 
+                                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm transition"
+                                        title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="manageDiplomes(<?php echo $member['id']; ?>, <?php echo htmlspecialchars(json_encode($member['discord_pseudo']), ENT_QUOTES, 'UTF-8'); ?>)" 
+                                        class="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm transition"
+                                        title="Diplômes">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </button>
+                                <button onclick="resetMemberPassword(<?php echo $member['id']; ?>)" 
+                                        class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-2 rounded text-sm transition"
+                                        title="Reset MDP">
+                                    <i class="fas fa-key"></i>
+                                </button>
+                                <button onclick="deleteMember(<?php echo $member['id']; ?>, <?php echo htmlspecialchars(json_encode($member['discord_pseudo']), ENT_QUOTES, 'UTF-8'); ?>)" 
+                                        class="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm transition"
+                                        title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
