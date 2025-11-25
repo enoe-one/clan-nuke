@@ -416,11 +416,11 @@ $rangs = getRangs();
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <div id="menu-<?php echo $member['id']; ?>" class="hidden absolute right-0 mt-2 w-48 bg-gray-800 rounded-lg shadow-xl z-10 border border-gray-700">
-                                        <button onclick='editMember(<?php echo json_encode($member); ?>)' 
+                                        <button onclick='editMember(<?php echo htmlspecialchars(json_encode($member), ENT_QUOTES, 'UTF-8'); ?>)' 
                                                 class="w-full text-left px-4 py-2 text-white hover:bg-gray-700 rounded-t-lg">
                                             <i class="fas fa-edit mr-2"></i>Modifier
                                         </button>
-                                        <button onclick="manageDiplomes(<?php echo $member['id']; ?>, '<?php echo addslashes($member['discord_pseudo']); ?>')" 
+                                        <button onclick="manageDiplomes(<?php echo $member['id']; ?>, <?php echo htmlspecialchars(json_encode($member['discord_pseudo']), ENT_QUOTES, 'UTF-8'); ?>)" 
                                                 class="w-full text-left px-4 py-2 text-white hover:bg-gray-700">
                                             <i class="fas fa-graduation-cap mr-2"></i>Diplômes
                                         </button>
@@ -428,7 +428,7 @@ $rangs = getRangs();
                                                 class="w-full text-left px-4 py-2 text-yellow-400 hover:bg-gray-700">
                                             <i class="fas fa-key mr-2"></i>Reset MDP
                                         </button>
-                                        <button onclick="deleteMember(<?php echo $member['id']; ?>, '<?php echo addslashes($member['discord_pseudo']); ?>')" 
+                                        <button onclick="deleteMember(<?php echo $member['id']; ?>, <?php echo htmlspecialchars(json_encode($member['discord_pseudo']), ENT_QUOTES, 'UTF-8'); ?>)" 
                                                 class="w-full text-left px-4 py-2 text-red-400 hover:bg-gray-700 rounded-b-lg">
                                             <i class="fas fa-trash mr-2"></i>Supprimer
                                         </button>
@@ -524,11 +524,11 @@ $rangs = getRangs();
                                         <?php echo $member['diplome_count']; ?>
                                     </td>
                                     <td class="px-4 py-3 text-center">
-                                        <button onclick='editMember(<?php echo json_encode($member); ?>)' 
+                                        <button onclick='editMember(<?php echo htmlspecialchars(json_encode($member), ENT_QUOTES, 'UTF-8'); ?>)' 
                                                 class="text-blue-400 hover:text-blue-300 mx-1" title="Modifier">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button onclick="manageDiplomes(<?php echo $member['id']; ?>, '<?php echo addslashes($member['discord_pseudo']); ?>')" 
+                                        <button onclick="manageDiplomes(<?php echo $member['id']; ?>, <?php echo htmlspecialchars(json_encode($member['discord_pseudo']), ENT_QUOTES, 'UTF-8'); ?>)" 
                                                 class="text-green-400 hover:text-green-300 mx-1" title="Diplômes">
                                             <i class="fas fa-graduation-cap"></i>
                                         </button>
@@ -536,7 +536,7 @@ $rangs = getRangs();
                                                 class="text-yellow-400 hover:text-yellow-300 mx-1" title="Reset MDP">
                                             <i class="fas fa-key"></i>
                                         </button>
-                                        <button onclick="deleteMember(<?php echo $member['id']; ?>, '<?php echo addslashes($member['discord_pseudo']); ?>')" 
+                                        <button onclick="deleteMember(<?php echo $member['id']; ?>, <?php echo htmlspecialchars(json_encode($member['discord_pseudo']), ENT_QUOTES, 'UTF-8'); ?>)" 
                                                 class="text-red-400 hover:text-red-300 mx-1" title="Supprimer">
                                             <i class="fas fa-trash"></i>
                                         </button>
