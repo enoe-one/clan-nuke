@@ -40,7 +40,7 @@ $error = '';
 // Traitement des actions (inscription/désinscription)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isMember()) {
     $action = $_POST['action'] ?? '';
-    $event_id = $_POST['event_id'] ?? 0;
+    $event_id = intval($_POST['event_id'] ?? 0);
     
     try {
         if ($action === 'register') {
@@ -87,8 +87,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isMember()) {
 }
 
 // Récupérer le mois/année à afficher
-$month = $_GET['month'] ?? date('n');
-$year = $_GET['year'] ?? date('Y');
+$month = intval($_GET['month'] ?? date('n'));
+$year = intval($_GET['year'] ?? date('Y'));
+
+// Validation du mois et de l'année
+if ($month < 1 || $month > 12) {
+    $month = date('n');
+}
+if ($year < 2000 || $year > 2100) {
+    $year = date('Y');
+}
 
 // Navigation mois précédent/suivant
 $prev_month = $month - 1;
@@ -106,7 +114,7 @@ if ($next_month > 12) {
 }
 
 // Récupérer les événements du mois
-$start_date = "$year-$month-01 00:00:00";
+$start_date = sprintf("%04d-%02d-01 00:00:00", $year, $month);
 $end_date = date('Y-m-t 23:59:59', strtotime($start_date));
 
 $stmt = $pdo->prepare("
@@ -181,7 +189,14 @@ $type_names = [
 $first_day_of_month = mktime(0, 0, 0, $month, 1, $year);
 $days_in_month = date('t', $first_day_of_month);
 $day_of_week = date('N', $first_day_of_month); // 1 (lundi) à 7 (dimanche)
-$month_name = strftime('%B %Y', $first_day_of_month);
+
+// Formatage du nom du mois en français
+$months_fr = [
+    1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril',
+    5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août',
+    9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'
+];
+$month_name = $months_fr[$month] . ' ' . $year;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -190,7 +205,7 @@ $month_name = strftime('%B %Y', $first_day_of_month);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendrier d'Événements - CFWT</title>
     <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="css/all.min.css">
+    <link rel="stylesheet" href="css/all.min.css">
     <style>
         .calendar-day {
             min-height: 120px;
@@ -213,29 +228,6 @@ $month_name = strftime('%B %Y', $first_day_of_month);
         }
         .event-today {
             animation: pulse-event 2s infinite;
-        }
-        @keyframes glow-important {
-            0%, 100% { 
-                box-shadow: 0 0 10px rgba(249, 115, 22, 0.5);
-                transform: scale(1);
-            }
-            50% { 
-                box-shadow: 0 0 20px rgba(249, 115, 22, 0.8);
-                transform: scale(1.02);
-            }
-        }
-        .event-important {
-            animation: glow-important 2s infinite;
-            font-weight: bold;
-        }
-        .important-banner {
-            background: linear-gradient(90deg, #ea580c, #f97316, #ea580c);
-            background-size: 200% 100%;
-            animation: gradient-shift 3s ease infinite;
-        }
-        @keyframes gradient-shift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
         }
     </style>
 </head>
@@ -294,18 +286,7 @@ $month_name = strftime('%B %Y', $first_day_of_month);
                             </a>
                             
                             <h2 class="text-2xl font-bold text-white capitalize">
-                                <?php 
-$date = new DateTime();
-$date->setDate($year, $month, 1);
-
-$formatter = new IntlDateFormatter(
-    'fr_FR', 
-    IntlDateFormatter::LONG, 
-    IntlDateFormatter::NONE
-);
-echo ucfirst($formatter->format($date)); // ex: Novembre 2025
-
-                                ?>
+                                <?php echo htmlspecialchars($month_name); ?>
                             </h2>
                             
                             <a href="?month=<?php echo $next_month; ?>&year=<?php echo $next_year; ?>" 
@@ -402,6 +383,13 @@ echo ucfirst($formatter->format($date)); // ex: Novembre 2025
                                     $is_registered = in_array($event['id'], $member_registrations);
                                     $is_full = $event['max_participants'] && $event['participant_count'] >= $event['max_participants'];
                                     $type_color = $type_colors[$event['type']];
+                                    
+                                    // Formatage de la date en français
+                                    $event_date = strtotime($event['date_start']);
+                                    $day_num = date('d', $event_date);
+                                    $month_num = date('n', $event_date);
+                                    $year_num = date('Y', $event_date);
+                                    $date_formatted = $day_num . ' ' . $months_fr[$month_num] . ' ' . $year_num;
                                     ?>
                                     <div class="bg-gray-700 rounded-lg p-4 border-l-4 border-<?php echo $type_color; ?>-500">
                                         <div class="flex items-start justify-between mb-2">
@@ -415,7 +403,7 @@ echo ucfirst($formatter->format($date)); // ex: Novembre 2025
                                         
                                         <div class="text-gray-300 text-sm mb-3">
                                             <i class="fas fa-calendar mr-1"></i>
-                                            <?php echo strftime('%d %B %Y', strtotime($event['date_start'])); ?>
+                                            <?php echo htmlspecialchars($date_formatted); ?>
                                             <br>
                                             <i class="fas fa-clock mr-1"></i>
                                             <?php echo date('H:i', strtotime($event['date_start'])); ?>
