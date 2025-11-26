@@ -21,7 +21,7 @@ if ($database_url) {
 
 // Configuration du site
 define('SITE_URL', getenv('RAILWAY_PUBLIC_DOMAIN') ? 'https://' . getenv('RAILWAY_PUBLIC_DOMAIN') : 'http://localhost');
-define('DISCORD_INVITE', 'https://discord.gg/Jt24qeYk');
+define('DISCORD_INVITE', 'https://discord.gg/bDVhdsyW');
 
 // Sécurité des sessions
 ini_set('session.cookie_httponly', 1);
@@ -262,3 +262,4 @@ function validateCSRFToken($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 ?>
+
