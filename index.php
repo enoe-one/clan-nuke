@@ -37,8 +37,6 @@ if ($appearance['background_style'] == 'gradient') {
     <meta name="description" content="<?php echo htmlspecialchars($appearance['site_description']); ?>">
     <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="css/all.min.css">
-    <meta name="google-site-verification" content="vLwQTeKKiHStTkVgExen8F9nnXXr6OWfmft95-wAbSU" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
 </head>
 <body class="<?php echo $background_class; ?>">
     <?php include 'includes/header.php'; ?>
@@ -54,13 +52,14 @@ if ($appearance['background_style'] == 'gradient') {
                     <i class="fas fa-shield-alt text-9xl mb-6" style="color: <?php echo htmlspecialchars($appearance['primary_color']); ?>"></i>
                 <?php endif; ?>
                 
-<h1 class="text-6xl font-bold text-white mb-4">CFWT - Coalition Française de Wars Tycoon</h1>
-<h2 class="text-3xl mb-8" style="color: <?php echo htmlspecialchars($appearance['primary_color']); ?>">
-    Clan Magna de la Guerre | Coalition Française Magna de la Guerre
-</h2>
-<p class="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
-    <?php echo htmlspecialchars($appearance['site_description'] ?? 'Rejoignez CFWT, la meilleure coalition française de Wars Tycoon sur Roblox. Stratégies, combats coordonnés et communauté active au rendez-vous.'); ?>
-</p>   
+                <h1 class="text-6xl font-bold text-white mb-4">CFWT</h1>
+                <h2 class="text-3xl mb-8" style="color: <?php echo htmlspecialchars($appearance['primary_color']); ?>">
+                    Coalition Française de Wars Tycoon
+                </h2>
+                <p class="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
+                    <?php echo htmlspecialchars($appearance['site_description']); ?>
+                </p>
+            </div>
 
             <!-- Discord -->
             <div class="bg-gray-800 rounded-lg p-6 mb-8 border-2" style="border-color: <?php echo htmlspecialchars($appearance['primary_color']); ?>">
@@ -146,11 +145,5 @@ if ($appearance['background_style'] == 'gradient') {
     <?php include 'includes/footer.php'; ?>
 </body>
 </html>
-
-
-
-
-
-
 
 
