@@ -155,12 +155,31 @@ if (in_array($_SESSION['role'], ['etat_major', 'chef', 'super_admin'])) {
                         <p class="text-gray-400 mb-4">Toutes les données et logs</p>
                     </a>
                 <?php endif; ?>
+<!-- Ajouter cette carte dans la grille du dashboard admin, après les autres cartes -->
+
+<?php
+// Compter les demandes de promotion en attente
+$stmt = $pdo->query("SELECT COUNT(*) FROM promotion_requests WHERE status = 'pending'");
+$pending_promotions = $stmt->fetchColumn();
+?>
+
+<?php if (hasAccess('access_edit_members')): ?>
+    <a href="manage_promotions.php" class="bg-gray-800 p-6 rounded-lg border-t-4 border-green-500 hover:bg-gray-700 transition">
+        <i class="fas fa-arrow-up text-green-500 text-5xl mb-4"></i>
+        <h3 class="text-xl font-bold text-white mb-2">Demandes de Promotion</h3>
+        <p class="text-gray-400 mb-4">Gérer les demandes de grade/rang</p>
+        <span class="bg-green-600 text-white px-3 py-1 rounded-full text-sm">
+            <?php echo $pending_promotions; ?> en attente
+        </span>
+    </a>
+<?php endif; ?>
 
                 <a href="manage_events.php" class="bg-gray-800 p-6 rounded-lg border-t-4 border-indigo-500 hover:bg-gray-700 transition">
                     <i class="fas fa-calendar-plus text-indigo-500 text-5xl mb-4"></i>
                     <h3 class="text-xl font-bold text-white mb-2">Gérer les Événements</h3>
                     <p class="text-gray-400 mb-4">Créer raids, formations et réunions</p>
                 </a>
+                
 
                 <a href="logs.php" class="bg-gray-800 p-6 rounded-lg border-t-4 border-gray-500 hover:bg-gray-700 transition">
                     <i class="fas fa-history text-gray-500 text-5xl mb-4"></i>
@@ -196,4 +215,5 @@ if (in_array($_SESSION['role'], ['etat_major', 'chef', 'super_admin'])) {
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
+
 
