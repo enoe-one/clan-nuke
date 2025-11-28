@@ -27,25 +27,10 @@ $stmt = $pdo->prepare("
 $stmt->execute([$_SESSION['member_id']]);
 $member_diplomes = $stmt->fetchAll();
 
-// Récupérer le nombre de messages non lus
-$unread_count = 0;
-try {
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE recipient_id = ? AND is_read = 0");
-    $stmt->execute([$_SESSION['member_id']]);
-    $unread_count = $stmt->fetchColumn();
-} catch (PDOException $e) {
-    // Table messages n'existe pas encore
-}
-
-// Récupérer le nombre de demandes de diplômes en attente
-$pending_requests = 0;
-try {
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM diplome_requests WHERE member_id = ? AND status = 'pending'");
-    $stmt->execute([$_SESSION['member_id']]);
-    $pending_requests = $stmt->fetchColumn();
-} catch (PDOException $e) {
-    // Table n'existe pas encore
-}
+// Vérifier s'il y a une demande de promotion en attente
+$stmt = $pdo->prepare("SELECT COUNT(*) FROM promotion_requests WHERE member_id = ? AND status = 'pending'");
+$stmt->execute([$_SESSION['member_id']]);
+$has_pending_promotion = $stmt->fetchColumn() > 0;
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -54,7 +39,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mon Profil - CFWT</title>
     <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-900">
     <?php include '../includes/header.php'; ?>
@@ -76,6 +61,18 @@ try {
                     </p>
                     <a href="change_password.php" class="text-yellow-200 underline hover:text-yellow-100">
                         Changer mon mot de passe maintenant
+                    </a>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($has_pending_promotion): ?>
+                <div class="bg-blue-900 bg-opacity-30 border border-blue-500 p-4 rounded-lg mb-6">
+                    <p class="text-blue-300 font-semibold">
+                        <i class="fas fa-clock mr-2"></i>
+                        Vous avez une demande de promotion en attente d'examen
+                    </p>
+                    <a href="request_promotion.php" class="text-blue-200 underline hover:text-blue-100">
+                        Voir ma demande
                     </a>
                 </div>
             <?php endif; ?>
@@ -157,7 +154,19 @@ try {
             </div>
 
             <!-- Actions rapides -->
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid md:grid-cols-3 gap-6">
+                <a href="request_promotion.php" 
+                   class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-green-500 relative">
+                    <?php if ($has_pending_promotion): ?>
+                        <span class="absolute top-2 right-2 bg-yellow-500 text-gray-900 px-2 py-1 rounded-full text-xs font-bold">
+                            <i class="fas fa-clock mr-1"></i>En attente
+                        </span>
+                    <?php endif; ?>
+                    <i class="fas fa-arrow-up text-green-500 text-4xl mb-3"></i>
+                    <h3 class="text-xl font-bold text-white mb-2">Demander une promotion</h3>
+                    <p class="text-gray-400">Grade ou rang supérieur</p>
+                </a>
+
                 <a href="change_password.php" 
                    class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-blue-500">
                     <i class="fas fa-key text-blue-500 text-4xl mb-3"></i>
@@ -171,39 +180,9 @@ try {
                     <h3 class="text-xl font-bold text-white mb-2">Rejoindre le Discord</h3>
                     <p class="text-gray-400">Communauté CFWT</p>
                 </a>
-
-                <!-- Bouton Messagerie -->
-                <a href="../messages.php"
-                   class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-green-500 relative">
-                    <?php if ($unread_count > 0): ?>
-                        <span class="absolute top-4 right-4 bg-red-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse">
-                            <?php echo $unread_count > 9 ? '9+' : $unread_count; ?>
-                        </span>
-                    <?php endif; ?>
-                    <i class="fas fa-envelope text-green-500 text-4xl mb-3"></i>
-                    <h3 class="text-xl font-bold text-white mb-2">Messagerie</h3>
-                    <p class="text-gray-400">
-                        <?php echo $unread_count > 0 ? "$unread_count nouveau(x)" : 'Consultez vos messages'; ?>
-                    </p>
-                </a>
-
-                <!-- Demandes de diplômes -->
-                <a href="../diplomes.php"
-                   class="bg-gray-800 p-6 rounded-lg hover:bg-gray-750 transition text-center border-2 border-cyan-500 relative">
-                    <?php if ($pending_requests > 0): ?>
-                        <span class="absolute top-4 right-4 bg-yellow-600 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center">
-                            <?php echo $pending_requests; ?>
-                        </span>
-                    <?php endif; ?>
-                    <i class="fas fa-graduation-cap text-cyan-500 text-4xl mb-3"></i>
-                    <h3 class="text-xl font-bold text-white mb-2">Demander un diplôme</h3>
-                    <p class="text-gray-400">
-                        <?php echo $pending_requests > 0 ? "$pending_requests en attente" : 'Voir les diplômes'; ?>
-                    </p>
-                </a>
             </div>
 
-            <!-- Historique d'activité -->
+            <!-- Historique d'activité (futur) -->
             <div class="bg-gray-800 p-6 rounded-lg mt-6">
                 <h2 class="text-2xl font-bold text-white mb-4">
                     <i class="fas fa-history mr-2"></i> Activité récente
@@ -219,7 +198,3 @@ try {
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
-
-
-
-
