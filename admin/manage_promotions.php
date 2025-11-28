@@ -1,7 +1,7 @@
 <?php
 require_once '../config.php';
 
-if (!isAdmin()) {
+if (!isAdmin() || !hasAccess('access_edit_members')) {
     header('Location: ../login.php');
     exit;
 }
@@ -98,7 +98,7 @@ $history = $stmt->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion des Promotions - CFWT Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="css/all.min.css">
+        <link rel="stylesheet" href="css/all.min.css">
 </head>
 <body class="bg-gray-900">
     <?php include '../includes/header.php'; ?>
