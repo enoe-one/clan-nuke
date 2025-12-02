@@ -212,7 +212,7 @@ $stats = [
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-900">
-    <?php include '/includes/header.php'; ?>
+    <?php include 'includes/header.php'; ?>
     
     <div class="min-h-screen py-12">
         <div class="max-w-7xl mx-auto px-4">
@@ -641,6 +641,6 @@ $stats = [
     });
     </script>
 
-    <?php include '/includes/footer.php'; ?>
+    <?php include 'includes/footer.php'; ?>
 </body>
 </html>
