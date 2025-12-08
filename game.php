@@ -427,7 +427,7 @@ $appearance = getAppearanceSettings($pdo);
         tank: { health: 150, speed: 0.6, reward: 20, icon: 'fa-shield', color: 'text-blue-400' },
         aerial: { health: 30, speed: 1.5, reward: 15, icon: 'fa-plane', color: 'text-cyan-400', flying: true },
         boss: { health: 500, speed: 0.8, reward: 100, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
-        panda: { health: 100000, speed: 0.5, reward: 1000, icon: 'fa-paw', color: 'text-pink-400', size: 3, boss: true }
+        panda: { health: 1000000, speed: 0.4, reward: 100000, icon: 'fa-paw', color: 'text-pink-400', size: 3, boss: true }
     };
 
     const ABILITIES = {
@@ -1233,4 +1233,5 @@ $appearance = getAppearanceSettings($pdo);
     </script>
 </body>
 </html>
+
 
