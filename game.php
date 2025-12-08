@@ -422,12 +422,12 @@ $appearance = getAppearanceSettings($pdo);
     };
 
     const ENEMY_TYPES = {
-        normal: { health: 40, speed: 1.2, reward: 15, icon: 'fa-user-ninja', color: 'text-red-400' },
-        runner: { health: 20, speed: 2.5, reward: 20, icon: 'fa-running', color: 'text-yellow-400' },
-        tank: { health: 150, speed: 0.6, reward: 40, icon: 'fa-shield', color: 'text-blue-400' },
-        aerial: { health: 30, speed: 1.5, reward: 25, icon: 'fa-plane', color: 'text-cyan-400', flying: true },
-        boss: { health: 500, speed: 0.8, reward: 200, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
-        panda: { health: 2000, speed: 0.5, reward: 1000, icon: 'fa-paw', color: 'text-pink-400', size: 3, boss: true }
+        normal: { health: 40, speed: 1.2, reward: 5, icon: 'fa-user-ninja', color: 'text-red-400' },
+        runner: { health: 20, speed: 2.5, reward: 10, icon: 'fa-running', color: 'text-yellow-400' },
+        tank: { health: 150, speed: 0.6, reward: 20, icon: 'fa-shield', color: 'text-blue-400' },
+        aerial: { health: 30, speed: 1.5, reward: 15, icon: 'fa-plane', color: 'text-cyan-400', flying: true },
+        boss: { health: 500, speed: 0.8, reward: 100, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
+        panda: { health: 100000, speed: 0.5, reward: 1000, icon: 'fa-paw', color: 'text-pink-400', size: 3, boss: true }
     };
 
     const ABILITIES = {
@@ -1233,3 +1233,4 @@ $appearance = getAppearanceSettings($pdo);
     </script>
 </body>
 </html>
+
