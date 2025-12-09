@@ -303,7 +303,7 @@ $appearance = getAppearanceSettings($pdo);
                     <button onclick="useAbility('reinforcement')" id="ability-reinforcement" class="ability-btn relative flex-1 min-w-[140px] bg-green-700 hover:bg-green-600 p-4 rounded-lg text-white transition">
                         <i class="fas fa-helicopter text-3xl mb-2"></i>
                         <p class="font-bold">Renforts</p>
-                        <p class="text-yellow-400 text-sm">💰 200</p>
+                        <p class="text-yellow-400 text-sm">💰 5000</p>
                         <p class="text-xs mt-1">Cooldown: 90s</p>
                     </button>
                 </div>
@@ -435,7 +435,7 @@ $appearance = getAppearanceSettings($pdo);
         airstrike: { cost: 150, cooldown: 45000, damage: 150, radius: 100 },
         freeze: { cost: 100, cooldown: 30000, duration: 5000 },
         boost: { cost: 120, cooldown: 60000, duration: 10000, multiplier: 2 },
-        reinforcement: { cost: 200, cooldown: 90000, duration: 15000 }
+        reinforcement: { cost: 20à0, cooldown: 90000, duration: 15000 }
     };
 
     // Variables du jeu
@@ -466,15 +466,15 @@ $appearance = getAppearanceSettings($pdo);
         
         // Ajuster les paramètres selon la difficulté
         if (difficulty === 'easy') {
-            gameState.money = 800;
+            gameState.money = 8000;
             gameState.baseHealth = 150;
             gameState.maxBaseHealth = 150;
         } else if (difficulty === 'medium') {
-            gameState.money = 600;
+            gameState.money = 2000;
             gameState.baseHealth = 100;
             gameState.maxBaseHealth = 100;
         } else if (difficulty === 'hard') {
-            gameState.money = 400;
+            gameState.money = 500;
             gameState.baseHealth = 15;
             gameState.maxBaseHealth = 15;
         }
@@ -1071,7 +1071,7 @@ if (forceType) {
                     x: endPath.x * CELL_SIZE + CELL_SIZE / 2,
                     y: endPath.y * CELL_SIZE + CELL_SIZE / 2,
                     pathIndex: gameState.path.length - 1,
-                    damage: 30,
+                    damage: 3000,
                     expiresAt: now + ABILITIES.reinforcement.duration + (i * 500),
                     id: Date.now() + Math.random()
                 };
@@ -1271,6 +1271,7 @@ if (forceType) {
     </script>
 </body>
 </html>
+
 
 
 
