@@ -435,7 +435,7 @@ $appearance = getAppearanceSettings($pdo);
         airstrike: { cost: 150, cooldown: 45000, damage: 150, radius: 100 },
         freeze: { cost: 100, cooldown: 30000, duration: 5000 },
         boost: { cost: 120, cooldown: 60000, duration: 10000, multiplier: 2 },
-        reinforcement: { cost: 20à0, cooldown: 90000, duration: 15000 }
+        reinforcement: { cost: 5000, cooldown: 90000, duration: 15000 }
     };
 
     // Variables du jeu
@@ -1271,6 +1271,7 @@ if (forceType) {
     </script>
 </body>
 </html>
+
 
 
 
