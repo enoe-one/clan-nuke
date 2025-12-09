@@ -423,11 +423,12 @@ $appearance = getAppearanceSettings($pdo);
 
     const ENEMY_TYPES = {
         normal: { health: 40, speed: 1.2, reward: 5, icon: 'fa-user-ninja', color: 'text-red-400' },
-        runner: { health: 20, speed: 2.5, reward: 10, icon: 'fa-running', color: 'text-yellow-400' },
+        runner: { health: 20, speed: 4.5, reward: 10, icon: 'fa-running', color: 'text-yellow-400' },
         tank: { health: 150, speed: 0.6, reward: 20, icon: 'fa-shield', color: 'text-blue-400' },
-        aerial: { health: 30, speed: 1.5, reward: 15, icon: 'fa-plane', color: 'text-cyan-400', flying: true },
-        boss: { health: 500, speed: 0.8, reward: 100, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
-        panda: { health: 1000000, speed: 0.4, reward: 100000, icon: 'fa-paw', color: 'text-pink-400', size: 3, boss: true }
+        aerial: { health: 300, speed: 2, reward: 15, icon: 'fa-plane', color: 'text-cyan-400', flying: true },
+        aerialboss: { health: 1500, speed: 1.5, reward: 30, icon: 'fa-plane', color: 'text-cyan-400',size: 2 ,flying: true },
+        boss: { health: 1000, speed: 0.8, reward: 100, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
+        panda: { health: 5000000, speed: 0.5, reward: 100000, icon: 'fa-paw', color: 'text-pink-400', size: 3, boss: true }
     };
 
     const ABILITIES = {
@@ -474,8 +475,8 @@ $appearance = getAppearanceSettings($pdo);
             gameState.maxBaseHealth = 100;
         } else if (difficulty === 'hard') {
             gameState.money = 400;
-            gameState.baseHealth = 75;
-            gameState.maxBaseHealth = 75;
+            gameState.baseHealth = 15;
+            gameState.maxBaseHealth = 15;
         }
         
         document.getElementById('start-screen').classList.add('hidden');
@@ -643,20 +644,57 @@ $appearance = getAppearanceSettings($pdo);
     function spawnEnemy(wave, forceType = null) {
         const startPos = gameState.path[0];
         
-        let type;
-        if (forceType) {
-            type = forceType;
+let type;
+
+if (forceType) {
+    type = forceType;
+
+} else {
+    const rand = Math.random();
+    let chanceBoss = 0;
+    let chanceAerialBoss = 0;
+
+    // --- Boss normal (sol) ---
+    if (wave >= 5) {
+        chanceBoss = Math.min(0.02 * (wave - 4), 0.25);
+    }
+
+    // --- Boss aérien ---
+    if (wave >= 10) {
+        chanceAerialBoss = Math.min(0.01 * (wave - 9), 0.15);
+    }
+
+    // Total chance boss
+    const totalBossChance = chanceBoss + chanceAerialBoss;
+
+    // Si tirage tombe dans la zone "boss"
+    if (rand < chanceBoss) {
+        type = 'boss';
+    } else if (rand < chanceBoss + chanceAerialBoss) {
+        type = 'aerialboss';
+    } else {
+        // --- Ennemis normaux (le reste du tirage) ---
+        const r = Math.random();
+
+        if (wave < 5) {
+            // Début du jeu = simple
+            type = r < 0.7 ? 'normal'
+                 : (r < 0.9 ? 'runner' : 'tank');
+
+        } else if (wave < 10) {
+            type = r < 0.5 ? 'normal'
+                 : (r < 0.7 ? 'runner'
+                 : (r < 0.9 ? 'tank' : 'aerial'));
+
         } else {
-            const rand = Math.random();
-            if (wave < 5) {
-                type = rand < 0.7 ? 'normal' : (rand < 0.9 ? 'runner' : 'tank');
-            } else if (wave < 10) {
-                type = rand < 0.4 ? 'normal' : (rand < 0.6 ? 'runner' : (rand < 0.8 ? 'tank' : 'aerial'));
-            } else {
-                type = rand < 0.25 ? 'normal' : (rand < 0.45 ? 'runner' : (rand < 0.65 ? 'tank' : (rand < 0.85 ? 'aerial' : 'boss')));
-            }
+            type = r < 0.45 ? 'normal'
+                 : (r < 0.65 ? 'runner'
+                 : (r < 0.85 ? 'tank'
+                 : 'aerial'));
         }
-        
+    }
+}
+
         const enemyTemplate = ENEMY_TYPES[type];
         const healthMultiplier = 1 + (wave * 0.15);
         
@@ -1233,5 +1271,6 @@ $appearance = getAppearanceSettings($pdo);
     </script>
 </body>
 </html>
+
 
 
