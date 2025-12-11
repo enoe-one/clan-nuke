@@ -10,7 +10,7 @@ $appearance = getAppearanceSettings($pdo);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base Defense - CFWT Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
-   <link rel="stylesheet" href="css/all.min.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -35,6 +35,20 @@ $appearance = getAppearanceSettings($pdo);
             right: -10px;
             font-size: 20px;
             animation: pulse 1s infinite;
+        }
+        
+        .tower.generator::after {
+            content: '💰';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 16px;
+            animation: moneyFloat 2s infinite;
+        }
+        
+        @keyframes moneyFloat {
+            0%, 100% { transform: translateY(0); opacity: 1; }
+            50% { transform: translateY(-10px); opacity: 0.6; }
         }
         
         .enemy-unit {
@@ -149,11 +163,143 @@ $appearance = getAppearanceSettings($pdo);
             animation: bossShake 0.5s infinite;
             filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.8));
         }
+        
+        .admin-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #fbbf24;
+            border-radius: 12px;
+            padding: 16px;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        @keyframes adminGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(251, 191, 36, 0.8); }
+        }
+        
+        .admin-btn {
+            animation: adminGlow 2s infinite;
+        }
+        
+        .nuke-warning {
+            animation: nukeFlash 0.5s infinite;
+        }
+        
+        @keyframes nukeFlash {
+            0%, 100% { background: #dc2626; }
+            50% { background: #991b1b; }
+        }
     </style>
 </head>
-<body>
-    <?php include 'includes/header.php'; ?>
+<body class="min-h-screen py-12">
     <div class="max-w-7xl mx-auto px-4">
+        <!-- Admin Panel Advanced (visible only for Enoe) -->
+        <div id="admin-panel" class="admin-panel hidden">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center">
+                    <i class="fas fa-crown text-yellow-400 text-xl mr-2"></i>
+                    <h3 class="text-yellow-400 font-bold text-lg">Admin Control Panel</h3>
+                </div>
+                <button onclick="toggleAdminPanel()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="mb-4">
+                <h4 class="text-white font-bold mb-2 text-sm">⚡ Actions Rapides</h4>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="adminAddMoney()" class="admin-btn bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded text-sm font-bold transition">
+                        <i class="fas fa-money-bill-wave mr-1"></i>+1000 💰
+                    </button>
+                    <button onclick="adminSkipWave()" class="admin-btn bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded text-sm font-bold transition">
+                        <i class="fas fa-forward mr-1"></i>Skip
+                    </button>
+                    <button onclick="adminKillAll()" class="admin-btn bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded text-sm font-bold transition">
+                        <i class="fas fa-skull mr-1"></i>Kill All
+                    </button>
+                    <button onclick="adminHealBase()" class="admin-btn bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded text-sm font-bold transition">
+                        <i class="fas fa-heart mr-1"></i>Heal
+                    </button>
+                </div>
+            </div>
+            
+            <!-- God Mode -->
+            <div class="mb-4">
+                <button onclick="adminGodMode()" id="god-mode-btn" class="admin-btn w-full bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded font-bold transition">
+                    <i class="fas fa-shield-alt mr-2"></i>God Mode: OFF
+                </button>
+            </div>
+            
+            <!-- Enemy Spawner -->
+            <div class="mb-4 bg-gray-800 p-3 rounded">
+                <h4 class="text-white font-bold mb-2 text-sm">👾 Spawn Ennemis</h4>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <button onclick="adminSpawnEnemy('normal')" class="bg-red-700 hover:bg-red-600 text-white px-2 py-1 rounded text-xs">
+                        <i class="fas fa-user-ninja mr-1"></i>Normal
+                    </button>
+                    <button onclick="adminSpawnEnemy('runner')" class="bg-yellow-700 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs">
+                        <i class="fas fa-running mr-1"></i>Runner
+                    </button>
+                    <button onclick="adminSpawnEnemy('tank')" class="bg-blue-700 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs">
+                        <i class="fas fa-shield mr-1"></i>Tank
+                    </button>
+                    <button onclick="adminSpawnEnemy('aerial')" class="bg-cyan-700 hover:bg-cyan-600 text-white px-2 py-1 rounded text-xs">
+                        <i class="fas fa-plane mr-1"></i>Aérien
+                    </button>
+                    <button onclick="adminSpawnEnemy('boss')" class="bg-purple-700 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs">
+                        <i class="fas fa-dragon mr-1"></i>Boss
+                    </button>
+                    <button onclick="adminSpawnEnemy('airboss')" class="bg-indigo-700 hover:bg-indigo-600 text-white px-2 py-1 rounded text-xs">
+                        <i class="fas fa-plane-departure mr-1"></i>Air Boss
+                    </button>
+                    <button onclick="adminSpawnEnemy('panda')" class="bg-pink-700 hover:bg-pink-600 text-white px-2 py-1 rounded text-xs">
+                        <i class="fas fa-paw mr-1"></i>Panda
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="adminSpawnWave()" class="flex-1 bg-orange-700 hover:bg-orange-600 text-white px-2 py-1 rounded text-xs">
+                        <i class="fas fa-users mr-1"></i>Spawn Vague x10
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Special Abilities -->
+            <div class="mb-4 bg-gray-800 p-3 rounded">
+                <h4 class="text-white font-bold mb-2 text-sm">✨ Capacités Admin</h4>
+                <div class="space-y-2">
+                    <button onclick="adminUseAbility('airstrike')" class="w-full bg-orange-600 hover:bg-orange-500 text-white px-3 py-2 rounded text-xs">
+                        <i class="fas fa-bomb mr-1"></i>Frappe Aérienne
+                    </button>
+                    <button onclick="adminUseAbility('freeze')" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-2 rounded text-xs">
+                        <i class="fas fa-snowflake mr-1"></i>Gel Global
+                    </button>
+                    <button onclick="adminUseAbility('boost')" class="w-full bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-2 rounded text-xs">
+                        <i class="fas fa-bolt mr-1"></i>Boost Tours
+                    </button>
+                    <button onclick="adminUseAbility('reinforcement')" class="w-full bg-green-600 hover:bg-green-500 text-white px-3 py-2 rounded text-xs">
+                        <i class="fas fa-helicopter mr-1"></i>Renforts
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Game Stats -->
+            <div class="bg-gray-800 p-3 rounded">
+                <h4 class="text-white font-bold mb-2 text-sm">📊 Statistiques</h4>
+                <div class="text-xs space-y-1 text-gray-300">
+                    <p>Ennemis actifs: <span id="admin-enemy-count" class="text-red-400 font-bold">0</span></p>
+                    <p>Tours actives: <span id="admin-tower-count" class="text-blue-400 font-bold">0</span></p>
+                    <p>Projectiles: <span id="admin-projectile-count" class="text-yellow-400 font-bold">0</span></p>
+                </div>
+            </div>
+        </div>
+
         <!-- En-tête -->
         <div class="text-center mb-8">
             <h1 class="text-5xl font-bold text-white mb-4">
@@ -161,6 +307,11 @@ $appearance = getAppearanceSettings($pdo);
                 Base Defense Enhanced
             </h1>
             <p class="text-gray-400 text-xl">Protégez votre base contre les vagues d'ennemis !</p>
+            <?php if (isset($_SESSION['username']) && strtolower($_SESSION['username']) === 'enoe'): ?>
+                <button onclick="toggleAdminPanel()" class="mt-4 bg-gradient-to-r from-yellow-600 to-orange-600 text-white px-6 py-2 rounded-lg font-bold hover:from-yellow-700 hover:to-orange-700 transition">
+                    <i class="fas fa-crown mr-2"></i>Ouvrir Admin Panel
+                </button>
+            <?php endif; ?>
         </div>
 
         <!-- Écran d'accueil -->
@@ -173,74 +324,77 @@ $appearance = getAppearanceSettings($pdo);
                     <button onclick="startGame('easy')" class="bg-green-700 hover:bg-green-600 p-8 rounded-lg transition transform hover:scale-105">
                         <i class="fas fa-smile text-6xl mb-4 text-green-300"></i>
                         <h3 class="text-white font-bold text-2xl mb-2">Facile</h3>
-                        <p class="text-gray-300">Argent: 800</p>
-                        <p class="text-gray-300">Vie base: 150</p>
+                        <p class="text-gray-300">Argent: 1000</p>
+                        <p class="text-gray-300">Vie base: 200</p>
+                        <p class="text-gray-300">25 vagues</p>
                     </button>
                     <button onclick="startGame('medium')" class="bg-yellow-700 hover:bg-yellow-600 p-8 rounded-lg transition transform hover:scale-105">
                         <i class="fas fa-meh text-6xl mb-4 text-yellow-300"></i>
                         <h3 class="text-white font-bold text-2xl mb-2">Normal</h3>
                         <p class="text-gray-300">Argent: 600</p>
                         <p class="text-gray-300">Vie base: 100</p>
+                        <p class="text-gray-300">30 vagues</p>
                     </button>
                     <button onclick="startGame('hard')" class="bg-red-700 hover:bg-red-600 p-8 rounded-lg transition transform hover:scale-105">
                         <i class="fas fa-skull text-6xl mb-4 text-red-300"></i>
-                        <h3 class="text-white font-bold text-2xl mb-2">Difficile</h3>
-                        <p class="text-gray-300">Argent: 400</p>
-                        <p class="text-gray-300">Vie base: 75</p>
-                        <p class="text-red-300 font-bold mt-2">Boss Panda Final!</p>
+                        <h3 class="text-white font-bold text-2xl mb-2">💀 HARDCORE 💀</h3>
+                        <p class="text-gray-300">Argent: 300</p>
+                        <p class="text-gray-300">Vie base: 50</p>
+                        <p class="text-red-300 font-bold mt-2">35 vagues</p>
+                        <p class="text-red-300 font-bold">Boss Panda 1M PV!</p>
                     </button>
                 </div>
 
                 <div class="bg-gray-800 p-6 rounded-lg mb-6">
                     <h3 class="text-white font-bold mb-4 text-xl">Types d'Ennemis</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+                    <div class="grid grid-cols-2 md:grid-cols-6 gap-3 text-sm">
                         <div class="bg-gray-700 p-3 rounded">
                             <i class="fas fa-user-ninja text-red-400 text-2xl mb-2"></i>
                             <p class="text-white font-bold">Normal</p>
-                            <p class="text-gray-400">Équilibré</p>
                         </div>
                         <div class="bg-gray-700 p-3 rounded">
                             <i class="fas fa-running text-yellow-400 text-2xl mb-2"></i>
                             <p class="text-white font-bold">Runner</p>
-                            <p class="text-gray-400">Très rapide</p>
                         </div>
                         <div class="bg-gray-700 p-3 rounded">
                             <i class="fas fa-shield text-blue-400 text-2xl mb-2"></i>
                             <p class="text-white font-bold">Tank</p>
-                            <p class="text-gray-400">Beaucoup de PV</p>
                         </div>
                         <div class="bg-gray-700 p-3 rounded">
                             <i class="fas fa-plane text-cyan-400 text-2xl mb-2"></i>
                             <p class="text-white font-bold">Aérien</p>
-                            <p class="text-gray-400">Vole au-dessus</p>
                         </div>
                         <div class="bg-gray-700 p-3 rounded">
                             <i class="fas fa-dragon text-purple-400 text-2xl mb-2"></i>
                             <p class="text-white font-bold">Boss</p>
-                            <p class="text-gray-400">Très puissant</p>
+                        </div>
+                        <div class="bg-gray-700 p-3 rounded">
+                            <i class="fas fa-plane-departure text-indigo-400 text-2xl mb-2"></i>
+                            <p class="text-white font-bold">Air Boss</p>
+                            <p class="text-gray-400 text-xs">1000 PV!</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-gray-800 p-6 rounded-lg">
-                    <h3 class="text-white font-bold mb-4 text-xl">Tours et Capacités Spéciales</h3>
-                    <p class="text-gray-400 mb-3">Utilisez les capacités spéciales pour vous sortir des situations difficiles !</p>
+                    <h3 class="text-white font-bold mb-4 text-xl">Tours et Capacités</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
                         <div class="bg-gray-700 p-2 rounded">
                             <i class="fas fa-bomb text-orange-400 text-xl mb-1"></i>
                             <p class="text-white font-bold">Frappe Aérienne</p>
                         </div>
                         <div class="bg-gray-700 p-2 rounded">
-                            <i class="fas fa-snowflake text-cyan-400 text-xl mb-1"></i>
-                            <p class="text-white font-bold">Gel</p>
+                            <i class="fas fa-radiation text-red-600 text-xl mb-1"></i>
+                            <p class="text-white font-bold">Bombe Nucléaire</p>
+                            <p class="text-red-400">1000💰 - 3000 DMG</p>
                         </div>
                         <div class="bg-gray-700 p-2 rounded">
                             <i class="fas fa-bolt text-yellow-400 text-xl mb-1"></i>
                             <p class="text-white font-bold">Boost</p>
                         </div>
                         <div class="bg-gray-700 p-2 rounded">
-                            <i class="fas fa-helicopter text-green-400 text-xl mb-1"></i>
-                            <p class="text-white font-bold">Renfort</p>
+                            <i class="fas fa-coins text-yellow-400 text-xl mb-1"></i>
+                            <p class="text-white font-bold">Tour Génératrice</p>
                         </div>
                     </div>
                 </div>
@@ -254,7 +408,7 @@ $appearance = getAppearanceSettings($pdo);
                 <div class="flex justify-between items-center flex-wrap gap-4">
                     <div>
                         <p class="text-gray-400 text-sm">Vague</p>
-                        <p class="text-white text-3xl font-bold"><span id="wave">1</span>/25</p>
+                        <p class="text-white text-3xl font-bold"><span id="wave">1</span>/<span id="max-waves">25</span></p>
                     </div>
                     <div>
                         <p class="text-gray-400 text-sm">Argent</p>
@@ -265,7 +419,7 @@ $appearance = getAppearanceSettings($pdo);
                         <div class="w-48 h-6 bg-gray-700 rounded-full overflow-hidden mt-2">
                             <div id="base-health" class="health-bar h-full bg-gradient-to-r from-green-500 to-green-400" style="width: 100%"></div>
                         </div>
-                        <p class="text-center text-white text-sm mt-1"><span id="base-health-text">100</span>/100</p>
+                        <p class="text-center text-white text-sm mt-1"><span id="base-health-text">100</span>/<span id="max-health-text">100</span></p>
                     </div>
                     <div>
                         <p class="text-gray-400 text-sm">Score</p>
@@ -282,29 +436,31 @@ $appearance = getAppearanceSettings($pdo);
             <div class="bg-gray-900 bg-opacity-90 p-4 rounded-lg mb-4">
                 <p class="text-gray-400 text-sm mb-3">Capacités Spéciales :</p>
                 <div class="flex flex-wrap gap-3">
-                    <button onclick="useAbility('airstrike')" id="ability-airstrike" class="ability-btn relative flex-1 min-w-[140px] bg-orange-700 hover:bg-orange-600 p-4 rounded-lg text-white transition">
-                        <i class="fas fa-bomb text-3xl mb-2"></i>
-                        <p class="font-bold">Frappe Aérienne</p>
-                        <p class="text-yellow-400 text-sm">💰 150</p>
-                        <p class="text-xs mt-1">Cooldown: 45s</p>
+                    <button onclick="useAbility('airstrike')" id="ability-airstrike" class="ability-btn relative flex-1 min-w-[130px] bg-orange-700 hover:bg-orange-600 p-3 rounded-lg text-white transition">
+                        <i class="fas fa-bomb text-2xl mb-1"></i>
+                        <p class="font-bold text-sm">Frappe Aérienne</p>
+                        <p class="text-yellow-400 text-xs">💰 150</p>
                     </button>
-                    <button onclick="useAbility('freeze')" id="ability-freeze" class="ability-btn relative flex-1 min-w-[140px] bg-cyan-700 hover:bg-cyan-600 p-4 rounded-lg text-white transition">
-                        <i class="fas fa-snowflake text-3xl mb-2"></i>
-                        <p class="font-bold">Gel</p>
-                        <p class="text-yellow-400 text-sm">💰 100</p>
-                        <p class="text-xs mt-1">Cooldown: 30s</p>
+                    <button onclick="useAbility('freeze')" id="ability-freeze" class="ability-btn relative flex-1 min-w-[130px] bg-cyan-700 hover:bg-cyan-600 p-3 rounded-lg text-white transition">
+                        <i class="fas fa-snowflake text-2xl mb-1"></i>
+                        <p class="font-bold text-sm">Gel</p>
+                        <p class="text-yellow-400 text-xs">💰 100</p>
                     </button>
-                    <button onclick="useAbility('boost')" id="ability-boost" class="ability-btn relative flex-1 min-w-[140px] bg-yellow-700 hover:bg-yellow-600 p-4 rounded-lg text-white transition">
-                        <i class="fas fa-bolt text-3xl mb-2"></i>
-                        <p class="font-bold">Boost Tours</p>
-                        <p class="text-yellow-400 text-sm">💰 120</p>
-                        <p class="text-xs mt-1">Cooldown: 60s</p>
+                    <button onclick="useAbility('boost')" id="ability-boost" class="ability-btn relative flex-1 min-w-[130px] bg-yellow-700 hover:bg-yellow-600 p-3 rounded-lg text-white transition">
+                        <i class="fas fa-bolt text-2xl mb-1"></i>
+                        <p class="font-bold text-sm">Boost</p>
+                        <p class="text-yellow-400 text-xs">💰 120</p>
                     </button>
-                    <button onclick="useAbility('reinforcement')" id="ability-reinforcement" class="ability-btn relative flex-1 min-w-[140px] bg-green-700 hover:bg-green-600 p-4 rounded-lg text-white transition">
-                        <i class="fas fa-helicopter text-3xl mb-2"></i>
-                        <p class="font-bold">Renforts</p>
-                        <p class="text-yellow-400 text-sm">💰 5000</p>
-                        <p class="text-xs mt-1">Cooldown: 90s</p>
+                    <button onclick="useAbility('reinforcement')" id="ability-reinforcement" class="ability-btn relative flex-1 min-w-[130px] bg-green-700 hover:bg-green-600 p-3 rounded-lg text-white transition">
+                        <i class="fas fa-helicopter text-2xl mb-1"></i>
+                        <p class="font-bold text-sm">Renforts</p>
+                        <p class="text-yellow-400 text-xs">💰 200</p>
+                    </button>
+                    <button onclick="useAbility('nuke')" id="ability-nuke" class="ability-btn relative flex-1 min-w-[130px] nuke-warning hover:bg-red-800 p-3 rounded-lg text-white transition">
+                        <i class="fas fa-radiation text-3xl mb-1"></i>
+                        <p class="font-bold text-sm">☢️ NUKE ☢️</p>
+                        <p class="text-yellow-400 text-xs">💰 1000</p>
+                        <p class="text-xs">3000 DMG + 1M Boss</p>
                     </button>
                 </div>
             </div>
@@ -315,48 +471,50 @@ $appearance = getAppearanceSettings($pdo);
                     <p class="text-5xl font-bold mb-2">VAGUE <span id="wave-number">1</span></p>
                     <p class="text-xl"><span id="enemy-count">10</span> ennemis en approche !</p>
                     <p id="boss-warning" class="text-2xl font-bold mt-2 hidden">⚠️ BOSS INCOMING ⚠️</p>
+                    <p id="difficulty-warning" class="text-lg font-bold mt-2 hidden text-red-300"></p>
                 </div>
             </div>
 
             <!-- Menu des tours -->
             <div class="bg-gray-900 bg-opacity-90 p-4 rounded-lg mb-4">
                 <p class="text-gray-400 text-sm mb-3">Sélectionnez une tour à construire :</p>
-                <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-                    <button onclick="selectTower('basic')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-white transition border-2 border-transparent" id="tower-basic">
-                        <i class="fas fa-gun text-gray-400 text-2xl mb-2"></i>
-                        <p class="font-bold text-sm">Basique</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+                    <button onclick="selectTower('basic')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-2 rounded-lg text-white transition border-2 border-transparent" id="tower-basic">
+                        <i class="fas fa-gun text-gray-400 text-xl mb-1"></i>
+                        <p class="font-bold text-xs">Basique</p>
                         <p class="text-yellow-400 text-xs">💰 40</p>
-                        <p class="text-gray-400 text-xs">DMG: 8 | RNG: 100</p>
                     </button>
-                    <button onclick="selectTower('sniper')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-white transition border-2 border-transparent" id="tower-sniper">
-                        <i class="fas fa-crosshairs text-red-400 text-2xl mb-2"></i>
-                        <p class="font-bold text-sm">Sniper</p>
+                    <button onclick="selectTower('sniper')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-2 rounded-lg text-white transition border-2 border-transparent" id="tower-sniper">
+                        <i class="fas fa-crosshairs text-red-400 text-xl mb-1"></i>
+                        <p class="font-bold text-xs">Sniper</p>
                         <p class="text-yellow-400 text-xs">💰 120</p>
-                        <p class="text-gray-400 text-xs">DMG: 40 | RNG: 250</p>
                     </button>
-                    <button onclick="selectTower('cannon')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-white transition border-2 border-transparent" id="tower-cannon">
-                        <i class="fas fa-bomb text-orange-400 text-2xl mb-2"></i>
-                        <p class="font-bold text-sm">Canon</p>
+                    <button onclick="selectTower('cannon')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-2 rounded-lg text-white transition border-2 border-transparent" id="tower-cannon">
+                        <i class="fas fa-bomb text-orange-400 text-xl mb-1"></i>
+                        <p class="font-bold text-xs">Canon</p>
                         <p class="text-yellow-400 text-xs">💰 180</p>
-                        <p class="text-gray-400 text-xs">DMG: 25 (Zone) | RNG: 130</p>
                     </button>
-                    <button onclick="selectTower('missile')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-white transition border-2 border-transparent" id="tower-missile">
-                        <i class="fas fa-rocket text-purple-400 text-2xl mb-2"></i>
-                        <p class="font-bold text-sm">Missile</p>
-                        <p class="text-yellow-400 text-xs">💰 250</p>
-                        <p class="text-gray-400 text-xs">DMG: 80 | RNG: 180</p>
+                    <button onclick="selectTower('missile')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-2 rounded-lg text-white transition border-2 border-transparent" id="tower-missile">
+                        <i class="fas fa-rocket text-purple-400 text-xl mb-1"></i>
+                        <p class="font-bold text-xs">Missile Pro</p>
+                        <p class="text-yellow-400 text-xs">💰 280</p>
+                        <p class="text-gray-400 text-xs">DMG: 120</p>
                     </button>
-                    <button onclick="selectTower('laser')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-white transition border-2 border-transparent" id="tower-laser">
-                        <i class="fas fa-radiation text-green-400 text-2xl mb-2"></i>
-                        <p class="font-bold text-sm">Laser</p>
+                    <button onclick="selectTower('laser')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-2 rounded-lg text-white transition border-2 border-transparent" id="tower-laser">
+                        <i class="fas fa-radiation text-green-400 text-xl mb-1"></i>
+                        <p class="font-bold text-xs">Laser</p>
                         <p class="text-yellow-400 text-xs">💰 300</p>
-                        <p class="text-gray-400 text-xs">DMG: 15/s | RNG: 140</p>
                     </button>
-                    <button onclick="selectTower('antiair')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-white transition border-2 border-transparent" id="tower-antiair">
-                        <i class="fas fa-plane-slash text-cyan-400 text-2xl mb-2"></i>
-                        <p class="font-bold text-sm">Anti-Aérien</p>
+                    <button onclick="selectTower('antiair')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-2 rounded-lg text-white transition border-2 border-transparent" id="tower-antiair">
+                        <i class="fas fa-plane-slash text-cyan-400 text-xl mb-1"></i>
+                        <p class="font-bold text-xs">Anti-Air</p>
                         <p class="text-yellow-400 text-xs">💰 150</p>
-                        <p class="text-gray-400 text-xs">DMG: 50 | Air Only</p>
+                    </button>
+                    <button onclick="selectTower('generator')" class="tower-menu bg-gray-800 hover:bg-gray-700 p-2 rounded-lg text-white transition border-2 border-transparent" id="tower-generator">
+                        <i class="fas fa-coins text-yellow-400 text-xl mb-1"></i>
+                        <p class="font-bold text-xs">Générateur</p>
+                        <p class="text-yellow-400 text-xs">💰 400</p>
+                        <p class="text-green-400 text-xs">+10💰/sec</p>
                     </button>
                 </div>
             </div>
@@ -405,37 +563,41 @@ $appearance = getAppearanceSettings($pdo);
             </div>
         </div>
     </div>
-    <?php include 'includes/footer.php'; ?>
+
     <script>
+    // Vérifier si l'utilisateur est Enoe (à intégrer avec PHP)
+    const isEnoe = <?php echo (isset($_SESSION['username']) && strtolower($_SESSION['username']) === 'enoe') ? 'true' : 'false'; ?>;
+    
     // Configuration du jeu
     const GRID_SIZE = 18;
     const CELL_SIZE = 38;
-    const MAX_WAVES = 25;
     
     const TOWER_TYPES = {
         basic: { cost: 40, damage: 8, range: 100, fireRate: 800, icon: 'fa-gun', color: 'text-gray-400', projectileColor: '#9ca3af' },
-        sniper: { cost: 120, damage: 40, range: 250, fireRate: 2500, icon: 'fa-crosshairs', color: 'text-red-400', projectileColor: '#f87171' },
-        cannon: { cost: 180, damage: 25, range: 130, fireRate: 2000, icon: 'fa-bomb', color: 'text-orange-400', splash: 60, projectileColor: '#fb923c' },
-        missile: { cost: 250, damage: 80, range: 180, fireRate: 3000, icon: 'fa-rocket', color: 'text-purple-400', projectileColor: '#c084fc' },
-        laser: { cost: 300, damage: 15, range: 140, fireRate: 200, icon: 'fa-radiation', color: 'text-green-400', continuous: true, projectileColor: '#4ade80' },
-        antiair: { cost: 150, damage: 50, range: 200, fireRate: 1200, icon: 'fa-plane-slash', color: 'text-cyan-400', airOnly: true, projectileColor: '#22d3ee' }
+        sniper: { cost: 220, damage: 40, range: 300, fireRate: 2500, icon: 'fa-crosshairs', color: 'text-red-400', projectileColor: '#f87171' },
+        cannon: { cost: 280, damage: 18, range: 130, fireRate: 2000, icon: 'fa-bomb', color: 'text-orange-400', splash: 60, projectileColor: '#fb923c' },
+        missile: { cost: 380, damage: 150, range: 200, fireRate: 2500, icon: 'fa-rocket', color: 'text-purple-400', projectileColor: '#c084fc', airCapable: true },
+        laser: { cost: 400, damage: 20, range: 140, fireRate: 200, icon: 'fa-radiation', color: 'text-green-400', continuous: true, projectileColor: '#4ade80' },
+        antiair: { cost: 250, damage: 60, range: 220, fireRate: 1000, icon: 'fa-plane-slash', color: 'text-cyan-400', airOnly: true, projectileColor: '#22d3ee' },
+        generator: { cost: 400, damage: 1000, range: 0, fireRate: 55000, icon: 'fa-coins', color: 'text-yellow-400', moneyGen: 25, projectileColor: '#9ca3af }
     };
 
     const ENEMY_TYPES = {
-        normal: { health: 40, speed: 1.2, reward: 5, icon: 'fa-user-ninja', color: 'text-red-400' },
-        runner: { health: 20, speed: 4.5, reward: 10, icon: 'fa-running', color: 'text-yellow-400' },
-        tank: { health: 150, speed: 0.6, reward: 20, icon: 'fa-shield', color: 'text-blue-400' },
-        aerial: { health: 300, speed: 2, reward: 15, icon: 'fa-plane', color: 'text-cyan-400', flying: true },
-        aerialboss: { health: 1500, speed: 1.5, reward: 30, icon: 'fa-plane', color: 'text-cyan-400',size: 2 ,flying: true },
-        boss: { health: 1000, speed: 0.8, reward: 100, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
-        panda: { health: 5000000, speed: 0.5, reward: 100000, icon: 'fa-paw', color: 'text-pink-400', size: 3, boss: true }
+        normal: { health: 40, speed: 1.2, reward: 15, icon: 'fa-user-ninja', color: 'text-red-400' },
+        runner: { health: 20, speed: 3.8, reward: 20, icon: 'fa-running', color: 'text-yellow-400' },
+        tank: { health: 200, speed: 0.6, reward: 40, icon: 'fa-shield', color: 'text-blue-400' },
+        aerial: { health: 30, speed: 1.8, reward: 25, icon: 'fa-plane', color: 'text-cyan-400', flying: true },
+        boss: { health: 1200, speed: 0.8, reward: 200, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
+        airboss: { health: 1800, speed: 2.2, reward: 300, icon: 'fa-plane-departure', color: 'text-indigo-400', size: 2.5, flying: true },
+        panda: { health: 1000000, speed: 0.4, reward: 5000, icon: 'fa-paw', color: 'text-pink-400', size: 3, boss: true }
     };
 
     const ABILITIES = {
-        airstrike: { cost: 150, cooldown: 45000, damage: 150, radius: 100 },
-        freeze: { cost: 100, cooldown: 30000, duration: 5000 },
+        airstrike: { cost: 150, cooldown: 45000, damage: 350, radius: 100 },
+        freeze: { cost: 100, cooldown: 30000, duration: 6000 },
         boost: { cost: 120, cooldown: 60000, duration: 10000, multiplier: 2 },
-        reinforcement: { cost: 5000, cooldown: 90000, duration: 15000 }
+        reinforcement: { cost: 200, cooldown: 90000, duration: 15000 },
+        nuke: { cost: 1000, cooldown: 120000, damage: 3000, radius: 500, pandaDamage: 1000 }
     };
 
     // Variables du jeu
@@ -453,30 +615,174 @@ $appearance = getAppearanceSettings($pdo);
         waveActive: false,
         path: [],
         difficulty: 'medium',
+        maxWaves: 25,
         abilityCooldowns: {},
         reinforcements: [],
-        boostedTowers: new Set()
+        boostedTowers: new Set(),
+        godMode: false,
+        moneyGenerators: []
     };
 
     let gameLoop = null;
     let lastUpdate = Date.now();
+    let moneyGenTimer = Date.now();
+
+    // Afficher le panel admin si Enoe
+    if (isEnoe) {
+        document.getElementById('admin-panel').classList.remove('hidden');
+    }
+
+    function toggleAdminPanel() {
+        const panel = document.getElementById('admin-panel');
+        panel.classList.toggle('hidden');
+    }
+
+    // === FONCTIONS ADMIN ===
+    function adminAddMoney() {
+        if (!isEnoe) return;
+        gameState.money += 1000;
+        gameState.score += 500;
+        updateHUD();
+        showNotification('💰 +1000 Argent ajouté !', 'success');
+    }
+
+    function adminSkipWave() {
+        if (!isEnoe) return;
+        
+        gameState.enemies.forEach(enemy => {
+            if (enemy.health > 0) {
+                killEnemy(enemy.id, false);
+            }
+        });
+        
+        gameState.waveActive = false;
+        gameState.wave++;
+        gameState.money += 200;
+        gameState.score += 1000;
+        
+        document.getElementById('start-wave-btn').disabled = false;
+        document.getElementById('start-wave-btn').classList.remove('opacity-50');
+        
+        if (gameState.wave > gameState.maxWaves) {
+            endGame(true);
+        } else {
+            updateHUD();
+            showNotification('⏩ Vague skippée !', 'success');
+        }
+    }
+
+    function adminKillAll() {
+        if (!isEnoe) return;
+        
+        let killCount = 0;
+        gameState.enemies.forEach(enemy => {
+            if (enemy.health > 0) {
+                killEnemy(enemy.id, true);
+                killCount++;
+            }
+        });
+        
+        showNotification(`💀 ${killCount} ennemis éliminés !`, 'success');
+    }
+
+    function adminHealBase() {
+        if (!isEnoe) return;
+        gameState.baseHealth = gameState.maxBaseHealth;
+        updateHUD();
+        showNotification('❤️ Base complètement soignée !', 'success');
+    }
+
+    function adminGodMode() {
+        if (!isEnoe) return;
+        gameState.godMode = !gameState.godMode;
+        
+        const btn = document.getElementById('god-mode-btn');
+        if (gameState.godMode) {
+            btn.innerHTML = '<i class="fas fa-shield-alt mr-2"></i>God Mode: ON';
+            btn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+            showNotification('🛡️ God Mode ACTIVÉ !', 'success');
+        } else {
+            btn.innerHTML = '<i class="fas fa-shield-alt mr-2"></i>God Mode: OFF';
+            btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            btn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+            showNotification('🛡️ God Mode DÉSACTIVÉ', 'info');
+        }
+    }
+
+    function adminSpawnEnemy(type) {
+        if (!isEnoe) return;
+        spawnEnemy(gameState.wave, type);
+        showNotification(`👾 ${type.toUpperCase()} spawné !`, 'success');
+    }
+
+    function adminSpawnWave() {
+        if (!isEnoe) return;
+        for (let i = 0; i < 10; i++) {
+            setTimeout(() => spawnEnemy(gameState.wave), i * 500);
+        }
+        showNotification('🌊 Vague de 10 ennemis spawnée !', 'success');
+    }
+
+    function adminUseAbility(abilityType) {
+        if (!isEnoe) return;
+        
+        const now = Date.now();
+        gameState.abilityCooldowns[abilityType] = 0; // Reset cooldown
+        
+        if (abilityType === 'airstrike') {
+            executeAirstrike();
+        } else if (abilityType === 'freeze') {
+            executeFreeze(now);
+        } else if (abilityType === 'boost') {
+            executeBoost(now);
+        } else if (abilityType === 'reinforcement') {
+            executeReinforcement(now);
+        }
+        
+        showNotification(`✨ Capacité ${abilityType} activée !`, 'success');
+    }
+
+    function showNotification(message, type = 'info') {
+        const colors = {
+            success: 'bg-green-600',
+            error: 'bg-red-600',
+            info: 'bg-blue-600',
+            warning: 'bg-yellow-600'
+        };
+        
+        const notif = document.createElement('div');
+        notif.className = `fixed top-24 right-24 ${colors[type]} text-white px-6 py-4 rounded-lg shadow-2xl z-50 font-bold`;
+        notif.textContent = message;
+        notif.style.animation = 'slideDown 0.5s ease-out';
+        
+        document.body.appendChild(notif);
+        
+        setTimeout(() => {
+            notif.style.opacity = '0';
+            notif.style.transition = 'opacity 0.5s';
+            setTimeout(() => notif.remove(), 500);
+        }, 2000);
+    }
 
     function startGame(difficulty) {
         gameState.difficulty = difficulty;
         
-        // Ajuster les paramètres selon la difficulté
         if (difficulty === 'easy') {
-            gameState.money = 8000;
-            gameState.baseHealth = 150;
-            gameState.maxBaseHealth = 150;
+            gameState.money = 1000;
+            gameState.baseHealth = 200;
+            gameState.maxBaseHealth = 200;
+            gameState.maxWaves = 25;
         } else if (difficulty === 'medium') {
-            gameState.money = 2000;
+            gameState.money = 600;
             gameState.baseHealth = 100;
             gameState.maxBaseHealth = 100;
+            gameState.maxWaves = 30;
         } else if (difficulty === 'hard') {
-            gameState.money = 500;
-            gameState.baseHealth = 15;
-            gameState.maxBaseHealth = 15;
+            gameState.money = 300;
+            gameState.baseHealth = 50;
+            gameState.maxBaseHealth = 50;
+            gameState.maxWaves = 35;
         }
         
         document.getElementById('start-screen').classList.add('hidden');
@@ -555,20 +861,20 @@ $appearance = getAppearanceSettings($pdo);
 
     function placeTower(x, y) {
         if (!gameState.selectedTower) {
-            alert('Sélectionnez d\'abord un type de tour !');
+            showNotification('Sélectionnez d\'abord un type de tour !', 'warning');
             return;
         }
         
         const towerType = TOWER_TYPES[gameState.selectedTower];
         
         if (gameState.money < towerType.cost) {
-            alert('Pas assez d\'argent !');
+            showNotification('Pas assez d\'argent !', 'error');
             return;
         }
         
         const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
         if (cell.classList.contains('path') || cell.querySelector('.tower')) {
-            alert('Impossible de placer une tour ici !');
+            showNotification('Impossible de placer une tour ici !', 'error');
             return;
         }
         
@@ -584,8 +890,15 @@ $appearance = getAppearanceSettings($pdo);
         
         gameState.towers.push(tower);
         
+        if (tower.moneyGen) {
+            gameState.moneyGenerators.push(tower);
+        }
+        
         const towerEl = document.createElement('div');
         towerEl.className = `tower absolute ${towerType.color}`;
+        if (tower.moneyGen) {
+            towerEl.classList.add('generator');
+        }
         towerEl.style.left = x * CELL_SIZE + 'px';
         towerEl.style.top = y * CELL_SIZE + 'px';
         towerEl.style.width = CELL_SIZE + 'px';
@@ -610,18 +923,30 @@ $appearance = getAppearanceSettings($pdo);
         document.getElementById('start-wave-btn').classList.add('opacity-50');
         
         const wave = gameState.wave;
-        const enemyCount = 8 + (wave * 3);
+        let enemyCount = 8 + (wave * 3);
+        
+        if (gameState.difficulty === 'hard') {
+            enemyCount = Math.floor(enemyCount * 1.5);
+        }
         
         document.getElementById('wave-number').textContent = wave;
         document.getElementById('enemy-count').textContent = enemyCount;
         
         const isBossWave = wave % 5 === 0;
-        const isFinalBoss = wave === 25 && gameState.difficulty === 'hard';
+        const isAirBossWave = wave % 7 === 0 && wave > 10;
+        const isFinalBoss = wave === gameState.maxWaves && gameState.difficulty === 'hard';
         
-        if (isBossWave || isFinalBoss) {
+        if (isBossWave || isFinalBoss || isAirBossWave) {
             document.getElementById('boss-warning').classList.remove('hidden');
         } else {
             document.getElementById('boss-warning').classList.add('hidden');
+        }
+        
+        if (gameState.difficulty === 'hard' && wave > 20) {
+            document.getElementById('difficulty-warning').classList.remove('hidden');
+            document.getElementById('difficulty-warning').textContent = '💀 HARDCORE MODE - Ennemis ultra renforcés !';
+        } else {
+            document.getElementById('difficulty-warning').classList.add('hidden');
         }
         
         document.getElementById('wave-alert').classList.remove('hidden');
@@ -631,72 +956,53 @@ $appearance = getAppearanceSettings($pdo);
         }, 2500);
         
         for (let i = 0; i < enemyCount; i++) {
-            setTimeout(() => spawnEnemy(wave), i * 800);
+            setTimeout(() => spawnEnemy(wave), i * 700);
         }
         
         if (isFinalBoss) {
-            setTimeout(() => spawnEnemy(wave, 'panda'), enemyCount * 800 + 2000);
+            setTimeout(() => spawnEnemy(wave, 'panda'), enemyCount * 700 + 2000);
+        } else if (isAirBossWave) {
+            setTimeout(() => spawnEnemy(wave, 'airboss'), enemyCount * 700 + 1500);
         } else if (isBossWave) {
-            setTimeout(() => spawnEnemy(wave, 'boss'), enemyCount * 800 + 1000);
+            const bossCount = gameState.difficulty === 'hard' ? 2 : 1;
+            for (let i = 0; i < bossCount; i++) {
+                setTimeout(() => spawnEnemy(wave, 'boss'), enemyCount * 700 + 1000 + (i * 1500));
+            }
         }
     }
 
     function spawnEnemy(wave, forceType = null) {
         const startPos = gameState.path[0];
         
-let type;
-
-if (forceType) {
-    type = forceType;
-
-} else {
-    const rand = Math.random();
-    let chanceBoss = 0;
-    let chanceAerialBoss = 0;
-
-    // --- Boss normal (sol) ---
-    if (wave >= 5) {
-        chanceBoss = Math.min(0.02 * (wave - 4), 0.25);
-    }
-
-    // --- Boss aérien ---
-    if (wave >= 10) {
-        chanceAerialBoss = Math.min(0.01 * (wave - 9), 0.15);
-    }
-
-    // Total chance boss
-    const totalBossChance = chanceBoss + chanceAerialBoss;
-
-    // Si tirage tombe dans la zone "boss"
-    if (rand < chanceBoss) {
-        type = 'boss';
-    } else if (rand < chanceBoss + chanceAerialBoss) {
-        type = 'aerialboss';
-    } else {
-        // --- Ennemis normaux (le reste du tirage) ---
-        const r = Math.random();
-
-        if (wave < 5) {
-            // Début du jeu = simple
-            type = r < 0.7 ? 'normal'
-                 : (r < 0.9 ? 'runner' : 'tank');
-
-        } else if (wave < 10) {
-            type = r < 0.5 ? 'normal'
-                 : (r < 0.7 ? 'runner'
-                 : (r < 0.9 ? 'tank' : 'aerial'));
-
+        let type;
+        if (forceType) {
+            type = forceType;
         } else {
-            type = r < 0.45 ? 'normal'
-                 : (r < 0.65 ? 'runner'
-                 : (r < 0.85 ? 'tank'
-                 : 'aerial'));
+            const rand = Math.random();
+            if (wave < 5) {
+                type = rand < 0.6 ? 'normal' : (rand < 0.85 ? 'runner' : 'tank');
+            } else if (wave < 10) {
+                type = rand < 0.3 ? 'normal' : (rand < 0.5 ? 'runner' : (rand < 0.7 ? 'tank' : 'aerial'));
+            } else if (wave < 20) {
+                type = rand < 0.2 ? 'normal' : (rand < 0.35 ? 'runner' : (rand < 0.55 ? 'tank' : (rand < 0.75 ? 'aerial' : 'boss')));
+            } else {
+                type = rand < 0.1 ? 'normal' : (rand < 0.2 ? 'runner' : (rand < 0.4 ? 'tank' : (rand < 0.6 ? 'aerial' : (rand < 0.85 ? 'boss' : 'airboss'))));
+            }
         }
-    }
-}
-
+        
         const enemyTemplate = ENEMY_TYPES[type];
-        const healthMultiplier = 1 + (wave * 0.15);
+        let healthMultiplier = 1 + (wave * 0.15);
+        let speedMultiplier = 1;
+        
+        if (gameState.difficulty === 'hard') {
+            healthMultiplier *= 2;
+            speedMultiplier = 1.3;
+            
+            if (wave > 20) {
+                healthMultiplier *= 1.5;
+                speedMultiplier = 1.5;
+            }
+        }
         
         const enemy = {
             x: startPos.x * CELL_SIZE + CELL_SIZE / 2,
@@ -704,8 +1010,8 @@ if (forceType) {
             pathIndex: 0,
             health: enemyTemplate.health * healthMultiplier,
             maxHealth: enemyTemplate.health * healthMultiplier,
-            speed: enemyTemplate.speed,
-            reward: enemyTemplate.reward + Math.floor(wave * 2),
+            speed: enemyTemplate.speed * speedMultiplier,
+            reward: Math.floor(enemyTemplate.reward * (1 + wave * 0.1)),
             type: type,
             icon: enemyTemplate.icon,
             color: enemyTemplate.color,
@@ -720,7 +1026,7 @@ if (forceType) {
         
         const enemyEl = document.createElement('div');
         enemyEl.className = `enemy-unit absolute ${enemy.color}`;
-        if (enemy.type === 'boss' || enemy.type === 'panda') {
+        if (enemy.type === 'boss' || enemy.type === 'panda' || enemy.type === 'airboss') {
             enemyEl.classList.add('boss');
         }
         enemyEl.style.left = (enemy.x - 15) + 'px';
@@ -740,20 +1046,37 @@ if (forceType) {
 
     function update() {
         const now = Date.now();
-        const deltaTime = now - lastUpdate;
-        lastUpdate = now;
+        
+        // Money generators
+        if (now - moneyGenTimer > 1000) {
+            gameState.moneyGenerators.forEach(gen => {
+                gameState.money += gen.moneyGen;
+                gameState.score += gen.moneyGen * 2;
+            });
+            moneyGenTimer = now;
+        }
         
         updateEnemies(now);
         updateTowers(now);
         updateProjectiles();
         updateReinforcements(now);
         updateAbilityCooldowns(now);
+        updateAdminStats();
+    }
+
+    function updateAdminStats() {
+        if (!isEnoe) return;
+        
+        const aliveEnemies = gameState.enemies.filter(e => e.health > 0).length;
+        document.getElementById('admin-enemy-count').textContent = aliveEnemies;
+        document.getElementById('admin-tower-count').textContent = gameState.towers.length;
+        document.getElementById('admin-projectile-count').textContent = gameState.projectiles.length;
     }
 
     function updateEnemies(now) {
         let allDead = true;
         
-        gameState.enemies.forEach((enemy, index) => {
+        gameState.enemies.forEach((enemy) => {
             if (enemy.health <= 0) return;
             
             allDead = false;
@@ -798,11 +1121,19 @@ if (forceType) {
                     }
                 }
             } else {
-                const damage = enemy.type === 'boss' ? 20 : (enemy.type === 'panda' ? 40 : 10);
-                gameState.baseHealth -= damage;
+                if (!gameState.godMode) {
+                    let damage = 10;
+                    if (enemy.type === 'boss') damage = 20;
+                    if (enemy.type === 'airboss') damage = 25;
+                    if (enemy.type === 'panda') damage = 30;
+                    if (gameState.difficulty === 'hard') damage *= 1.5;
+                    
+                    gameState.baseHealth -= damage;
+                }
+                
                 killEnemy(enemy.id, false);
                 
-                if (gameState.baseHealth <= 0) {
+                if (gameState.baseHealth <= 0 && !gameState.godMode) {
                     endGame(false);
                 }
             }
@@ -818,8 +1149,10 @@ if (forceType) {
             document.getElementById('start-wave-btn').disabled = false;
             document.getElementById('start-wave-btn').classList.remove('opacity-50');
             
-            if (gameState.wave > MAX_WAVES) {
+            if (gameState.wave > gameState.maxWaves) {
                 endGame(true);
+            } else {
+                showNotification(`✅ Vague ${gameState.wave - 1} terminée ! +${bonus}💰`, 'success');
             }
         }
         
@@ -828,6 +1161,8 @@ if (forceType) {
 
     function updateTowers(now) {
         gameState.towers.forEach(tower => {
+            if (tower.moneyGen) return; // Skip generators
+            
             const isBoosted = gameState.boostedTowers.has(tower.id);
             const fireRate = isBoosted ? tower.fireRate / 2 : tower.fireRate;
             
@@ -840,7 +1175,7 @@ if (forceType) {
                 if (enemy.health <= 0) return;
                 
                 if (tower.airOnly && !enemy.flying) return;
-                if (!tower.airOnly && enemy.flying && tower.type !== 'missile') return;
+                if (!tower.airOnly && !tower.airCapable && enemy.flying) return;
                 
                 const dx = enemy.x - (tower.x * CELL_SIZE + CELL_SIZE / 2);
                 const dy = enemy.y - (tower.y * CELL_SIZE + CELL_SIZE / 2);
@@ -984,12 +1319,12 @@ if (forceType) {
         const now = Date.now();
         
         if (gameState.abilityCooldowns[abilityType] && now < gameState.abilityCooldowns[abilityType]) {
-            alert('Capacité en cooldown !');
+            showNotification('Capacité en cooldown !', 'warning');
             return;
         }
         
         if (gameState.money < ability.cost) {
-            alert('Pas assez d\'argent !');
+            showNotification('Pas assez d\'argent !', 'error');
             return;
         }
         
@@ -1004,6 +1339,8 @@ if (forceType) {
             executeBoost(now);
         } else if (abilityType === 'reinforcement') {
             executeReinforcement(now);
+        } else if (abilityType === 'nuke') {
+            executeNuke();
         }
         
         updateHUD();
@@ -1037,15 +1374,20 @@ if (forceType) {
                 createExplosion(targetX + offsetX, targetY + offsetY, true);
             }, i * 300);
         }
+        
+        showNotification('💣 Frappe aérienne lancée !', 'success');
     }
 
     function executeFreeze(now) {
+        let frozenCount = 0;
         gameState.enemies.forEach(enemy => {
             if (enemy.health > 0 && !enemy.frozen) {
                 enemy.frozen = true;
                 enemy.frozenUntil = now + ABILITIES.freeze.duration;
+                frozenCount++;
             }
         });
+        showNotification(`❄️ ${frozenCount} ennemis gelés !`, 'success');
     }
 
     function executeBoost(now) {
@@ -1060,6 +1402,8 @@ if (forceType) {
             gameState.boostedTowers.clear();
             document.querySelectorAll('.tower').forEach(el => el.classList.remove('boosted'));
         }, ABILITIES.boost.duration);
+        
+        showNotification('⚡ Tours boostées x2 pendant 10s !', 'success');
     }
 
     function executeReinforcement(now) {
@@ -1071,7 +1415,7 @@ if (forceType) {
                     x: endPath.x * CELL_SIZE + CELL_SIZE / 2,
                     y: endPath.y * CELL_SIZE + CELL_SIZE / 2,
                     pathIndex: gameState.path.length - 1,
-                    damage: 3000,
+                    damage: 30,
                     expiresAt: now + ABILITIES.reinforcement.duration + (i * 500),
                     id: Date.now() + Math.random()
                 };
@@ -1089,6 +1433,46 @@ if (forceType) {
                 document.getElementById('game-grid').appendChild(reinforcementEl);
             }, i * 500);
         }
+        
+        showNotification('🚁 Renforts déployés !', 'success');
+    }
+
+    function executeNuke() {
+        // Animation de flash
+        const flash = document.createElement('div');
+        flash.className = 'fixed inset-0 bg-white z-50';
+        flash.style.animation = 'explosion 1s ease-out';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 1000);
+        
+        // Dégâts massifs
+        let killCount = 0;
+        gameState.enemies.forEach(enemy => {
+            if (enemy.health <= 0) return;
+            
+            if (enemy.type === 'panda') {
+                enemy.health -= ABILITIES.nuke.pandaDamage;
+                showNotification(`🐼 Panda: -${ABILITIES.nuke.pandaDamage.toLocaleString()} PV !`, 'warning');
+            } else {
+                enemy.health -= ABILITIES.nuke.damage;
+            }
+            
+            if (enemy.health <= 0) {
+                killEnemy(enemy.id, true);
+                killCount++;
+            }
+        });
+        
+        // Explosions visuelles multiples
+        for (let i = 0; i < 20; i++) {
+            setTimeout(() => {
+                const x = Math.random() * GRID_SIZE * CELL_SIZE;
+                const y = Math.random() * GRID_SIZE * CELL_SIZE;
+                createExplosion(x, y, true);
+            }, i * 50);
+        }
+        
+        showNotification(`☢️ BOMBE NUCLÉAIRE ! ${killCount} ennemis éliminés !`, 'success');
     }
 
     function updateReinforcements(now) {
@@ -1174,9 +1558,11 @@ if (forceType) {
 
     function updateHUD() {
         document.getElementById('wave').textContent = gameState.wave;
+        document.getElementById('max-waves').textContent = gameState.maxWaves;
         document.getElementById('money').textContent = gameState.money;
         document.getElementById('score').textContent = gameState.score;
         document.getElementById('base-health-text').textContent = Math.max(0, Math.floor(gameState.baseHealth));
+        document.getElementById('max-health-text').textContent = gameState.maxBaseHealth;
         
         const healthPercent = Math.max(0, (gameState.baseHealth / gameState.maxBaseHealth) * 100);
         const healthBar = document.getElementById('base-health');
@@ -1199,7 +1585,12 @@ if (forceType) {
         
         if (victory) {
             document.getElementById('game-over-icon').className = 'fas fa-trophy text-yellow-500 text-8xl mb-6';
-            document.getElementById('game-over-title').textContent = gameState.difficulty === 'hard' ? 'VICTOIRE LÉGENDAIRE !' : 'Victoire !';
+            
+            if (gameState.difficulty === 'hard') {
+                document.getElementById('game-over-title').textContent = '💀 VICTOIRE LÉGENDAIRE ! 💀';
+            } else {
+                document.getElementById('game-over-title').textContent = 'Victoire !';
+            }
         } else {
             document.getElementById('game-over-icon').className = 'fas fa-skull-crossbones text-red-500 text-8xl mb-6';
             document.getElementById('game-over-title').textContent = 'Mission Échouée';
@@ -1228,12 +1619,16 @@ if (forceType) {
             waveActive: false,
             path: [],
             difficulty: difficulty,
+            maxWaves: 25,
             abilityCooldowns: {},
             reinforcements: [],
-            boostedTowers: new Set()
+            boostedTowers: new Set(),
+            godMode: false,
+            moneyGenerators: []
         };
         
         lastUpdate = Date.now();
+        moneyGenTimer = Date.now();
         
         document.getElementById('game-over-screen').classList.add('hidden');
         
@@ -1255,9 +1650,12 @@ if (forceType) {
             waveActive: false,
             path: [],
             difficulty: 'medium',
+            maxWaves: 25,
             abilityCooldowns: {},
             reinforcements: [],
-            boostedTowers: new Set()
+            boostedTowers: new Set(),
+            godMode: false,
+            moneyGenerators: []
         };
         
         clearInterval(gameLoop);
@@ -1271,8 +1669,3 @@ if (forceType) {
     </script>
 </body>
 </html>
-
-
-
-
-
