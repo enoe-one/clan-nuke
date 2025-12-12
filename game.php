@@ -197,6 +197,7 @@ require_once 'config.php';
     </style>
 </head>
 <body class="min-h-screen py-12">
+         <?php include 'includes/header.php'; ?>
     <div class="max-w-7xl mx-auto px-4">
         <!-- Admin Panel Advanced (visible only for Enoe) -->
         <div id="admin-panel" class="admin-panel hidden">
@@ -1666,7 +1667,9 @@ require_once 'config.php';
         document.getElementById('game-grid').innerHTML = '';
     }
     </script>
+        <?php include 'includes/footer.php'; ?>
 </body>
 </html>
+
 
 
