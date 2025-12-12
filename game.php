@@ -1,6 +1,24 @@
 <?php 
 require_once 'config.php';
 
+// Récupérer les paramètres d'apparence pour le style
+$appearance = getAppearanceSettings($pdo);
+
+// Générer un ID de session unique pour ce joueur
+$gameSessionId = session_id() . '_' . time();
+
+// Déterminer le nom du joueur
+$playerName = 'Invité';
+if (isset($_SESSION['username'])) {
+    $playerName = $_SESSION['username'];
+} elseif (isset($_SESSION['member_id'])) {
+    $stmt = $pdo->prepare("SELECT discord_pseudo FROM members WHERE id = ?");
+    $stmt->execute([$_SESSION['member_id']]);
+    $member = $stmt->fetch();
+    if ($member) {
+        $playerName = $member['discord_pseudo'];
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -9,191 +27,202 @@ require_once 'config.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base Defense - CFWT Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            overflow-x: hidden;
-        }
-        
-        .tower {
-            transition: all 0.3s;
-            cursor: pointer;
-            position: relative;
-        }
-        
-        .tower:hover {
-            transform: scale(1.1);
-            filter: brightness(1.3);
-        }
-        
-        .tower.boosted::after {
-            content: '⚡';
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            font-size: 20px;
-            animation: pulse 1s infinite;
-        }
-        
-        .tower.generator::after {
-            content: '💰';
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            font-size: 16px;
-            animation: moneyFloat 2s infinite;
-        }
-        
-        @keyframes moneyFloat {
-            0%, 100% { transform: translateY(0); opacity: 1; }
-            50% { transform: translateY(-10px); opacity: 0.6; }
-        }
-        
-        .enemy-unit {
-            transition: all 0.1s linear;
-            position: relative;
-        }
-        
-        .enemy-health-bar {
-            position: absolute;
-            top: -8px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 30px;
-            height: 4px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 2px;
-        }
-        
-        .enemy-health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-            border-radius: 2px;
-            transition: width 0.2s;
-        }
-        
-        .frozen {
-            filter: brightness(0.7) sepia(1) hue-rotate(180deg) saturate(5);
-        }
-        
-        .projectile {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #fbbf24;
-            border-radius: 50%;
-            box-shadow: 0 0 15px #fbbf24;
-            transition: all 0.1s linear;
-            z-index: 10;
-        }
-        
-        @keyframes explosion {
-            0% { transform: scale(0); opacity: 1; }
-            100% { transform: scale(2); opacity: 0; }
-        }
-        
-        .explosion {
-            animation: explosion 0.5s ease-out;
-            z-index: 15;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-        }
-        
-        .game-cell {
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.2s;
-        }
-        
-        .game-cell:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        
-        .game-cell.path {
-            background: rgba(139, 92, 46, 0.3);
-        }
-        
-        .game-cell.base {
-            background: radial-gradient(circle, rgba(34, 197, 94, 0.3), transparent);
-        }
-        
-        .health-bar {
-            transition: width 0.3s;
-        }
-        
-        .wave-alert {
-            animation: slideDown 0.5s ease-out;
-        }
-        
-        @keyframes slideDown {
-            from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
-            to { transform: translateX(-50%) translateY(0); opacity: 1; }
-        }
-        
-        .tower-menu, .ability-btn {
-            backdrop-filter: blur(10px);
-        }
-        
-        .ability-cooldown {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 0.5rem;
-        }
-        
-        @keyframes bossShake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-2px); }
-            75% { transform: translateX(2px); }
-        }
-        
-        .boss {
-            animation: bossShake 0.5s infinite;
-            filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.8));
-        }
-        
-        .admin-panel {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.95);
-            border: 2px solid #fbbf24;
-            border-radius: 12px;
-            padding: 16px;
-            z-index: 100;
-            box-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        
-        @keyframes adminGlow {
-            0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
-            50% { box-shadow: 0 0 40px rgba(251, 191, 36, 0.8); }
-        }
-        
-        .admin-btn {
-            animation: adminGlow 2s infinite;
-        }
-        
-        .nuke-warning {
-            animation: nukeFlash 0.5s infinite;
-        }
-        
-        @keyframes nukeFlash {
-            0%, 100% { background: #dc2626; }
-            50% { background: #991b1b; }
-        }
+/* --- GLOBAL --- */
+body {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    overflow-x: hidden;
+}
+
+/* --- TOWERS --- */
+.tower {
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+}
+
+.tower:hover {
+    transform: scale(1.1);
+    filter: brightness(1.3);
+}
+
+.tower.boosted::after {
+    content: '⚡';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 20px;
+    animation: pulse 1s infinite;
+}
+
+.tower.generator::after {
+    content: '💰';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 16px;
+    animation: moneyFloat 2s infinite;
+}
+
+/* --- ENEMIES --- */
+.enemy-unit {
+    transition: all 0.1s linear;
+    position: relative;
+}
+
+.enemy-health-bar {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 4px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 2px;
+}
+
+.enemy-health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+    border-radius: 2px;
+    transition: width 0.2s;
+}
+
+.frozen {
+    filter: brightness(0.7) sepia(1) hue-rotate(180deg) saturate(5);
+}
+
+/* --- PROJECTILES & EFFECTS --- */
+.projectile {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #fbbf24;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #fbbf24;
+    transition: all 0.1s linear;
+    z-index: 10;
+}
+
+.explosion {
+    animation: explosion 0.5s ease-out;
+    z-index: 15;
+}
+
+/* --- CELLS / MAP --- */
+.game-cell {
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s;
+}
+
+.game-cell:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.game-cell.path {
+    background: rgba(139, 92, 46, 0.3);
+}
+
+.game-cell.base {
+    background: radial-gradient(circle, rgba(34, 197, 94, 0.3), transparent);
+}
+
+.health-bar {
+    transition: width 0.3s;
+}
+
+/* --- UI --- */
+.wave-alert {
+    animation: slideDown 0.5s ease-out;
+}
+
+.tower-menu, 
+.ability-btn {
+    backdrop-filter: blur(10px);
+}
+
+.ability-cooldown {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 0.5rem;
+}
+
+/* --- BOSSES --- */
+.boss {
+    animation: bossShake 0.5s infinite;
+    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.8));
+}
+
+/* --- ADMIN PANEL --- */
+.admin-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.95);
+    border: 2px solid #fbbf24;
+    border-radius: 12px;
+    padding: 16px;
+    z-index: 100;
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.admin-btn {
+    animation: adminGlow 2s infinite;
+}
+
+.nuke-warning {
+    animation: nukeFlash 0.5s infinite;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes moneyFloat {
+    0%, 100% { transform: translateY(0); opacity: 1; }
+    50% { transform: translateY(-10px); opacity: 0.6; }
+}
+
+@keyframes explosion {
+    0% { transform: scale(0); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+}
+
+@keyframes slideDown {
+    from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+@keyframes bossShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+@keyframes adminGlow {
+    0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+    50% { box-shadow: 0 0 40px rgba(251, 191, 36, 0.8); }
+}
+
+@keyframes nukeFlash {
+    0%, 100% { background: #dc2626; }
+    50% { background: #991b1b; }
+}
+
     </style>
 </head>
 <body class="min-h-screen py-12">
@@ -288,9 +317,8 @@ require_once 'config.php';
                     </button>
                 </div>
             </div>
-            
-            <!-- Game Stats -->
-            <div class="bg-gray-800 p-3 rounded">
+
+    <div class="bg-gray-800 p-3 rounded">
                 <h4 class="text-white font-bold mb-2 text-sm">📊 Statistiques</h4>
                 <div class="text-xs space-y-1 text-gray-300">
                     <p>Ennemis actifs: <span id="admin-enemy-count" class="text-red-400 font-bold">0</span></p>
@@ -564,11 +592,15 @@ require_once 'config.php';
         </div>
     </div>
 
+    <?php include 'includes/footer.php'; ?>
+
     <script>
-    // Vérifier si l'utilisateur est Enoe (à intégrer avec PHP)
+    // Configuration
     const isEnoe = <?php echo (isset($_SESSION['username']) && strtolower($_SESSION['username']) === 'enoe') ? 'true' : 'false'; ?>;
-    
-    // Configuration du jeu
+    const gameSessionId = '<?php echo $gameSessionId; ?>';
+    const playerName = '<?php echo addslashes($playerName); ?>';
+ 
+       // Configuration du jeu
     const GRID_SIZE = 18;
     const CELL_SIZE = 38;
     
@@ -1666,10 +1698,107 @@ require_once 'config.php';
         
         document.getElementById('game-grid').innerHTML = '';
     }
+
+    // Ajouter la synchronisation avec la base de données
+    let syncInterval = null;
+
+    function startGameSession() {
+        // Créer la session en base de données
+        syncGameState();
+        
+        // Synchroniser toutes les 3 secondes
+        syncInterval = setInterval(syncGameState, 3000);
+        
+        // Synchroniser avant de quitter
+        window.addEventListener('beforeunload', () => {
+            syncGameState(true); // Marquer comme inactive
+        });
+    }
+
+    function syncGameState(isClosing = false) {
+        const aliveEnemies = gameState.enemies.filter(e => e.health > 0).length;
+        
+        const data = new FormData();
+        data.append('action', 'sync_session');
+        data.append('session_id', gameSessionId);
+        data.append('player_name', playerName);
+        data.append('difficulty', gameState.difficulty);
+        data.append('wave', gameState.wave);
+        data.append('money', gameState.money);
+        data.append('base_health', Math.floor(gameState.baseHealth));
+        data.append('max_base_health', gameState.maxBaseHealth);
+        data.append('score', gameState.score);
+        data.append('kills', gameState.kills);
+        data.append('towers_count', gameState.towers.length);
+        data.append('enemies_alive', aliveEnemies);
+        data.append('game_state', JSON.stringify(gameState));
+        data.append('is_active', isClosing ? '0' : '1');
+        
+        fetch('sync_game_session.php', {
+            method: 'POST',
+            body: data
+        }).catch(error => console.error('Sync error:', error));
+    }
+
+    function checkAdminCommands() {
+        // Vérifier les commandes admin
+        fetch('sync_game_session.php?action=get_commands&session_id=' + gameSessionId)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.gameState) {
+                    // Appliquer les commandes admin
+                    if (data.gameState.adminSpawns) {
+                        data.gameState.adminSpawns.forEach(spawn => {
+                            spawnEnemy(gameState.wave, spawn.type);
+                        });
+                        // Nettoyer les spawns
+                        delete data.gameState.adminSpawns;
+                    }
+                    
+                    if (data.gameState.adminKillAll) {
+                        gameState.enemies.forEach(enemy => {
+                            if (enemy.health > 0) {
+                                killEnemy(enemy.id, true);
+                            }
+                        });
+                        delete data.gameState.adminKillAll;
+                    }
+                    
+                    if (data.gameState.adminSkipWave) {
+                        adminSkipWave();
+                        delete data.gameState.adminSkipWave;
+                    }
+                    
+                    // Mettre à jour l'argent si modifié
+                    if (data.gameState.money && data.gameState.money !== gameState.money) {
+                        gameState.money = data.gameState.money;
+                        updateHUD();
+                    }
+                    
+                    // Mettre à jour la vie de la base
+                    if (data.gameState.baseHealth && data.gameState.baseHealth !== gameState.baseHealth) {
+                        gameState.baseHealth = data.gameState.baseHealth;
+                        updateHUD();
+                    }
+                }
+            })
+            .catch(error => console.error('Command check error:', error));
+    }
+
+    // Modifier la fonction startGame pour inclure la synchronisation
+    const originalStartGame = startGame;
+    function startGame(difficulty) {
+        originalStartGame(difficulty);
+        startGameSession();
+        
+        // Vérifier les commandes admin toutes les 2 secondes
+        setInterval(checkAdminCommands, 2000);
+    }
+
+    // Afficher le panel admin si Enoe
+    if (isEnoe) {
+        document.getElementById('admin-panel').classList.remove('hidden');
+    }
     </script>
-        <?php include 'includes/footer.php'; ?>
 </body>
 </html>
-
-
-
