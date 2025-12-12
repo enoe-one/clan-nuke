@@ -1,7 +1,6 @@
 <?php 
 require_once 'config.php';
 
-$appearance = getAppearanceSettings($pdo);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -579,7 +578,7 @@ $appearance = getAppearanceSettings($pdo);
         missile: { cost: 380, damage: 150, range: 200, fireRate: 2500, icon: 'fa-rocket', color: 'text-purple-400', projectileColor: '#c084fc', airCapable: true },
         laser: { cost: 400, damage: 20, range: 140, fireRate: 200, icon: 'fa-radiation', color: 'text-green-400', continuous: true, projectileColor: '#4ade80' },
         antiair: { cost: 250, damage: 60, range: 220, fireRate: 1000, icon: 'fa-plane-slash', color: 'text-cyan-400', airOnly: true, projectileColor: '#22d3ee' },
-        generator: { cost: 400, damage: 1000, range: 0, fireRate: 55000, icon: 'fa-coins', color: 'text-yellow-400', moneyGen: 25, projectileColor: '#9ca3af }
+        generator: { cost: 400,range: 0, fireRate: 0, icon: 'fa-coins', color: 'text-yellow-400', moneyGen: 15}
     };
 
     const ENEMY_TYPES = {
@@ -1669,4 +1668,5 @@ $appearance = getAppearanceSettings($pdo);
     </script>
 </body>
 </html>
+
 
