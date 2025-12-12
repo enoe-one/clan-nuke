@@ -21,7 +21,7 @@ if ($database_url) {
 
 // Configuration du site
 define('SITE_URL', getenv('RAILWAY_PUBLIC_DOMAIN') ? 'https://' . getenv('RAILWAY_PUBLIC_DOMAIN') : 'http://localhost');
-define('DISCORD_INVITE', 'https://discord.gg/bDVhdsyW');
+define('DISCORD_INVITE', 'https://discord.gg/CxwtnUpe');
 
 // Sécurité des sessions
 ini_set('session.cookie_httponly', 1);
@@ -41,7 +41,7 @@ try {
 } catch(PDOException $e) {
     die('Erreur de connexion à la base de données. Veuillez recharger la page et attendre. 
     Si au bout de 2 minutes le site n\'est pas lancé, veuillez contacter l\'administrateur 
-    en cliquant <a href="https://discord.gg/bDVhdsyW" style="color:#fff;background-color:#5865F2;padding:6px 12px;border-radius:6px;text-decoration:none;">ici</a>.');
+    en cliquant <a href="https://discord.gg/CxwtnUpe" style="color:#fff;background-color:#5865F2;padding:6px 12px;border-radius:6px;text-decoration:none;">ici</a>.');
 }
 
 // Inclure les fonctions d'apparence
@@ -261,5 +261,6 @@ function generateCSRFToken() {
 function validateCSRFToken($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
+
 
 
