@@ -89,6 +89,17 @@ if (in_array($_SESSION['role'], ['etat_major', 'chef', 'super_admin'])) {
                     </a>
                 <?php endif; ?>
 
+                                <?php if (hasAccess('admin-panel-game')): ?>
+                    <a href="admin-panel-game.php" class="bg-gray-800 p-6 rounded-lg border-t-4 border-red-500 hover:bg-gray-700 transition">
+                        <i class="fas fa-users text-red-500 text-5xl mb-4"></i>
+                        <h3 class="text-xl font-bold text-white mb-2">gestion mini jeu</h3>
+                        <p class="text-gray-400 mb-4">Voir les jeu en cours</p>
+                        <span class="bg-red-600 text-white px-3 py-1 rounded-full text-sm">
+                            <?php echo $pending_factions; ?> mini-jeu
+                        </span>
+                    </a>
+                <?php endif; ?>
+
                 <?php if (hasAccess('access_edit_members')): ?>
                     <a href="manage_members.php" class="bg-gray-800 p-6 rounded-lg border-t-4 border-green-500 hover:bg-gray-700 transition">
                         <i class="fas fa-users-cog text-green-500 text-5xl mb-4"></i>
@@ -215,5 +226,6 @@ $pending_promotions = $stmt->fetchColumn();
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
+
 
 
