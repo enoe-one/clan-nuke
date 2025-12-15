@@ -1,13 +1,8 @@
 <?php 
 require_once 'config.php';
-
-// Récupérer les paramètres d'apparence pour le style
 $appearance = getAppearanceSettings($pdo);
-
-// Générer un ID de session unique pour ce joueur
 $gameSessionId = session_id() . '_' . time();
 
-// Déterminer le nom du joueur
 $playerName = 'Invité';
 if (isset($_SESSION['username'])) {
     $playerName = $_SESSION['username'];
@@ -27,7 +22,7 @@ if (isset($_SESSION['username'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base Defense - CFWT Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/all.min.css">
     <style>
 /* --- GLOBAL --- */
 body {
@@ -611,7 +606,7 @@ body {
         missile: { cost: 380, damage: 150, range: 200, fireRate: 2500, icon: 'fa-rocket', color: 'text-purple-400', projectileColor: '#c084fc', airCapable: true },
         laser: { cost: 400, damage: 20, range: 140, fireRate: 200, icon: 'fa-radiation', color: 'text-green-400', continuous: true, projectileColor: '#4ade80' },
         antiair: { cost: 250, damage: 60, range: 220, fireRate: 1000, icon: 'fa-plane-slash', color: 'text-cyan-400', airOnly: true, projectileColor: '#22d3ee' },
-        generator: { cost: 400,range: 0, fireRate: 0, icon: 'fa-coins', color: 'text-yellow-400', moneyGen: 15}
+        generator: { cost: 400, range: 0, fireRate: 0, icon: 'fa-coins', color: 'text-yellow-400', moneyGen: 15}
     };
 
     const ENEMY_TYPES = {
@@ -1741,17 +1736,14 @@ body {
     }
 
     function checkAdminCommands() {
-        // Vérifier les commandes admin
         fetch('sync_game_session.php?action=get_commands&session_id=' + gameSessionId)
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.gameState) {
-                    // Appliquer les commandes admin
                     if (data.gameState.adminSpawns) {
                         data.gameState.adminSpawns.forEach(spawn => {
                             spawnEnemy(gameState.wave, spawn.type);
                         });
-                        // Nettoyer les spawns
                         delete data.gameState.adminSpawns;
                     }
                     
@@ -1768,14 +1760,14 @@ body {
                         adminSkipWave();
                         delete data.gameState.adminSkipWave;
                     }
-                    
-                    // Mettre à jour l'argent si modifié
+
+                
                     if (data.gameState.money && data.gameState.money !== gameState.money) {
                         gameState.money = data.gameState.money;
                         updateHUD();
                     }
                     
-                    // Mettre à jour la vie de la base
+
                     if (data.gameState.baseHealth && data.gameState.baseHealth !== gameState.baseHealth) {
                         gameState.baseHealth = data.gameState.baseHealth;
                         updateHUD();
@@ -1785,20 +1777,18 @@ body {
             .catch(error => console.error('Command check error:', error));
     }
 
-    // Modifier la fonction startGame pour inclure la synchronisation
     const originalStartGame = startGame;
     function startGame(difficulty) {
         originalStartGame(difficulty);
         startGameSession();
-        
-        // Vérifier les commandes admin toutes les 2 secondes
+
         setInterval(checkAdminCommands, 2000);
     }
 
-    // Afficher le panel admin si Enoe
     if (isEnoe) {
         document.getElementById('admin-panel').classList.remove('hidden');
     }
     </script>
 </body>
 </html>
+
