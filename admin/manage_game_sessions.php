@@ -149,7 +149,7 @@ logAdminAction($pdo, $_SESSION['user_id'], 'Consultation sessions de jeu');
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestion Sessions de Jeu - CFWT</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href=".../css/all.min.css">
     <style>
         @keyframes pulse-glow {
             0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.5); }
