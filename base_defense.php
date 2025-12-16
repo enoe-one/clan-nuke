@@ -1,8 +1,13 @@
 <?php 
 require_once 'config.php';
+
+// Récupérer les paramètres d'apparence pour le style
 $appearance = getAppearanceSettings($pdo);
+
+// Générer un ID de session unique pour ce joueur
 $gameSessionId = session_id() . '_' . time();
 
+// Déterminer le nom du joueur
 $playerName = 'Invité';
 if (isset($_SESSION['username'])) {
     $playerName = $_SESSION['username'];
@@ -22,206 +27,194 @@ if (isset($_SESSION['username'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base Defense - CFWT Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-/* --- GLOBAL --- */
-body {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    overflow-x: hidden;
-}
-
-/* --- TOWERS --- */
-.tower {
-    transition: all 0.3s;
-    cursor: pointer;
-    position: relative;
-}
-
-.tower:hover {
-    transform: scale(1.1);
-    filter: brightness(1.3);
-}
-
-.tower.boosted::after {
-    content: '⚡';
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    font-size: 20px;
-    animation: pulse 1s infinite;
-}
-
-.tower.generator::after {
-    content: '💰';
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    font-size: 16px;
-    animation: moneyFloat 2s infinite;
-}
-
-/* --- ENEMIES --- */
-.enemy-unit {
-    transition: all 0.1s linear;
-    position: relative;
-}
-
-.enemy-health-bar {
-    position: absolute;
-    top: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 30px;
-    height: 4px;
-    background: rgba(0,0,0,0.5);
-    border-radius: 2px;
-}
-
-.enemy-health-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #ef4444, #dc2626);
-    border-radius: 2px;
-    transition: width 0.2s;
-}
-
-.frozen {
-    filter: brightness(0.7) sepia(1) hue-rotate(180deg) saturate(5);
-}
-
-/* --- PROJECTILES & EFFECTS --- */
-.projectile {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: #fbbf24;
-    border-radius: 50%;
-    box-shadow: 0 0 15px #fbbf24;
-    transition: all 0.1s linear;
-    z-index: 10;
-}
-
-.explosion {
-    animation: explosion 0.5s ease-out;
-    z-index: 15;
-}
-
-/* --- CELLS / MAP --- */
-.game-cell {
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.2s;
-}
-
-.game-cell:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.game-cell.path {
-    background: rgba(139, 92, 46, 0.3);
-}
-
-.game-cell.base {
-    background: radial-gradient(circle, rgba(34, 197, 94, 0.3), transparent);
-}
-
-.health-bar {
-    transition: width 0.3s;
-}
-
-/* --- UI --- */
-.wave-alert {
-    animation: slideDown 0.5s ease-out;
-}
-
-.tower-menu, 
-.ability-btn {
-    backdrop-filter: blur(10px);
-}
-
-.ability-cooldown {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: bold;
-    border-radius: 0.5rem;
-}
-
-/* --- BOSSES --- */
-.boss {
-    animation: bossShake 0.5s infinite;
-    filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.8));
-}
-
-/* --- ADMIN PANEL --- */
-.admin-panel {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.95);
-    border: 2px solid #fbbf24;
-    border-radius: 12px;
-    padding: 16px;
-    z-index: 100;
-    box-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.admin-btn {
-    animation: adminGlow 2s infinite;
-}
-
-.nuke-warning {
-    animation: nukeFlash 0.5s infinite;
-}
-
-/* --- ANIMATIONS --- */
-@keyframes moneyFloat {
-    0%, 100% { transform: translateY(0); opacity: 1; }
-    50% { transform: translateY(-10px); opacity: 0.6; }
-}
-
-@keyframes explosion {
-    0% { transform: scale(0); opacity: 1; }
-    100% { transform: scale(2); opacity: 0; }
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.2); }
-}
-
-@keyframes slideDown {
-    from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
-    to { transform: translateX(-50%) translateY(0); opacity: 1; }
-}
-
-@keyframes bossShake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-2px); }
-    75% { transform: translateX(2px); }
-}
-
-@keyframes adminGlow {
-    0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
-    50% { box-shadow: 0 0 40px rgba(251, 191, 36, 0.8); }
-}
-
-@keyframes nukeFlash {
-    0%, 100% { background: #dc2626; }
-    50% { background: #991b1b; }
-}
-
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            overflow-x: hidden;
+        }
+        
+        .tower {
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .tower:hover {
+            transform: scale(1.1);
+            filter: brightness(1.3);
+        }
+        
+        .tower.boosted::after {
+            content: '⚡';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 20px;
+            animation: pulse 1s infinite;
+        }
+        
+        .tower.generator::after {
+            content: '💰';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 16px;
+            animation: moneyFloat 2s infinite;
+        }
+        
+        @keyframes moneyFloat {
+            0%, 100% { transform: translateY(0); opacity: 1; }
+            50% { transform: translateY(-10px); opacity: 0.6; }
+        }
+        
+        .enemy-unit {
+            transition: all 0.1s linear;
+            position: relative;
+        }
+        
+        .enemy-health-bar {
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 4px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 2px;
+        }
+        
+        .enemy-health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+            border-radius: 2px;
+            transition: width 0.2s;
+        }
+        
+        .frozen {
+            filter: brightness(0.7) sepia(1) hue-rotate(180deg) saturate(5);
+        }
+        
+        .projectile {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #fbbf24;
+            border-radius: 50%;
+            box-shadow: 0 0 15px #fbbf24;
+            transition: all 0.1s linear;
+            z-index: 10;
+        }
+        
+        @keyframes explosion {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        
+        .explosion {
+            animation: explosion 0.5s ease-out;
+            z-index: 15;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        .game-cell {
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s;
+        }
+        
+        .game-cell:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .game-cell.path {
+            background: rgba(139, 92, 46, 0.3);
+        }
+        
+        .game-cell.base {
+            background: radial-gradient(circle, rgba(34, 197, 94, 0.3), transparent);
+        }
+        
+        .health-bar {
+            transition: width 0.3s;
+        }
+        
+        .wave-alert {
+            animation: slideDown 0.5s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        .tower-menu, .ability-btn {
+            backdrop-filter: blur(10px);
+        }
+        
+        .ability-cooldown {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 0.5rem;
+        }
+        
+        @keyframes bossShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+        
+        .boss {
+            animation: bossShake 0.5s infinite;
+            filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.8));
+        }
+        
+        .admin-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 2px solid #fbbf24;
+            border-radius: 12px;
+            padding: 16px;
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(251, 191, 36, 0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        @keyframes adminGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(251, 191, 36, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(251, 191, 36, 0.8); }
+        }
+        
+        .admin-btn {
+            animation: adminGlow 2s infinite;
+        }
+        
+        .nuke-warning {
+            animation: nukeFlash 0.5s infinite;
+        }
+        
+        @keyframes nukeFlash {
+            0%, 100% { background: #dc2626; }
+            50% { background: #991b1b; }
+        }
     </style>
 </head>
 <body class="min-h-screen py-12">
-         <?php include 'includes/header.php'; ?>
     <div class="max-w-7xl mx-auto px-4">
         <!-- Admin Panel Advanced (visible only for Enoe) -->
         <div id="admin-panel" class="admin-panel hidden">
@@ -312,8 +305,9 @@ body {
                     </button>
                 </div>
             </div>
-
-    <div class="bg-gray-800 p-3 rounded">
+            
+            <!-- Game Stats -->
+            <div class="bg-gray-800 p-3 rounded">
                 <h4 class="text-white font-bold mb-2 text-sm">📊 Statistiques</h4>
                 <div class="text-xs space-y-1 text-gray-300">
                     <p>Ennemis actifs: <span id="admin-enemy-count" class="text-red-400 font-bold">0</span></p>
@@ -587,44 +581,40 @@ body {
         </div>
     </div>
 
-    <?php include 'includes/footer.php'; ?>
-
     <script>
-    // Configuration
+    // Vérifier si l'utilisateur est Enoe (à intégrer avec PHP)
     const isEnoe = <?php echo (isset($_SESSION['username']) && strtolower($_SESSION['username']) === 'enoe') ? 'true' : 'false'; ?>;
-    const gameSessionId = '<?php echo $gameSessionId; ?>';
-    const playerName = '<?php echo addslashes($playerName); ?>';
- 
-       // Configuration du jeu
+    
+    // Configuration du jeu
     const GRID_SIZE = 18;
     const CELL_SIZE = 38;
     
     const TOWER_TYPES = {
         basic: { cost: 40, damage: 8, range: 100, fireRate: 800, icon: 'fa-gun', color: 'text-gray-400', projectileColor: '#9ca3af' },
-        sniper: { cost: 220, damage: 40, range: 300, fireRate: 2500, icon: 'fa-crosshairs', color: 'text-red-400', projectileColor: '#f87171' },
-        cannon: { cost: 280, damage: 18, range: 130, fireRate: 2000, icon: 'fa-bomb', color: 'text-orange-400', splash: 60, projectileColor: '#fb923c' },
-        missile: { cost: 380, damage: 150, range: 200, fireRate: 2500, icon: 'fa-rocket', color: 'text-purple-400', projectileColor: '#c084fc', airCapable: true },
-        laser: { cost: 400, damage: 20, range: 140, fireRate: 200, icon: 'fa-radiation', color: 'text-green-400', continuous: true, projectileColor: '#4ade80' },
-        antiair: { cost: 250, damage: 60, range: 220, fireRate: 1000, icon: 'fa-plane-slash', color: 'text-cyan-400', airOnly: true, projectileColor: '#22d3ee' },
-        generator: { cost: 400, range: 0, fireRate: 0, icon: 'fa-coins', color: 'text-yellow-400', moneyGen: 15}
+        sniper: { cost: 120, damage: 40, range: 250, fireRate: 2500, icon: 'fa-crosshairs', color: 'text-red-400', projectileColor: '#f87171' },
+        cannon: { cost: 180, damage: 25, range: 130, fireRate: 2000, icon: 'fa-bomb', color: 'text-orange-400', splash: 60, projectileColor: '#fb923c' },
+        missile: { cost: 280, damage: 120, range: 200, fireRate: 2500, icon: 'fa-rocket', color: 'text-purple-400', projectileColor: '#c084fc', airCapable: true },
+        laser: { cost: 300, damage: 15, range: 140, fireRate: 200, icon: 'fa-radiation', color: 'text-green-400', continuous: true, projectileColor: '#4ade80' },
+        antiair: { cost: 150, damage: 60, range: 220, fireRate: 1000, icon: 'fa-plane-slash', color: 'text-cyan-400', airOnly: true, projectileColor: '#22d3ee' },
+        generator: { cost: 400, damage: 0, range: 0, fireRate: 0, icon: 'fa-coins', color: 'text-yellow-400', moneyGen: 10 }
     };
 
     const ENEMY_TYPES = {
         normal: { health: 40, speed: 1.2, reward: 15, icon: 'fa-user-ninja', color: 'text-red-400' },
-        runner: { health: 20, speed: 3.8, reward: 20, icon: 'fa-running', color: 'text-yellow-400' },
-        tank: { health: 200, speed: 0.6, reward: 40, icon: 'fa-shield', color: 'text-blue-400' },
+        runner: { health: 20, speed: 2.8, reward: 20, icon: 'fa-running', color: 'text-yellow-400' },
+        tank: { health: 150, speed: 0.6, reward: 40, icon: 'fa-shield', color: 'text-blue-400' },
         aerial: { health: 30, speed: 1.8, reward: 25, icon: 'fa-plane', color: 'text-cyan-400', flying: true },
-        boss: { health: 1200, speed: 0.8, reward: 200, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
-        airboss: { health: 1800, speed: 2.2, reward: 300, icon: 'fa-plane-departure', color: 'text-indigo-400', size: 2.5, flying: true },
+        boss: { health: 800, speed: 0.8, reward: 200, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
+        airboss: { health: 1000, speed: 2.2, reward: 300, icon: 'fa-plane-departure', color: 'text-indigo-400', size: 2.5, flying: true },
         panda: { health: 1000000, speed: 0.4, reward: 5000, icon: 'fa-paw', color: 'text-pink-400', size: 3, boss: true }
     };
 
     const ABILITIES = {
-        airstrike: { cost: 150, cooldown: 45000, damage: 350, radius: 100 },
-        freeze: { cost: 100, cooldown: 30000, duration: 6000 },
+        airstrike: { cost: 150, cooldown: 45000, damage: 150, radius: 100 },
+        freeze: { cost: 100, cooldown: 30000, duration: 5000 },
         boost: { cost: 120, cooldown: 60000, duration: 10000, multiplier: 2 },
         reinforcement: { cost: 200, cooldown: 90000, duration: 15000 },
-        nuke: { cost: 1000, cooldown: 120000, damage: 3000, radius: 500, pandaDamage: 1000 }
+        nuke: { cost: 1000, cooldown: 120000, damage: 3000, radius: 200, pandaDamage: 1000000 }
     };
 
     // Variables du jeu
@@ -791,10 +781,8 @@ body {
             setTimeout(() => notif.remove(), 500);
         }, 2000);
     }
-
-    function startGame(difficulty) {
-        gameState.difficulty = difficulty;
-        
+const originalStartGameLogic = function(difficulty) {
+    gameState.difficulty = difficulty;
         if (difficulty === 'easy') {
             gameState.money = 1000;
             gameState.baseHealth = 200;
@@ -818,9 +806,14 @@ body {
         initializeGrid();
         generatePath();
         updateHUD();
-        
+ 
         gameLoop = setInterval(update, 50);
-    }
+};
+function startGame(difficulty) {
+    originalStartGameLogic(difficulty);
+    startGameSession();
+    setInterval(checkAdminCommands, 2000);
+}
 
     function initializeGrid() {
         const grid = document.getElementById('game-grid');
@@ -1605,6 +1598,10 @@ body {
     }
 
     function endGame(victory) {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+    }
+    syncGameState(true);
         clearInterval(gameLoop);
         
         document.getElementById('game-area').classList.add('hidden');
@@ -1693,102 +1690,100 @@ body {
         
         document.getElementById('game-grid').innerHTML = '';
     }
+    // === SYNCHRONISATION SESSIONS ===
+let syncInterval = null;
 
-    // Ajouter la synchronisation avec la base de données
-    let syncInterval = null;
+function startGameSession() {
+    syncGameState();
+    syncInterval = setInterval(syncGameState, 3000);
+    window.addEventListener('beforeunload', () => {
+        syncGameState(true);
+    });
+}
 
-    function startGameSession() {
-        // Créer la session en base de données
-        syncGameState();
-        
-        // Synchroniser toutes les 3 secondes
-        syncInterval = setInterval(syncGameState, 3000);
-        
-        // Synchroniser avant de quitter
-        window.addEventListener('beforeunload', () => {
-            syncGameState(true); // Marquer comme inactive
-        });
-    }
+function syncGameState(isClosing = false) {
+    const aliveEnemies = gameState.enemies.filter(e => e.health > 0).length;
+    const data = new FormData();
+    data.append('action', 'sync_session');
+    data.append('session_id', gameSessionId);
+    data.append('player_name', playerName);
+    data.append('difficulty', gameState.difficulty);
+    data.append('wave', gameState.wave);
+    data.append('money', gameState.money);
+    data.append('base_health', Math.floor(gameState.baseHealth));
+    data.append('max_base_health', gameState.maxBaseHealth);
+    data.append('score', gameState.score);
+    data.append('kills', gameState.kills);
+    data.append('towers_count', gameState.towers.length);
+    data.append('enemies_alive', aliveEnemies);
+    data.append('game_state', JSON.stringify(gameState));
+    data.append('is_active', isClosing ? '0' : '1');
+    
+    fetch('sync_game_session.php', {
+        method: 'POST',
+        body: data
+    }).catch(error => console.error('Sync error:', error));
+}
 
-    function syncGameState(isClosing = false) {
-        const aliveEnemies = gameState.enemies.filter(e => e.health > 0).length;
-        
-        const data = new FormData();
-        data.append('action', 'sync_session');
-        data.append('session_id', gameSessionId);
-        data.append('player_name', playerName);
-        data.append('difficulty', gameState.difficulty);
-        data.append('wave', gameState.wave);
-        data.append('money', gameState.money);
-        data.append('base_health', Math.floor(gameState.baseHealth));
-        data.append('max_base_health', gameState.maxBaseHealth);
-        data.append('score', gameState.score);
-        data.append('kills', gameState.kills);
-        data.append('towers_count', gameState.towers.length);
-        data.append('enemies_alive', aliveEnemies);
-        data.append('game_state', JSON.stringify(gameState));
-        data.append('is_active', isClosing ? '0' : '1');
-        
-        fetch('sync_game_session.php', {
-            method: 'POST',
-            body: data
-        }).catch(error => console.error('Sync error:', error));
-    }
-
-    function checkAdminCommands() {
-        fetch('sync_game_session.php?action=get_commands&session_id=' + gameSessionId)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.gameState) {
-                    if (data.gameState.adminSpawns) {
-                        data.gameState.adminSpawns.forEach(spawn => {
-                            spawnEnemy(gameState.wave, spawn.type);
-                        });
-                        delete data.gameState.adminSpawns;
-                    }
-                    
-                    if (data.gameState.adminKillAll) {
-                        gameState.enemies.forEach(enemy => {
-                            if (enemy.health > 0) {
-                                killEnemy(enemy.id, true);
-                            }
-                        });
-                        delete data.gameState.adminKillAll;
-                    }
-                    
-                    if (data.gameState.adminSkipWave) {
-                        adminSkipWave();
-                        delete data.gameState.adminSkipWave;
-                    }
-
+function checkAdminCommands() {
+    fetch('sync_game_session.php?action=get_commands&session_id=' + gameSessionId)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.gameState) {
+                if (data.gameState.adminSpawns) {
+                    data.gameState.adminSpawns.forEach(spawn => {
+                        spawnEnemy(gameState.wave, spawn.type);
+                        showNotification(`👾 Admin a spawné un ${spawn.type} !`, 'info');
+                    });
+                }
                 
-                    if (data.gameState.money && data.gameState.money !== gameState.money) {
-                        gameState.money = data.gameState.money;
-                        updateHUD();
-                    }
-                    
-
-                    if (data.gameState.baseHealth && data.gameState.baseHealth !== gameState.baseHealth) {
-                        gameState.baseHealth = data.gameState.baseHealth;
-                        updateHUD();
+                if (data.gameState.adminKillAll) {
+                    let killCount = 0;
+                    gameState.enemies.forEach(enemy => {
+                        if (enemy.health > 0) {
+                            killEnemy(enemy.id, true);
+                            killCount++;
+                        }
+                    });
+                    if (killCount > 0) {
+                        showNotification(`💀 Admin a éliminé ${killCount} ennemis !`, 'info');
                     }
                 }
-            })
-            .catch(error => console.error('Command check error:', error));
-    }
-
-    const originalStartGame = startGame;
-    function startGame(difficulty) {
-        originalStartGame(difficulty);
-        startGameSession();
-
-        setInterval(checkAdminCommands, 2000);
-    }
-
-    if (isEnoe) {
-        document.getElementById('admin-panel').classList.remove('hidden');
-    }
+                
+                if (data.gameState.adminSkipWave) {
+                    gameState.enemies.forEach(enemy => {
+                        if (enemy.health > 0) {
+                            killEnemy(enemy.id, false);
+                        }
+                    });
+                    
+                    gameState.waveActive = false;
+                    gameState.wave++;
+                    gameState.money += 200;
+                    
+                    document.getElementById('start-wave-btn').disabled = false;
+                    document.getElementById('start-wave-btn').classList.remove('opacity-50');
+                    
+                    updateHUD();
+                    showNotification('⏩ Admin a skippé la vague !', 'info');
+                }
+                
+                if (data.gameState.money && data.gameState.money > gameState.money) {
+                    const diff = data.gameState.money - gameState.money;
+                    gameState.money = data.gameState.money;
+                    updateHUD();
+                    showNotification(`💰 Admin a ajouté ${diff} argent !`, 'success');
+                }
+                
+                if (data.gameState.baseHealth && data.gameState.baseHealth > gameState.baseHealth) {
+                    gameState.baseHealth = data.gameState.baseHealth;
+                    updateHUD();
+                    showNotification('❤️ Admin a soigné la base !', 'success');
+                }
+            }
+        })
+        .catch(error => console.error('Command check error:', error));
+}
     </script>
 </body>
 </html>
-
