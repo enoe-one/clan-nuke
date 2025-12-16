@@ -14,9 +14,9 @@ Notre objectif est de rassembler des joueurs motivés autour d’une organisatio
 
 ---
 
-## 🧑‍🤝‍🧑 Recrutement
+## -Recrutement
 
-🔓 **Le recrutement est actuellement ouvert**.
+ **Le recrutement est actuellement ouvert**.
 
 La CFWT adopte une politique inclusive :
 
