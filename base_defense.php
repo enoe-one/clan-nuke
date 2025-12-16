@@ -27,7 +27,7 @@ if (isset($_SESSION['username'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Base Defense - CFWT Enhanced</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="css/all.min.css">
     <style>
         body {
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -596,7 +596,7 @@ if (isset($_SESSION['username'])) {
         missile: { cost: 280, damage: 120, range: 200, fireRate: 2500, icon: 'fa-rocket', color: 'text-purple-400', projectileColor: '#c084fc', airCapable: true },
         laser: { cost: 300, damage: 15, range: 140, fireRate: 200, icon: 'fa-radiation', color: 'text-green-400', continuous: true, projectileColor: '#4ade80' },
         antiair: { cost: 150, damage: 60, range: 220, fireRate: 1000, icon: 'fa-plane-slash', color: 'text-cyan-400', airOnly: true, projectileColor: '#22d3ee' },
-        generator: { cost: 400, damage: 0, range: 0, fireRate: 0, icon: 'fa-coins', color: 'text-yellow-400', moneyGen: 10 }
+        generator: { cost: 500, damage: 0, range: 0, fireRate: 0, icon: 'fa-coins', color: 'text-yellow-400', moneyGen: 5 }
     };
 
     const ENEMY_TYPES = {
@@ -1787,3 +1787,4 @@ function checkAdminCommands() {
     </script>
 </body>
 </html>
+
