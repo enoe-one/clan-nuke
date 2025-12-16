@@ -600,12 +600,12 @@ if (isset($_SESSION['username'])) {
     };
 
     const ENEMY_TYPES = {
-        normal: { health: 40, speed: 1.2, reward: 15, icon: 'fa-user-ninja', color: 'text-red-400' },
-        runner: { health: 20, speed: 2.8, reward: 20, icon: 'fa-running', color: 'text-yellow-400' },
-        tank: { health: 150, speed: 0.6, reward: 40, icon: 'fa-shield', color: 'text-blue-400' },
-        aerial: { health: 30, speed: 1.8, reward: 25, icon: 'fa-plane', color: 'text-cyan-400', flying: true },
-        boss: { health: 800, speed: 0.8, reward: 200, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
-        airboss: { health: 1000, speed: 2.2, reward: 300, icon: 'fa-plane-departure', color: 'text-indigo-400', size: 2.5, flying: true },
+        normal: { health: 40, speed: 1.2, reward: 5, icon: 'fa-user-ninja', color: 'text-red-400' },
+        runner: { health: 20, speed: 3.8, reward: 10, icon: 'fa-running', color: 'text-yellow-400' },
+        tank: { health: 250, speed: 0.6, reward: 20, icon: 'fa-shield', color: 'text-blue-400' },
+        aerial: { health: 30, speed: 2.9, reward: 15, icon: 'fa-plane', color: 'text-cyan-400', flying: true },
+        boss: { health: 800, speed: 0.8, reward: 50, icon: 'fa-dragon', color: 'text-purple-400', size: 2 },
+        airboss: { health: 1000, speed: 2.2, reward: 100, icon: 'fa-plane-departure', color: 'text-indigo-400', size: 2.5, flying: true },
         panda: { health: 1000000, speed: 0.4, reward: 5000, icon: 'fa-paw', color: 'text-pink-400', size: 3, boss: true }
     };
 
@@ -614,7 +614,7 @@ if (isset($_SESSION['username'])) {
         freeze: { cost: 100, cooldown: 30000, duration: 5000 },
         boost: { cost: 120, cooldown: 60000, duration: 10000, multiplier: 2 },
         reinforcement: { cost: 200, cooldown: 90000, duration: 15000 },
-        nuke: { cost: 1000, cooldown: 120000, damage: 3000, radius: 200, pandaDamage: 1000000 }
+        nuke: { cost: 1000, cooldown: 120000, damage: 3000, radius: 200, pandaDamage: 1000 }
     };
 
     // Variables du jeu
@@ -784,20 +784,20 @@ if (isset($_SESSION['username'])) {
 const originalStartGameLogic = function(difficulty) {
     gameState.difficulty = difficulty;
         if (difficulty === 'easy') {
-            gameState.money = 1000;
+            gameState.money = 10000;
             gameState.baseHealth = 200;
             gameState.maxBaseHealth = 200;
-            gameState.maxWaves = 25;
+            gameState.maxWaves = 10;
         } else if (difficulty === 'medium') {
             gameState.money = 600;
             gameState.baseHealth = 100;
             gameState.maxBaseHealth = 100;
-            gameState.maxWaves = 30;
+            gameState.maxWaves = 15;
         } else if (difficulty === 'hard') {
-            gameState.money = 300;
-            gameState.baseHealth = 50;
-            gameState.maxBaseHealth = 50;
-            gameState.maxWaves = 35;
+            gameState.money = 100;
+            gameState.baseHealth = 25;
+            gameState.maxBaseHealth = 25;
+            gameState.maxWaves = 20;
         }
         
         document.getElementById('start-screen').classList.add('hidden');
@@ -1643,7 +1643,7 @@ function startGame(difficulty) {
             waveActive: false,
             path: [],
             difficulty: difficulty,
-            maxWaves: 25,
+            maxWaves: 10,
             abilityCooldowns: {},
             reinforcements: [],
             boostedTowers: new Set(),
@@ -1674,7 +1674,7 @@ function startGame(difficulty) {
             waveActive: false,
             path: [],
             difficulty: 'medium',
-            maxWaves: 25,
+            maxWaves: 10,
             abilityCooldowns: {},
             reinforcements: [],
             boostedTowers: new Set(),
@@ -1787,4 +1787,5 @@ function checkAdminCommands() {
     </script>
 </body>
 </html>
+
 
