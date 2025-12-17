@@ -1607,7 +1607,7 @@ function startGame(difficulty) {
         }
     }
 
-unction endGame(victory) {
+function endGame(victory) {
     console.log('🎮 endGame appelé, victory:', victory);
     
     // ARRÊTER TOUTES LES BOUCLES IMMÉDIATEMENT
@@ -1883,6 +1883,7 @@ function checkAdminCommands() {
         <?php include 'includes/footer.php'; ?>
 </body>
 </html>
+
 
 
 
