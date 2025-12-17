@@ -1607,14 +1607,15 @@ function startGame(difficulty) {
         }
     }
 
-   function endGame(victory) {
-    // CRITIQUE : Arrêter toutes les boucles
+unction endGame(victory) {
+    console.log('🎮 endGame appelé, victory:', victory);
+    
+    // ARRÊTER TOUTES LES BOUCLES IMMÉDIATEMENT
     if (gameLoop) {
         clearInterval(gameLoop);
         gameLoop = null;
     }
     
-    // Arrêter la synchronisation
     if (syncInterval) {
         clearInterval(syncInterval);
         syncInterval = null;
@@ -1623,30 +1624,57 @@ function startGame(difficulty) {
     // Marquer la session comme terminée
     syncGameState(true);
     
-    // Cacher le jeu
-    document.getElementById('game-area').classList.add('hidden');
-    document.getElementById('game-over-screen').classList.remove('hidden');
+    // FORCER LE MASQUAGE DE LA ZONE DE JEU
+    const gameArea = document.getElementById('game-area');
+    const gameOverScreen = document.getElementById('game-over-screen');
+    
+    if (gameArea) {
+        gameArea.style.display = 'none';
+        gameArea.classList.add('hidden');
+    }
+    
+    if (gameOverScreen) {
+        gameOverScreen.style.display = 'block';
+        gameOverScreen.classList.remove('hidden');
+    }
+    
+    console.log('🎮 Écran game over affiché');
     
     // Afficher les résultats
     if (victory) {
-        document.getElementById('game-over-icon').className = 'fas fa-trophy text-yellow-500 text-8xl mb-6';
+        const icon = document.getElementById('game-over-icon');
+        const title = document.getElementById('game-over-title');
         
-        if (gameState.difficulty === 'hard') {
-            document.getElementById('game-over-title').textContent = '💀 VICTOIRE LÉGENDAIRE ! 💀';
-        } else {
-            document.getElementById('game-over-title').textContent = 'Victoire !';
+        if (icon) icon.className = 'fas fa-trophy text-yellow-500 text-8xl mb-6';
+        
+        if (title) {
+            if (gameState.difficulty === 'hard') {
+                title.textContent = '💀 VICTOIRE LÉGENDAIRE ! 💀';
+            } else {
+                title.textContent = 'Victoire !';
+            }
         }
     } else {
-        document.getElementById('game-over-icon').className = 'fas fa-skull-crossbones text-red-500 text-8xl mb-6';
-        document.getElementById('game-over-title').textContent = 'Mission Échouée';
+        const icon = document.getElementById('game-over-icon');
+        const title = document.getElementById('game-over-title');
+        
+        if (icon) icon.className = 'fas fa-skull-crossbones text-red-500 text-8xl mb-6';
+        if (title) title.textContent = 'Mission Échouée';
     }
     
-    document.getElementById('final-score').textContent = gameState.score;
-    document.getElementById('final-wave').textContent = gameState.wave;
-    document.getElementById('total-kills').textContent = gameState.kills;
-    document.getElementById('total-towers').textContent = gameState.towers.length;
-}
-    function restartGame() {
+    // Mettre à jour les stats
+    const finalScore = document.getElementById('final-score');
+    const finalWave = document.getElementById('final-wave');
+    const totalKills = document.getElementById('total-kills');
+    const totalTowers = document.getElementById('total-towers');
+    
+    if (finalScore) finalScore.textContent = gameState.score;
+    if (finalWave) finalWave.textContent = gameState.wave;
+    if (totalKills) totalKills.textContent = gameState.kills;
+    if (totalTowers) totalTowers.textContent = gameState.towers.length;
+    
+    console.log('🎮 Stats finales affichées');
+}    function restartGame() {
         const difficulty = gameState.difficulty;
         
         gameState = {
@@ -1855,6 +1883,7 @@ function checkAdminCommands() {
         <?php include 'includes/footer.php'; ?>
 </body>
 </html>
+
 
 
 
