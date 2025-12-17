@@ -14,9 +14,9 @@ Our goal is to bring together motivated players within a serious, active organiz
 
 ---
 
-## 🧑‍🤝‍🧑 Recruitment
+##  -Recruitment
 
-🔓 **Recruitment is currently open**.
+ **Recruitment is currently open**.
 
 CFWT follows an inclusive recruitment policy:
 
