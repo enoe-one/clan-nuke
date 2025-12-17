@@ -1,50 +1,50 @@
-# CFWT — Coalition Française de War Tycoon
+# CFWT — French War Tycoon Coalition
 
-Bienvenue sur le site officiel de la **CFWT (Coalition Française de War Tycoon)**, une organisation communautaire structurée et ambitieuse dédiée au mode **War Tycoon**.
-
----
-
-## 📌 Présentation
-
-La **CFWT** a été **fondée par Death_Angel**.
-
-Anciennement connue sous le nom de **Clan Nuke**, la coalition a évolué afin de proposer une structure plus solide, professionnelle et durable, tout en conservant un esprit communautaire fort.
-
-Notre objectif est de rassembler des joueurs motivés autour d’une organisation sérieuse, active et tournée vers l’amélioration continue.
+Welcome to the official website of **CFWT (French War Tycoon Coalition)**, a structured and ambitious community organization dedicated to the **War Tycoon** game mode.
 
 ---
 
-## -Recrutement
+## 📌 Overview
 
- **Le recrutement est actuellement ouvert**.
+**CFWT** was **founded by Death_Angel**.
 
-La CFWT adopte une politique inclusive :
+Formerly known as **Clan Nuke**, the coalition evolved to establish a stronger, more professional, and long-term structure, while preserving a solid community-driven spirit.
 
-* Aucun prérequis de niveau
-* L’engagement, la communication et le respect priment
-* Tous les profils sont acceptés, du débutant au joueur confirmé
+Our goal is to bring together motivated players within a serious, active organization focused on continuous improvement.
 
 ---
 
-## 🌐 À propos du site web
+## 🧑‍🤝‍🧑 Recruitment
 
-Ce site constitue la plateforme officielle de la CFWT.
+🔓 **Recruitment is currently open**.
 
-* 📅 **Lancé en 2024**
-* ✅ **96 % du code est finalisé**, stable depuis environ un deux mois
-* 🔄 Les **mises à jour sont déployées progressivement** afin d’assurer la qualité et la stabilité
-* ⚠️ Le **mini-jeu intégré** fait l’objet d’un développement séparé et reste en cours d’optimisation
+CFWT follows an inclusive recruitment policy:
 
-### Infrastructure technique
-
-* 🚄 Hébergement et déploiement via **Railway**
-* 🗃️ Code source versionné et stocké sur **GitHub**
+* No minimum level required
+* Commitment, communication, and respect come first
+* Beginners and experienced players are equally welcome
 
 ---
 
-## 🙏 Remerciements
+## 🌐 About the Website
 
-Nous remercions sincèrement les personnes ayant contribué au projet, de près ou de loin :
+This website serves as the official platform of CFWT.
+
+* 📅 **Launched in 2024**
+* ✅ **96% of the codebase is finalized**, stable for approximately one month
+* 🔄 **Updates are deployed progressively** to ensure quality and stability
+* ⚠️ The **mini-game** is developed separately and is still undergoing optimization
+
+### Technical Infrastructure
+
+* 🚄 Hosted and deployed via **Railway**
+* 🗃️ Source code versioned and stored on **GitHub**
+
+---
+
+## 🙏 Acknowledgements
+
+We would like to sincerely thank the individuals who contributed to and supported the project:
 
 * **Death_Angel**
 * **Tankman**
@@ -52,15 +52,15 @@ Nous remercions sincèrement les personnes ayant contribué au projet, de près 
 
 ---
 
-## 🎮 Rejoindre la CFWT
+## 🎮 Join CFWT
 
-Merci d’avoir pris le temps de découvrir la CFWT.
+Thank you for taking the time to learn about CFWT.
 
-Nous avons hâte de vous retrouver **en jeu** et au sein de notre communauté.
+We look forward to meeting you **in-game** and welcoming you into our community.
 
-🔗 **Discord officiel** :
+🔗 **Official Discord**:
 [https://discord.gg/CxwtnUpe](https://discord.gg/CxwtnUpe)
 
 ---
 
-*CFWT — Une coalition organisée, tournée vers l’avenir.*
+*CFWT — A structured coalition, focused on the future.*
