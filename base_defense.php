@@ -1094,92 +1094,101 @@ function startGame(difficulty) {
         document.getElementById('admin-projectile-count').textContent = gameState.projectiles.length;
     }
 
-    function updateEnemies(now) {
-        let allDead = true;
+ function updateEnemies(now) {
+    let allDead = true;
+    
+    gameState.enemies.forEach((enemy) => {
+        if (enemy.health <= 0) return;
         
-        gameState.enemies.forEach((enemy) => {
-            if (enemy.health <= 0) return;
-            
-            allDead = false;
-            
-            if (enemy.frozen && now < enemy.frozenUntil) {
-                const enemyEl = document.querySelector(`[data-enemy-id="${enemy.id}"]`);
-                if (enemyEl && !enemyEl.classList.contains('frozen')) {
-                    enemyEl.classList.add('frozen');
-                }
-                return;
-            } else if (enemy.frozen && now >= enemy.frozenUntil) {
-                enemy.frozen = false;
-                const enemyEl = document.querySelector(`[data-enemy-id="${enemy.id}"]`);
-                if (enemyEl) enemyEl.classList.remove('frozen');
-            }
-            
-            if (enemy.pathIndex < gameState.path.length - 1) {
-                const target = gameState.path[enemy.pathIndex + 1];
-                const targetX = target.x * CELL_SIZE + CELL_SIZE / 2;
-                const targetY = target.y * CELL_SIZE + CELL_SIZE / 2;
-                
-                const dx = targetX - enemy.x;
-                const dy = targetY - enemy.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < enemy.speed) {
-                    enemy.pathIndex++;
-                } else {
-                    enemy.x += (dx / distance) * enemy.speed;
-                    enemy.y += (dy / distance) * enemy.speed;
-                }
-                
-                const enemyEl = document.querySelector(`[data-enemy-id="${enemy.id}"]`);
-                if (enemyEl) {
-                    enemyEl.style.left = (enemy.x - 15) + 'px';
-                    enemyEl.style.top = (enemy.y - 15) + 'px';
-                    
-                    const healthBar = enemyEl.querySelector('.enemy-health-fill');
-                    if (healthBar) {
-                        const healthPercent = (enemy.health / enemy.maxHealth) * 100;
-                        healthBar.style.width = healthPercent + '%';
-                    }
-                }
-            } else {
-                if (!gameState.godMode) {
-                    let damage = 10;
-                    if (enemy.type === 'boss') damage = 20;
-                    if (enemy.type === 'airboss') damage = 25;
-                    if (enemy.type === 'panda') damage = 30;
-                    if (gameState.difficulty === 'hard') damage *= 1.5;
-                    
-                    gameState.baseHealth -= damage;
-                }
-                
-                killEnemy(enemy.id, false);
-                
-                if (gameState.baseHealth <= 0 && !gameState.godMode) {
-                    endGame(false);
-                }
-            }
-        });
+        allDead = false;
         
-        if (gameState.waveActive && allDead) {
-            gameState.waveActive = false;
-            gameState.wave++;
-            const bonus = 80 + (gameState.wave * 10);
-            gameState.money += bonus;
-            gameState.score += bonus * 5;
-            
-            document.getElementById('start-wave-btn').disabled = false;
-            document.getElementById('start-wave-btn').classList.remove('opacity-50');
-            
-            if (gameState.wave > gameState.maxWaves) {
-                endGame(true);
-            } else {
-                showNotification(`✅ Vague ${gameState.wave - 1} terminée ! +${bonus}💰`, 'success');
+        if (enemy.frozen && now < enemy.frozenUntil) {
+            const enemyEl = document.querySelector(`[data-enemy-id="${enemy.id}"]`);
+            if (enemyEl && !enemyEl.classList.contains('frozen')) {
+                enemyEl.classList.add('frozen');
             }
+            return;
+        } else if (enemy.frozen && now >= enemy.frozenUntil) {
+            enemy.frozen = false;
+            const enemyEl = document.querySelector(`[data-enemy-id="${enemy.id}"]`);
+            if (enemyEl) enemyEl.classList.remove('frozen');
         }
         
-        updateHUD();
+        if (enemy.pathIndex < gameState.path.length - 1) {
+            const target = gameState.path[enemy.pathIndex + 1];
+            const targetX = target.x * CELL_SIZE + CELL_SIZE / 2;
+            const targetY = target.y * CELL_SIZE + CELL_SIZE / 2;
+            
+            const dx = targetX - enemy.x;
+            const dy = targetY - enemy.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < enemy.speed) {
+                enemy.pathIndex++;
+            } else {
+                enemy.x += (dx / distance) * enemy.speed;
+                enemy.y += (dy / distance) * enemy.speed;
+            }
+            
+            const enemyEl = document.querySelector(`[data-enemy-id="${enemy.id}"]`);
+            if (enemyEl) {
+                enemyEl.style.left = (enemy.x - 15) + 'px';
+                enemyEl.style.top = (enemy.y - 15) + 'px';
+                
+                const healthBar = enemyEl.querySelector('.enemy-health-fill');
+                if (healthBar) {
+                    const healthPercent = (enemy.health / enemy.maxHealth) * 100;
+                    healthBar.style.width = healthPercent + '%';
+                }
+            }
+        } else {
+            // ENNEMI A ATTEINT LA BASE - APPLIQUER LES DÉGÂTS
+            if (!gameState.godMode) {
+                let damage = 10;
+                if (enemy.type === 'boss') damage = 20;
+                if (enemy.type === 'airboss') damage = 25;
+                if (enemy.type === 'panda') damage = 30;
+                if (gameState.difficulty === 'hard') damage *= 1.5;
+                
+                gameState.baseHealth -= damage;
+                
+                // VÉRIFIER SI LA BASE EST DÉTRUITE
+                if (gameState.baseHealth <= 0) {
+                    gameState.baseHealth = 0; // S'assurer qu'on ne va pas en négatif
+                    updateHUD();
+                    
+                    // Tuer l'ennemi qui a terminé le chemin
+                    killEnemy(enemy.id, false);
+                    
+                    // TERMINER LE JEU
+                    endGame(false);
+                    return; // Sortir immédiatement
+                }
+            }
+            
+            killEnemy(enemy.id, false);
+        }
+    });
+    
+    if (gameState.waveActive && allDead) {
+        gameState.waveActive = false;
+        gameState.wave++;
+        const bonus = 80 + (gameState.wave * 10);
+        gameState.money += bonus;
+        gameState.score += bonus * 5;
+        
+        document.getElementById('start-wave-btn').disabled = false;
+        document.getElementById('start-wave-btn').classList.remove('opacity-50');
+        
+        if (gameState.wave > gameState.maxWaves) {
+            endGame(true);
+        } else {
+            showNotification(`✅ Vague ${gameState.wave - 1} terminée ! +${bonus}💰`, 'success');
+        }
     }
-
+    
+    updateHUD();
+}
     function updateTowers(now) {
         gameState.towers.forEach(tower => {
             if (tower.moneyGen) return; // Skip generators
@@ -1598,35 +1607,45 @@ function startGame(difficulty) {
         }
     }
 
-    function endGame(victory) {
+   function endGame(victory) {
+    // CRITIQUE : Arrêter toutes les boucles
+    if (gameLoop) {
+        clearInterval(gameLoop);
+        gameLoop = null;
+    }
+    
+    // Arrêter la synchronisation
     if (syncInterval) {
         clearInterval(syncInterval);
+        syncInterval = null;
     }
+    
+    // Marquer la session comme terminée
     syncGameState(true);
-        clearInterval(gameLoop);
+    
+    // Cacher le jeu
+    document.getElementById('game-area').classList.add('hidden');
+    document.getElementById('game-over-screen').classList.remove('hidden');
+    
+    // Afficher les résultats
+    if (victory) {
+        document.getElementById('game-over-icon').className = 'fas fa-trophy text-yellow-500 text-8xl mb-6';
         
-        document.getElementById('game-area').classList.add('hidden');
-        document.getElementById('game-over-screen').classList.remove('hidden');
-        
-        if (victory) {
-            document.getElementById('game-over-icon').className = 'fas fa-trophy text-yellow-500 text-8xl mb-6';
-            
-            if (gameState.difficulty === 'hard') {
-                document.getElementById('game-over-title').textContent = '💀 VICTOIRE LÉGENDAIRE ! 💀';
-            } else {
-                document.getElementById('game-over-title').textContent = 'Victoire !';
-            }
+        if (gameState.difficulty === 'hard') {
+            document.getElementById('game-over-title').textContent = '💀 VICTOIRE LÉGENDAIRE ! 💀';
         } else {
-            document.getElementById('game-over-icon').className = 'fas fa-skull-crossbones text-red-500 text-8xl mb-6';
-            document.getElementById('game-over-title').textContent = 'Mission Échouée';
+            document.getElementById('game-over-title').textContent = 'Victoire !';
         }
-        
-        document.getElementById('final-score').textContent = gameState.score;
-        document.getElementById('final-wave').textContent = gameState.wave;
-        document.getElementById('total-kills').textContent = gameState.kills;
-        document.getElementById('total-towers').textContent = gameState.towers.length;
+    } else {
+        document.getElementById('game-over-icon').className = 'fas fa-skull-crossbones text-red-500 text-8xl mb-6';
+        document.getElementById('game-over-title').textContent = 'Mission Échouée';
     }
-
+    
+    document.getElementById('final-score').textContent = gameState.score;
+    document.getElementById('final-wave').textContent = gameState.wave;
+    document.getElementById('total-kills').textContent = gameState.kills;
+    document.getElementById('total-towers').textContent = gameState.towers.length;
+}
     function restartGame() {
         const difficulty = gameState.difficulty;
         
@@ -1731,13 +1750,18 @@ function checkAdminCommands() {
         .then(response => response.json())
         .then(data => {
             if (data.success && data.gameState) {
-                if (data.gameState.adminSpawns) {
+                let hasChanges = false;
+                
+                // === SPAWN ENNEMIS ===
+                if (data.gameState.adminSpawns && Array.isArray(data.gameState.adminSpawns)) {
                     data.gameState.adminSpawns.forEach(spawn => {
                         spawnEnemy(gameState.wave, spawn.type);
                         showNotification(`👾 Admin a spawné un ${spawn.type} !`, 'info');
+                        hasChanges = true;
                     });
                 }
                 
+                // === KILL ALL ===
                 if (data.gameState.adminKillAll) {
                     let killCount = 0;
                     gameState.enemies.forEach(enemy => {
@@ -1749,8 +1773,10 @@ function checkAdminCommands() {
                     if (killCount > 0) {
                         showNotification(`💀 Admin a éliminé ${killCount} ennemis !`, 'info');
                     }
+                    hasChanges = true;
                 }
                 
+                // === SKIP WAVE ===
                 if (data.gameState.adminSkipWave) {
                     gameState.enemies.forEach(enemy => {
                         if (enemy.health > 0) {
@@ -1767,19 +1793,59 @@ function checkAdminCommands() {
                     
                     updateHUD();
                     showNotification('⏩ Admin a skippé la vague !', 'info');
+                    hasChanges = true;
                 }
                 
+                // === ARGENT ===
                 if (data.gameState.money && data.gameState.money > gameState.money) {
                     const diff = data.gameState.money - gameState.money;
                     gameState.money = data.gameState.money;
                     updateHUD();
                     showNotification(`💰 Admin a ajouté ${diff} argent !`, 'success');
+                    hasChanges = true;
                 }
                 
-                if (data.gameState.baseHealth && data.gameState.baseHealth > gameState.baseHealth) {
-                    gameState.baseHealth = data.gameState.baseHealth;
-                    updateHUD();
-                    showNotification('❤️ Admin a soigné la base !', 'success');
+                // === VIE BASE ===
+                if (data.gameState.baseHealth && data.gameState.baseHealth !== gameState.baseHealth) {
+                    // Vérifier si c'est un heal
+                    if (data.gameState.baseHealth > gameState.baseHealth) {
+                        gameState.baseHealth = data.gameState.baseHealth;
+                        updateHUD();
+                        showNotification('❤️ Admin a soigné la base !', 'success');
+                        hasChanges = true;
+                    }
+                }
+                
+                // === NETTOYER LES COMMANDES APRÈS EXÉCUTION ===
+                if (hasChanges) {
+                    // Envoyer une mise à jour pour nettoyer les commandes
+                    const cleanData = new FormData();
+                    cleanData.append('action', 'sync_session');
+                    cleanData.append('session_id', gameSessionId);
+                    cleanData.append('player_name', playerName);
+                    cleanData.append('difficulty', gameState.difficulty);
+                    cleanData.append('wave', gameState.wave);
+                    cleanData.append('money', gameState.money);
+                    cleanData.append('base_health', Math.floor(gameState.baseHealth));
+                    cleanData.append('max_base_health', gameState.maxBaseHealth);
+                    cleanData.append('score', gameState.score);
+                    cleanData.append('kills', gameState.kills);
+                    cleanData.append('towers_count', gameState.towers.length);
+                    cleanData.append('enemies_alive', gameState.enemies.filter(e => e.health > 0).length);
+                    
+                    // Créer un état nettoyé sans les commandes admin
+                    const cleanedState = { ...gameState };
+                    delete cleanedState.adminSpawns;
+                    delete cleanedState.adminKillAll;
+                    delete cleanedState.adminSkipWave;
+                    
+                    cleanData.append('game_state', JSON.stringify(cleanedState));
+                    cleanData.append('is_active', '1');
+                    
+                    fetch('sync_game_session.php', {
+                        method: 'POST',
+                        body: cleanData
+                    }).catch(error => console.error('Clean error:', error));
                 }
             }
         })
@@ -1789,6 +1855,7 @@ function checkAdminCommands() {
         <?php include 'includes/footer.php'; ?>
 </body>
 </html>
+
 
 
 
