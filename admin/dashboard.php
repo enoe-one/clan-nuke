@@ -167,7 +167,30 @@ if (in_array($_SESSION['role'], ['etat_major', 'chef', 'super_admin'])) {
                         <p class="text-gray-400 mb-4">Toutes les données et logs</p>
                     </a>
                 <?php endif; ?>
-<!-- Ajouter cette carte dans la grille du dashboard admin, après les autres cartes -->
+<?php
+// Vérifier si c'est Enoe
+$stmt = $pdo->prepare("SELECT username FROM users WHERE id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$current_user = $stmt->fetch();
+?>
+
+<?php if ($current_user && strtolower($current_user['username']) === 'enoe'): ?>
+    <!-- Carte Maintenance - EXCLUSIF ENOE -->
+    <a href="maintenance_manager.php" class="block">
+        <div class="bg-gradient-to-br from-red-900 to-red-800 p-6 rounded-lg hover:shadow-2xl transition transform hover:scale-105">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-red-300 text-sm font-semibold mb-1">
+                        <i class="fas fa-crown mr-1"></i>SUPER ADMIN
+                    </p>
+                    <p class="text-white text-2xl font-bold">Gestion Maintenance</p>
+                    <p class="text-red-200 text-sm mt-2">Contrôle total du site</p>
+                </div>
+                <i class="fas fa-tools text-red-400 text-5xl"></i>
+            </div>
+        </div>
+    </a>
+<?php endif; ?>
 
 <?php
 // Compter les demandes de promotion en attente
@@ -227,6 +250,7 @@ $pending_promotions = $stmt->fetchColumn();
     <?php include '../includes/footer.php'; ?>
 </body>
 </html>
+
 
 
 
