@@ -1,6 +1,12 @@
 <?php
+// includes/header.php
 if (!defined('SITE_URL')) {
     define('SITE_URL', 'https://' . $_SERVER['HTTP_HOST']);
+}
+
+// Ne pas afficher le header si en mode maintenance et que l'utilisateur n'est pas admin
+if (isset($pdo) && isMaintenanceMode($pdo) && !isAdmin()) {
+    return; // Sortir sans afficher le header
 }
 
 // Récupérer les paramètres d'apparence
@@ -31,6 +37,15 @@ $appearance = getAppearanceSettings($pdo);
         background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     }
 </style>
+
+<!-- Banner de maintenance pour les admins -->
+<?php if (isset($pdo) && isMaintenanceMode($pdo) && isAdmin()): ?>
+    <div class="bg-red-600 text-white py-3 text-center font-bold">
+        <i class="fas fa-exclamation-triangle mr-2"></i>
+        MODE MAINTENANCE ACTIF - Seuls les administrateurs peuvent accéder au site
+        <i class="fas fa-exclamation-triangle ml-2"></i>
+    </div>
+<?php endif; ?>
 
 <header class="shadow-lg" style="background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));">
     <nav class="max-w-7xl mx-auto px-4 py-4">
@@ -71,7 +86,7 @@ $appearance = getAppearanceSettings($pdo);
                 </a>
                 <a href="<?php echo SITE_URL; ?>/events.php" class="text-white hover:text-gray-200 transition">
                    <i class="fas fa-calendar-alt mr-1"></i> Événements
-</a>
+                </a>
             </div>
             
             <!-- Boutons de connexion -->
@@ -134,8 +149,8 @@ $appearance = getAppearanceSettings($pdo);
             <a href="<?php echo SITE_URL; ?>/game.php" class="block text-white hover:bg-white hover:bg-opacity-10 px-4 py-2 rounded">
                 <i class="fas fa-gamepad mr-2"></i> Jeu
             </a>
-            <a href="<?php echo SITE_URL; ?>/events.php" class="text-white hover:text-gray-200 transition">
-                <i class="fas fa-user-plus mr-2"></i> Événements
+            <a href="<?php echo SITE_URL; ?>/events.php" class="block text-white hover:bg-white hover:bg-opacity-10 px-4 py-2 rounded">
+                <i class="fas fa-calendar-alt mr-2"></i> Événements
             </a>
         </div>
     </nav>
@@ -147,6 +162,3 @@ function toggleMobileMenu() {
     menu.classList.toggle('hidden');
 }
 </script>
-
-
-
