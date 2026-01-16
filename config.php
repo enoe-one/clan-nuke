@@ -57,7 +57,7 @@ function showLoadingPage() {
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>CFWT - Chargement...</title>
+        <title>CFWT - coalition francaise de war tycoon</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link rel="stylesheet" href="css/all.min.css">
         <style>
@@ -382,3 +382,4 @@ function generateCSRFToken() {
 function validateCSRFToken($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
+
