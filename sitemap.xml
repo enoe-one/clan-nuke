@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.2" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
@@ -7,42 +7,42 @@
   </url>
 
   <url>
-    <loc>https://cfwt.up.railway.app/grades</loc>
+    <loc>https://cfwt.up.railway.app/grades.php</loc>
     <lastmod>2026-01-23</lastmod>
   </url>
 
   <url>
-    <loc>https://cfwt.up.railway.app/diplomes</loc>
+    <loc>https://cfwt.up.railway.app/diplomes.php</loc>
     <lastmod>2026-01-23</lastmod>
   </url>
 
   <url>
-    <loc>https://cfwt.up.railway.app/legions</loc>
+    <loc>https://cfwt.up.railway.app/legions.php</loc>
     <lastmod>2026-01-23</lastmod>
   </url>
 
   <url>
-    <loc>https://cfwt.up.railway.app/membres</loc>
+    <loc>https://cfwt.up.railway.app/membres.php</loc>
     <lastmod>2026-01-23</lastmod>
   </url>
 
   <url>
-    <loc>https://cfwt.up.railway.app/recrutement</loc>
+    <loc>https://cfwt.up.railway.app/recrutement.php</loc>
     <lastmod>2026-01-23</lastmod>
   </url>
 
   <url>
-    <loc>https://cfwt.up.railway.app/jeu</loc>
+    <loc>https://cfwt.up.railway.app/jeu.php</loc>
     <lastmod>2026-01-23</lastmod>
   </url>
 
   <url>
-    <loc>https://cfwt.up.railway.app/evenements</loc>
+    <loc>https://cfwt.up.railway.app/evenements.php</loc>
     <lastmod>2026-01-23</lastmod>
   </url>
   
   <url>
-    <loc>https://cfwt.up.railway.app/connexion</loc>
+    <loc>https://cfwt.up.railway.app/connexion.php</loc>
     <lastmod>2026-01-23</lastmod>
   </url>
 
