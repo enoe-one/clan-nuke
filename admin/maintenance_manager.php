@@ -26,17 +26,13 @@ try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS maintenance_settings (
         id INT AUTO_INCREMENT PRIMARY KEY,
         is_active BOOLEAN DEFAULT FALSE,
-        maintenance_type ENUM('scheduled', 'emergency', 'update', 'technical', 'custom') DEFAULT 'scheduled',
+        maintenance_type ENUM('server_issue', 'technical_danger', 'scheduled', 'emergency_update') DEFAULT 'scheduled',
         title VARCHAR(255) NOT NULL,
         message TEXT,
         estimated_duration VARCHAR(100),
-        start_time DATETIME,
         end_time DATETIME,
         show_countdown BOOLEAN DEFAULT TRUE,
         show_discord_link BOOLEAN DEFAULT TRUE,
-        custom_icon VARCHAR(50) DEFAULT 'fa-cog',
-        icon_color VARCHAR(20) DEFAULT 'text-blue-500',
-        theme_color VARCHAR(20) DEFAULT 'blue',
         created_by INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -46,52 +42,84 @@ try {
     // Table existe déjà
 }
 
+// Insérer les 4 maintenances par défaut si elles n'existent pas
+try {
+    $count = $pdo->query("SELECT COUNT(*) FROM maintenance_settings")->fetchColumn();
+    
+    if ($count == 0) {
+        $default_maintenances = [
+            [
+                'type' => 'server_issue',
+                'title' => '⚠️ PROBLÈME SERVEUR CRITIQUE',
+                'message' => "Nous rencontrons actuellement des problèmes techniques majeurs affectant la stabilité du serveur.\n\nNos équipes travaillent activement pour résoudre ce problème dans les plus brefs délais.\n\nMerci de votre patience et de votre compréhension.",
+                'duration' => 'Jusqu\'à résolution complète'
+            ],
+            [
+                'type' => 'technical_danger',
+                'title' => '🔴 DANGER TECHNIQUE - INTERVENTION D\'URGENCE',
+                'message' => "Une faille de sécurité critique a été détectée et nécessite une intervention immédiate.\n\nPour protéger vos données et garantir la sécurité de tous, le site est temporairement inaccessible.\n\nLa situation est sous contrôle et sera résolue très rapidement.",
+                'duration' => '15-30 minutes'
+            ],
+            [
+                'type' => 'scheduled',
+                'title' => '📅 Maintenance Programmée',
+                'message' => "Une maintenance planifiée est en cours pour améliorer les performances et la sécurité du site.\n\nCette intervention était prévue et permettra d'installer de nouvelles fonctionnalités.\n\nMerci de votre compréhension.",
+                'duration' => '1-2 heures'
+            ],
+            [
+                'type' => 'emergency_update',
+                'title' => '🚀 MISE À JOUR MAJEURE EN COURS',
+                'message' => "Une mise à jour importante est en cours d'installation.\n\nDe nouvelles fonctionnalités et améliorations arrivent très bientôt !\n\nLe site sera de retour avec des nouveautés excitantes.",
+                'duration' => '30-45 minutes'
+            ]
+        ];
+        
+        foreach ($default_maintenances as $maint) {
+            $stmt = $pdo->prepare("INSERT INTO maintenance_settings 
+                (maintenance_type, title, message, estimated_duration, show_countdown, show_discord_link, created_by) 
+                VALUES (?, ?, ?, ?, 1, 1, ?)");
+            $stmt->execute([
+                $maint['type'],
+                $maint['title'],
+                $maint['message'],
+                $maint['duration'],
+                $_SESSION['user_id']
+            ]);
+        }
+    }
+} catch (PDOException $e) {
+    // Erreur silencieuse
+}
+
 // Gestion des actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     try {
         switch ($action) {
-            case 'activate_maintenance':
-                $type = $_POST['maintenance_type'];
-                $title = $_POST['title'];
-                $message = $_POST['message'];
-                $estimated_duration = $_POST['estimated_duration'];
-                $start_time = $_POST['start_time'] ?: date('Y-m-d H:i:s');
-                $end_time = $_POST['end_time'] ?: null;
-                $show_countdown = isset($_POST['show_countdown']) ? 1 : 0;
-                $show_discord = isset($_POST['show_discord_link']) ? 1 : 0;
-                $custom_icon = $_POST['custom_icon'];
-                $icon_color = $_POST['icon_color'];
-                $theme_color = $_POST['theme_color'];
+            case 'quick_activate':
+                $id = $_POST['maintenance_id'];
+                $end_time = $_POST['end_time'] ?? null;
                 
-                // Désactiver toutes les maintenances actives
+                // Désactiver toutes les maintenances
                 $pdo->query("UPDATE maintenance_settings SET is_active = 0");
                 
-                // Créer la nouvelle maintenance
-                $stmt = $pdo->prepare("INSERT INTO maintenance_settings 
-                    (is_active, maintenance_type, title, message, estimated_duration, 
-                     start_time, end_time, show_countdown, show_discord_link, 
-                     custom_icon, icon_color, theme_color, created_by) 
-                    VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([
-                    $type, $title, $message, $estimated_duration,
-                    $start_time, $end_time, $show_countdown, $show_discord,
-                    $custom_icon, $icon_color, $theme_color, $_SESSION['user_id']
-                ]);
+                // Activer celle sélectionnée avec l'heure de fin
+                $stmt = $pdo->prepare("UPDATE maintenance_settings SET is_active = 1, end_time = ? WHERE id = ?");
+                $stmt->execute([$end_time, $id]);
                 
-                // Mettre à jour site_content pour activer le mode maintenance
+                // Activer dans site_content
                 $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
                     VALUES ('appearance', 'maintenance_mode', '1', ?, NOW()) 
                     ON DUPLICATE KEY UPDATE content = '1', updated_by = ?, updated_at = NOW()")
                     ->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
                 
-                logAdminAction($pdo, $_SESSION['user_id'], 'Activation maintenance', $title);
+                logAdminAction($pdo, $_SESSION['user_id'], 'Activation maintenance', "ID: $id");
                 $success = "Maintenance activée avec succès !";
                 break;
                 
             case 'deactivate_maintenance':
-                $pdo->query("UPDATE maintenance_settings SET is_active = 0");
+                $pdo->query("UPDATE maintenance_settings SET is_active = 0, end_time = NULL");
                 
                 // Désactiver dans site_content
                 $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
@@ -103,33 +131,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $success = "Maintenance désactivée avec succès !";
                 break;
                 
-            case 'delete_maintenance':
+            case 'update_maintenance':
                 $id = $_POST['maintenance_id'];
-                $stmt = $pdo->prepare("DELETE FROM maintenance_settings WHERE id = ?");
-                $stmt->execute([$id]);
+                $title = $_POST['title'];
+                $message = $_POST['message'];
+                $duration = $_POST['estimated_duration'];
                 
-                logAdminAction($pdo, $_SESSION['user_id'], 'Suppression maintenance', "ID: $id");
-                $success = "Configuration de maintenance supprimée !";
-                break;
+                $stmt = $pdo->prepare("UPDATE maintenance_settings 
+                    SET title = ?, message = ?, estimated_duration = ? 
+                    WHERE id = ?");
+                $stmt->execute([$title, $message, $duration, $id]);
                 
-            case 'quick_activate':
-                $id = $_POST['maintenance_id'];
-                
-                // Désactiver toutes les maintenances
-                $pdo->query("UPDATE maintenance_settings SET is_active = 0");
-                
-                // Activer celle sélectionnée
-                $stmt = $pdo->prepare("UPDATE maintenance_settings SET is_active = 1 WHERE id = ?");
-                $stmt->execute([$id]);
-                
-                // Activer dans site_content
-                $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
-                    VALUES ('appearance', 'maintenance_mode', '1', ?, NOW()) 
-                    ON DUPLICATE KEY UPDATE content = '1', updated_by = ?, updated_at = NOW()")
-                    ->execute([$_SESSION['user_id'], $_SESSION['user_id']]);
-                
-                logAdminAction($pdo, $_SESSION['user_id'], 'Activation rapide maintenance', "ID: $id");
-                $success = "Maintenance activée !";
+                logAdminAction($pdo, $_SESSION['user_id'], 'Modification maintenance', "ID: $id");
+                $success = "Maintenance modifiée avec succès !";
                 break;
         }
     } catch (Exception $e) {
@@ -141,47 +155,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $active_maintenance = $pdo->query("SELECT * FROM maintenance_settings WHERE is_active = 1 LIMIT 1")->fetch();
 
 // Récupérer toutes les configurations
-$all_maintenances = $pdo->query("SELECT m.*, u.username 
-    FROM maintenance_settings m 
-    LEFT JOIN users u ON m.created_by = u.id 
-    ORDER BY m.created_at DESC")->fetchAll();
+$all_maintenances = $pdo->query("SELECT * FROM maintenance_settings ORDER BY 
+    FIELD(maintenance_type, 'server_issue', 'technical_danger', 'scheduled', 'emergency_update')")->fetchAll();
 
-// Templates de maintenance prédéfinis
-$templates = [
-    'scheduled' => [
-        'title' => 'Maintenance Programmée',
-        'message' => 'Nous effectuons une maintenance programmée pour améliorer nos services. Le site sera de nouveau accessible très prochainement.',
-        'icon' => 'fa-calendar-check',
-        'color' => 'blue',
-        'icon_color' => 'text-blue-500'
-    ],
-    'emergency' => [
-        'title' => 'Maintenance d\'Urgence',
-        'message' => 'Une intervention urgente est en cours pour résoudre un problème technique. Nous nous excusons pour la gêne occasionnée.',
+// Configurations visuelles par type
+$type_configs = [
+    'server_issue' => [
+        'name' => 'Problème Serveur',
         'icon' => 'fa-exclamation-triangle',
-        'color' => 'red',
-        'icon_color' => 'text-red-500'
+        'bg' => 'from-red-900 via-red-800 to-orange-900',
+        'border' => 'border-red-500',
+        'text' => 'text-red-400',
+        'badge' => 'bg-red-600',
+        'pulse' => true
     ],
-    'update' => [
-        'title' => 'Mise à Jour en Cours',
-        'message' => 'Nous installons de nouvelles fonctionnalités pour améliorer votre expérience. Le site sera bientôt de retour avec des nouveautés !',
-        'icon' => 'fa-download',
-        'color' => 'green',
-        'icon_color' => 'text-green-500'
+    'technical_danger' => [
+        'name' => 'Danger Technique',
+        'icon' => 'fa-radiation-alt',
+        'bg' => 'from-red-900 via-pink-900 to-red-900',
+        'border' => 'border-pink-500',
+        'text' => 'text-pink-400',
+        'badge' => 'bg-pink-600',
+        'pulse' => true
     ],
-    'technical' => [
-        'title' => 'Maintenance Technique',
-        'message' => 'Notre équipe technique effectue des optimisations pour garantir les meilleures performances possibles.',
-        'icon' => 'fa-tools',
-        'color' => 'yellow',
-        'icon_color' => 'text-yellow-500'
+    'scheduled' => [
+        'name' => 'Maintenance Prévue',
+        'icon' => 'fa-calendar-check',
+        'bg' => 'from-blue-900 via-blue-800 to-indigo-900',
+        'border' => 'border-blue-500',
+        'text' => 'text-blue-400',
+        'badge' => 'bg-blue-600',
+        'pulse' => false
     ],
-    'custom' => [
-        'title' => 'Maintenance Personnalisée',
-        'message' => 'Le site est temporairement indisponible.',
-        'icon' => 'fa-cog',
-        'color' => 'purple',
-        'icon_color' => 'text-purple-500'
+    'emergency_update' => [
+        'name' => 'Mise à Jour Urgente',
+        'icon' => 'fa-rocket',
+        'bg' => 'from-purple-900 via-violet-800 to-purple-900',
+        'border' => 'border-purple-500',
+        'text' => 'text-purple-400',
+        'badge' => 'bg-purple-600',
+        'pulse' => false
     ]
 ];
 ?>
@@ -193,14 +206,27 @@ $templates = [
     <title>Gestion Maintenance - CFWT Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../css/all.min.css">
+    <style>
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+            100% { transform: scale(0.8); opacity: 1; }
+        }
+        .pulse-ring {
+            animation: pulse-ring 2s ease-in-out infinite;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+    </style>
 </head>
 <body class="bg-gray-900">
-    <?php 
-    // Ne pas afficher le header en mode maintenance pour les non-admins
-    if (!isMaintenanceMode($pdo) || isAdmin()) {
-        include '../includes/header.php'; 
-    }
-    ?>
+    <?php include '../includes/header.php'; ?>
     
     <div class="min-h-screen py-12">
         <div class="max-w-7xl mx-auto px-4">
@@ -212,7 +238,7 @@ $templates = [
                     </h1>
                     <p class="text-gray-400">
                         <i class="fas fa-crown text-yellow-500 mr-2"></i>
-                        Accès réservé à Enoe
+                        Accès réservé à Enoe - Contrôle total du site
                     </p>
                 </div>
                 <a href="dashboard.php" class="bg-gray-700 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition">
@@ -221,7 +247,7 @@ $templates = [
             </div>
 
             <?php if ($success): ?>
-                <div class="bg-green-900 border border-green-500 text-green-200 px-4 py-3 rounded mb-6">
+                <div class="bg-green-900 border border-green-500 text-green-200 px-4 py-3 rounded mb-6 animate-pulse">
                     <i class="fas fa-check-circle mr-2"></i><?php echo htmlspecialchars($success); ?>
                 </div>
             <?php endif; ?>
@@ -235,337 +261,240 @@ $templates = [
             <!-- Statut actuel -->
             <div class="bg-gray-800 rounded-lg p-6 mb-8 border-2 <?php echo $active_maintenance ? 'border-red-500' : 'border-green-500'; ?>">
                 <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-2xl font-bold text-white mb-2">
-                            Statut actuel : 
-                            <?php if ($active_maintenance): ?>
-                                <span class="text-red-500">
-                                    <i class="fas fa-exclamation-triangle mr-2"></i>MAINTENANCE ACTIVE
-                                </span>
-                            <?php else: ?>
-                                <span class="text-green-500">
-                                    <i class="fas fa-check-circle mr-2"></i>SITE OPÉRATIONNEL
-                                </span>
-                            <?php endif; ?>
-                        </h2>
-                        
+                    <div class="flex items-center space-x-4">
                         <?php if ($active_maintenance): ?>
-                            <p class="text-gray-400">
-                                Type: <span class="text-white font-semibold"><?php echo ucfirst($active_maintenance['maintenance_type']); ?></span>
-                            </p>
-                            <p class="text-gray-400">
-                                Début: <span class="text-white"><?php echo date('d/m/Y H:i', strtotime($active_maintenance['start_time'])); ?></span>
-                            </p>
-                            <?php if ($active_maintenance['end_time']): ?>
-                                <p class="text-gray-400">
-                                    Fin prévue: <span class="text-white"><?php echo date('d/m/Y H:i', strtotime($active_maintenance['end_time'])); ?></span>
-                                </p>
-                            <?php endif; ?>
+                            <div class="relative">
+                                <div class="w-4 h-4 bg-red-500 rounded-full pulse-ring"></div>
+                                <div class="w-4 h-4 bg-red-500 rounded-full absolute top-0 left-0"></div>
+                            </div>
+                        <?php else: ?>
+                            <div class="w-4 h-4 bg-green-500 rounded-full"></div>
                         <?php endif; ?>
+                        
+                        <div>
+                            <h2 class="text-2xl font-bold text-white mb-2">
+                                <?php if ($active_maintenance): ?>
+                                    <span class="text-red-500">
+                                        <i class="fas fa-exclamation-triangle mr-2 shake"></i>MAINTENANCE ACTIVE
+                                    </span>
+                                <?php else: ?>
+                                    <span class="text-green-500">
+                                        <i class="fas fa-check-circle mr-2"></i>SITE OPÉRATIONNEL
+                                    </span>
+                                <?php endif; ?>
+                            </h2>
+                            
+                            <?php if ($active_maintenance): ?>
+                                <div class="space-y-1">
+                                    <p class="text-gray-300">
+                                        <i class="fas fa-tag mr-2"></i>
+                                        <span class="font-semibold"><?php echo htmlspecialchars($active_maintenance['title']); ?></span>
+                                    </p>
+                                    <?php if ($active_maintenance['end_time']): ?>
+                                        <p class="text-gray-400 text-sm">
+                                            <i class="fas fa-clock mr-2"></i>
+                                            Fin prévue: <?php echo date('d/m/Y à H:i', strtotime($active_maintenance['end_time'])); ?>
+                                        </p>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     
                     <?php if ($active_maintenance): ?>
-                        <form method="POST" onsubmit="return confirm('Désactiver la maintenance ?');">
+                        <form method="POST" onsubmit="return confirm('Désactiver la maintenance et rendre le site accessible ?');">
                             <input type="hidden" name="action" value="deactivate_maintenance">
-                            <button type="submit" class="bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 transition font-bold">
+                            <button type="submit" class="bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 transition font-bold transform hover:scale-105">
                                 <i class="fas fa-power-off mr-2"></i>Désactiver la Maintenance
                             </button>
                         </form>
-                    <?php else: ?>
-                        <button onclick="document.getElementById('modal-new-maintenance').classList.remove('hidden')" 
-                                class="bg-red-600 text-white px-8 py-4 rounded-lg hover:bg-red-700 transition font-bold">
-                            <i class="fas fa-exclamation-triangle mr-2"></i>Activer une Maintenance
-                        </button>
                     <?php endif; ?>
                 </div>
             </div>
 
-            <!-- Templates rapides -->
-            <div class="bg-gray-800 rounded-lg p-6 mb-8">
-                <h2 class="text-2xl font-bold text-white mb-6">
-                    <i class="fas fa-bolt text-yellow-500 mr-2"></i>Activation Rapide
-                </h2>
-                <div class="grid md:grid-cols-5 gap-4">
-                    <?php foreach ($templates as $type => $template): ?>
-                        <button onclick="fillTemplate('<?php echo $type; ?>')" 
-                                class="bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition text-center">
-                            <i class="fas <?php echo $template['icon']; ?> text-4xl mb-3 <?php echo $template['icon_color']; ?>"></i>
-                            <p class="text-white font-semibold text-sm"><?php echo $template['title']; ?></p>
-                        </button>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-            <!-- Configurations sauvegardées -->
-            <div class="bg-gray-800 rounded-lg p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-white">
-                        <i class="fas fa-history text-blue-500 mr-2"></i>Configurations Sauvegardées
-                    </h2>
-                    <button onclick="document.getElementById('modal-new-maintenance').classList.remove('hidden')" 
-                            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                        <i class="fas fa-plus mr-2"></i>Nouvelle Configuration
-                    </button>
-                </div>
-
-                <div class="space-y-4">
-                    <?php foreach ($all_maintenances as $maint): ?>
-                        <div class="bg-gray-700 p-6 rounded-lg <?php echo $maint['is_active'] ? 'border-2 border-red-500' : ''; ?>">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-3 mb-3">
-                                        <i class="fas <?php echo $maint['custom_icon']; ?> text-3xl <?php echo $maint['icon_color']; ?>"></i>
-                                        <div>
-                                            <h3 class="text-xl font-bold text-white">
-                                                <?php echo htmlspecialchars($maint['title']); ?>
-                                            </h3>
-                                            <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                                <?php 
-                                                $colors = [
-                                                    'scheduled' => 'bg-blue-600',
-                                                    'emergency' => 'bg-red-600',
-                                                    'update' => 'bg-green-600',
-                                                    'technical' => 'bg-yellow-600',
-                                                    'custom' => 'bg-purple-600'
-                                                ];
-                                                echo $colors[$maint['maintenance_type']] ?? 'bg-gray-600';
-                                                ?> text-white">
-                                                <?php echo ucfirst($maint['maintenance_type']); ?>
-                                            </span>
-                                            <?php if ($maint['is_active']): ?>
-                                                <span class="ml-2 px-3 py-1 bg-red-600 text-white rounded-full text-xs font-bold">
-                                                    ACTIVE
-                                                </span>
-                                            <?php endif; ?>
-                                        </div>
-                                    </div>
-                                    
-                                    <p class="text-gray-300 mb-3"><?php echo nl2br(htmlspecialchars($maint['message'])); ?></p>
-                                    
-                                    <div class="grid md:grid-cols-3 gap-4 text-sm">
-                                        <?php if ($maint['estimated_duration']): ?>
-                                            <div class="text-gray-400">
-                                                <i class="fas fa-clock mr-2"></i>
-                                                Durée: <span class="text-white"><?php echo htmlspecialchars($maint['estimated_duration']); ?></span>
-                                            </div>
-                                        <?php endif; ?>
-                                        
-                                        <div class="text-gray-400">
-                                            <i class="fas fa-user mr-2"></i>
-                                            Par: <span class="text-white"><?php echo htmlspecialchars($maint['username']); ?></span>
-                                        </div>
-                                        
-                                        <div class="text-gray-400">
-                                            <i class="fas fa-calendar mr-2"></i>
-                                            <?php echo date('d/m/Y H:i', strtotime($maint['created_at'])); ?>
-                                        </div>
-                                    </div>
+            <!-- Grid des 4 maintenances -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <?php foreach ($all_maintenances as $maint): 
+                    $config = $type_configs[$maint['maintenance_type']];
+                ?>
+                    <div class="bg-gradient-to-br <?php echo $config['bg']; ?> rounded-lg p-6 border-2 <?php echo $config['border']; ?> <?php echo $maint['is_active'] ? 'ring-4 ring-yellow-500' : ''; ?> relative overflow-hidden">
+                        
+                        <!-- Badge ACTIF -->
+                        <?php if ($maint['is_active']): ?>
+                            <div class="absolute top-4 right-4">
+                                <span class="bg-yellow-500 text-black px-4 py-2 rounded-full text-sm font-bold pulse-ring">
+                                    ● EN DIRECT
+                                </span>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <!-- Icône et titre -->
+                        <div class="mb-6">
+                            <div class="flex items-start space-x-4">
+                                <div class="<?php echo $config['pulse'] ? 'pulse-ring' : ''; ?>">
+                                    <i class="fas <?php echo $config['icon']; ?> text-6xl <?php echo $config['text']; ?>"></i>
                                 </div>
-                                
-                                <div class="flex flex-col space-y-2 ml-4">
-                                    <?php if (!$maint['is_active']): ?>
-                                        <form method="POST">
-                                            <input type="hidden" name="action" value="quick_activate">
-                                            <input type="hidden" name="maintenance_id" value="<?php echo $maint['id']; ?>">
-                                            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition text-sm whitespace-nowrap">
-                                                <i class="fas fa-play mr-2"></i>Activer
-                                            </button>
-                                        </form>
-                                    <?php endif; ?>
-                                    
-                                    <form method="POST" onsubmit="return confirm('Supprimer cette configuration ?');">
-                                        <input type="hidden" name="action" value="delete_maintenance">
-                                        <input type="hidden" name="maintenance_id" value="<?php echo $maint['id']; ?>">
-                                        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition text-sm whitespace-nowrap">
-                                            <i class="fas fa-trash mr-2"></i>Supprimer
-                                        </button>
-                                    </form>
+                                <div class="flex-1">
+                                    <span class="<?php echo $config['badge']; ?> text-white px-3 py-1 rounded-full text-xs font-bold uppercase">
+                                        <?php echo $config['name']; ?>
+                                    </span>
+                                    <h3 class="text-2xl font-bold text-white mt-3 mb-2">
+                                        <?php echo htmlspecialchars($maint['title']); ?>
+                                    </h3>
                                 </div>
                             </div>
                         </div>
-                    <?php endforeach; ?>
-                    
-                    <?php if (empty($all_maintenances)): ?>
-                        <div class="text-center py-12 text-gray-500">
-                            <i class="fas fa-inbox text-6xl mb-4"></i>
-                            <p>Aucune configuration de maintenance enregistrée</p>
+
+                        <!-- Message -->
+                        <div class="bg-black bg-opacity-30 rounded-lg p-4 mb-4">
+                            <p class="text-gray-200 text-sm whitespace-pre-line leading-relaxed">
+                                <?php echo htmlspecialchars($maint['message']); ?>
+                            </p>
                         </div>
-                    <?php endif; ?>
-                </div>
+
+                        <!-- Durée estimée -->
+                        <div class="bg-black bg-opacity-20 rounded-lg p-3 mb-4">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-gray-400">
+                                    <i class="fas fa-clock mr-2"></i>Durée estimée:
+                                </span>
+                                <span class="<?php echo $config['text']; ?> font-bold">
+                                    <?php echo htmlspecialchars($maint['estimated_duration']); ?>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex space-x-3">
+                            <?php if (!$maint['is_active']): ?>
+                                <!-- Formulaire d'activation -->
+                                <button onclick="openActivationModal(<?php echo $maint['id']; ?>, '<?php echo addslashes($maint['title']); ?>')" 
+                                        class="flex-1 bg-white text-gray-900 px-6 py-3 rounded-lg hover:bg-gray-100 transition font-bold transform hover:scale-105">
+                                    <i class="fas fa-play mr-2"></i>Activer
+                                </button>
+                            <?php endif; ?>
+                            
+                            <button onclick="openEditModal(<?php echo htmlspecialchars(json_encode($maint)); ?>)" 
+                                    class="bg-gray-700 bg-opacity-50 text-white px-4 py-3 rounded-lg hover:bg-opacity-70 transition">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <!-- Informations -->
+            <div class="mt-8 bg-gray-800 rounded-lg p-6 border border-gray-700">
+                <h3 class="text-xl font-bold text-white mb-4">
+                    <i class="fas fa-info-circle text-blue-400 mr-2"></i>Informations importantes
+                </h3>
+                <ul class="space-y-2 text-gray-300">
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Les visiteurs verront une page de maintenance pendant qu'elle est active</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Les administrateurs peuvent toujours accéder au site normalement</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Le timer est optionnel - laissez vide si vous ne connaissez pas la durée exacte</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Les modifications sont appliquées immédiatement</li>
+                    <li><i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>Une seule maintenance peut être active à la fois</li>
+                </ul>
             </div>
         </div>
     </div>
 
-    <!-- Modal: Nouvelle Maintenance -->
-    <div id="modal-new-maintenance" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
-        <div class="bg-gray-800 p-8 rounded-lg max-w-4xl w-full my-8">
-            <h2 class="text-3xl font-bold text-white mb-6">
-                <i class="fas fa-plus-circle text-blue-500 mr-2"></i>Nouvelle Maintenance
+    <!-- Modal: Activation avec timer -->
+    <div id="modal-activation" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-800 p-8 rounded-lg max-w-md w-full border-2 border-red-500">
+            <h2 class="text-2xl font-bold text-white mb-6">
+                <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>Activer la maintenance
             </h2>
             
-            <form method="POST" id="maintenance-form" class="space-y-6">
-                <input type="hidden" name="action" value="activate_maintenance">
+            <form method="POST" id="activation-form">
+                <input type="hidden" name="action" value="quick_activate">
+                <input type="hidden" name="maintenance_id" id="activation-id">
                 
-                <!-- Type de maintenance -->
-                <div>
-                    <label class="block text-white font-semibold mb-3">Type de maintenance *</label>
-                    <div class="grid md:grid-cols-5 gap-3">
-                        <?php foreach ($templates as $type => $template): ?>
-                            <label class="cursor-pointer">
-                                <input type="radio" name="maintenance_type" value="<?php echo $type; ?>" 
-                                       class="hidden peer" required
-                                       onchange="updatePreview()">
-                                <div class="bg-gray-700 p-4 rounded-lg text-center border-2 border-gray-600 
-                                            peer-checked:border-<?php echo $template['color']; ?>-500 
-                                            peer-checked:bg-gray-600 transition hover:bg-gray-650">
-                                    <i class="fas <?php echo $template['icon']; ?> text-3xl mb-2 <?php echo $template['icon_color']; ?>"></i>
-                                    <p class="text-white text-sm font-semibold"><?php echo ucfirst($type); ?></p>
-                                </div>
-                            </label>
-                        <?php endforeach; ?>
-                    </div>
+                <div class="bg-gray-900 p-4 rounded-lg mb-6">
+                    <p class="text-white font-semibold mb-2" id="activation-title"></p>
+                    <p class="text-gray-400 text-sm">
+                        <i class="fas fa-users mr-2"></i>
+                        Les visiteurs ne pourront plus accéder au site
+                    </p>
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Titre -->
+                <div class="mb-6">
+                    <label class="block text-white font-semibold mb-2">
+                        <i class="fas fa-clock mr-2"></i>Fin prévue (optionnel)
+                    </label>
+                    <input type="datetime-local" name="end_time" id="activation-endtime"
+                           class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                    <p class="text-gray-500 text-sm mt-2">
+                        Si défini, un compte à rebours s'affichera sur la page de maintenance
+                    </p>
+                </div>
+
+                <div class="space-y-3">
+                    <button type="button" onclick="setQuickTime(30)" 
+                            class="w-full bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition text-sm">
+                        <i class="fas fa-clock mr-2"></i>+30 minutes
+                    </button>
+                    <button type="button" onclick="setQuickTime(60)" 
+                            class="w-full bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition text-sm">
+                        <i class="fas fa-clock mr-2"></i>+1 heure
+                    </button>
+                    <button type="button" onclick="setQuickTime(120)" 
+                            class="w-full bg-gray-700 text-white px-4 py-2 rounded hover:bg-gray-600 transition text-sm">
+                        <i class="fas fa-clock mr-2"></i>+2 heures
+                    </button>
+                </div>
+
+                <div class="flex space-x-4 mt-6">
+                    <button type="submit" class="flex-1 bg-red-600 text-white px-6 py-4 rounded-lg hover:bg-red-700 transition font-bold">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>ACTIVER
+                    </button>
+                    <button type="button" onclick="closeActivationModal()" 
+                            class="bg-gray-600 text-white px-6 py-4 rounded-lg hover:bg-gray-700 transition font-bold">
+                        Annuler
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Édition -->
+    <div id="modal-edit" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-gray-800 p-8 rounded-lg max-w-2xl w-full my-8">
+            <h2 class="text-2xl font-bold text-white mb-6">
+                <i class="fas fa-edit text-blue-500 mr-2"></i>Modifier la maintenance
+            </h2>
+            
+            <form method="POST" id="edit-form">
+                <input type="hidden" name="action" value="update_maintenance">
+                <input type="hidden" name="maintenance_id" id="edit-id">
+                
+                <div class="space-y-4">
                     <div>
                         <label class="block text-white font-semibold mb-2">Titre *</label>
-                        <input type="text" name="title" id="maint-title" required maxlength="255"
-                               placeholder="Ex: Maintenance Programmée"
-                               onkeyup="updatePreview()"
+                        <input type="text" name="title" id="edit-title" required maxlength="255"
                                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
                     </div>
 
-                    <!-- Durée estimée -->
                     <div>
-                        <label class="block text-white font-semibold mb-2">Durée estimée</label>
-                        <input type="text" name="estimated_duration" id="maint-duration"
-                               placeholder="Ex: 30 minutes, 2 heures, etc."
-                               onkeyup="updatePreview()"
-                               class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
+                        <label class="block text-white font-semibold mb-2">Message *</label>
+                        <textarea name="message" id="edit-message" required rows="6"
+                                  class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600"></textarea>
                     </div>
-                </div>
 
-                <!-- Message -->
-                <div>
-                    <label class="block text-white font-semibold mb-2">Message *</label>
-                    <textarea name="message" id="maint-message" required rows="4"
-                              placeholder="Message à afficher aux visiteurs..."
-                              onkeyup="updatePreview()"
-                              class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600"></textarea>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                    <!-- Heure de début -->
                     <div>
-                        <label class="block text-white font-semibold mb-2">Heure de début</label>
-                        <input type="datetime-local" name="start_time"
-                               value="<?php echo date('Y-m-d\TH:i'); ?>"
+                        <label class="block text-white font-semibold mb-2">Durée estimée *</label>
+                        <input type="text" name="estimated_duration" id="edit-duration" required
+                               placeholder="Ex: 30 minutes, 1-2 heures, etc."
                                class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
-                        <p class="text-gray-500 text-sm mt-1">Laisser vide pour maintenant</p>
-                    </div>
-
-                    <!-- Heure de fin -->
-                    <div>
-                        <label class="block text-white font-semibold mb-2">Heure de fin prévue</label>
-                        <input type="datetime-local" name="end_time"
-                               class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600">
-                        <p class="text-gray-500 text-sm mt-1">Optionnel</p>
                     </div>
                 </div>
 
-                <!-- Personnalisation -->
-                <div class="bg-gray-700 p-6 rounded-lg">
-                    <h3 class="text-xl font-bold text-white mb-4">
-                        <i class="fas fa-palette text-purple-500 mr-2"></i>Personnalisation visuelle
-                    </h3>
-                    
-                    <div class="grid md:grid-cols-3 gap-4">
-                        <!-- Icône -->
-                        <div>
-                            <label class="block text-white mb-2">Icône</label>
-                            <select name="custom_icon" id="maint-icon" onchange="updatePreview()"
-                                    class="w-full p-3 rounded bg-gray-600 text-white border border-gray-500">
-                                <option value="fa-cog">⚙️ Engrenage</option>
-                                <option value="fa-tools">🔧 Outils</option>
-                                <option value="fa-exclamation-triangle">⚠️ Triangle</option>
-                                <option value="fa-calendar-check">📅 Calendrier</option>
-                                <option value="fa-download">⬇️ Téléchargement</option>
-                                <option value="fa-server">🖥️ Serveur</option>
-                                <option value="fa-shield-alt">🛡️ Bouclier</option>
-                            </select>
-                        </div>
-
-                        <!-- Couleur icône -->
-                        <div>
-                            <label class="block text-white mb-2">Couleur icône</label>
-                            <select name="icon_color" id="maint-icon-color" onchange="updatePreview()"
-                                    class="w-full p-3 rounded bg-gray-600 text-white border border-gray-500">
-                                <option value="text-blue-500">🔵 Bleu</option>
-                                <option value="text-red-500">🔴 Rouge</option>
-                                <option value="text-green-500">🟢 Vert</option>
-                                <option value="text-yellow-500">🟡 Jaune</option>
-                                <option value="text-purple-500">🟣 Violet</option>
-                                <option value="text-orange-500">🟠 Orange</option>
-                            </select>
-                        </div>
-
-                        <!-- Thème -->
-                        <div>
-                            <label class="block text-white mb-2">Thème</label>
-                            <select name="theme_color"
-                                    class="w-full p-3 rounded bg-gray-600 text-white border border-gray-500">
-                                <option value="blue">Bleu</option>
-                                <option value="red">Rouge</option>
-                                <option value="green">Vert</option>
-                                <option value="yellow">Jaune</option>
-                                <option value="purple">Violet</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Options -->
-                <div class="space-y-3">
-                    <label class="flex items-center space-x-3 cursor-pointer">
-                        <input type="checkbox" name="show_countdown" checked
-                               class="w-5 h-5 rounded">
-                        <span class="text-white">
-                            <i class="fas fa-clock mr-2 text-blue-400"></i>
-                            Afficher le compte à rebours (si heure de fin définie)
-                        </span>
-                    </label>
-
-                    <label class="flex items-center space-x-3 cursor-pointer">
-                        <input type="checkbox" name="show_discord_link" checked
-                               class="w-5 h-5 rounded">
-                        <span class="text-white">
-                            <i class="fab fa-discord mr-2 text-blue-400"></i>
-                            Afficher le lien Discord
-                        </span>
-                    </label>
-                </div>
-
-                <!-- Prévisualisation -->
-                <div class="bg-gray-900 p-6 rounded-lg border-2 border-gray-700">
-                    <h3 class="text-white font-bold mb-4">
-                        <i class="fas fa-eye text-green-500 mr-2"></i>Aperçu
-                    </h3>
-                    <div id="preview-container" class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-8 rounded text-center">
-                        <i id="preview-icon" class="fas fa-cog text-9xl text-blue-500 mb-4"></i>
-                        <h2 id="preview-title" class="text-3xl font-bold text-white mb-4">Titre de la maintenance</h2>
-                        <p id="preview-message" class="text-gray-300 mb-4">Message de la maintenance</p>
-                        <p id="preview-duration" class="text-gray-500 text-sm"></p>
-                    </div>
-                </div>
-
-                <!-- Boutons -->
-                <div class="flex space-x-4">
-                    <button type="submit" class="flex-1 bg-red-600 text-white px-8 py-4 rounded-lg hover:bg-red-700 transition font-bold text-lg">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>Activer la Maintenance
+                <div class="flex space-x-4 mt-6">
+                    <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-bold">
+                        <i class="fas fa-save mr-2"></i>Enregistrer
                     </button>
-                    <button type="button" onclick="document.getElementById('modal-new-maintenance').classList.add('hidden')" 
-                            class="bg-gray-600 text-white px-8 py-4 rounded-lg hover:bg-gray-700 transition font-bold">
+                    <button type="button" onclick="closeEditModal()" 
+                            class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition font-bold">
                         Annuler
                     </button>
                 </div>
@@ -574,36 +503,44 @@ $templates = [
     </div>
 
     <script>
-    const templates = <?php echo json_encode($templates); ?>;
-
-    function fillTemplate(type) {
-        const template = templates[type];
-        document.querySelector(`input[value="${type}"]`).checked = true;
-        document.getElementById('maint-title').value = template.title;
-        document.getElementById('maint-message').value = template.message;
-        document.getElementById('maint-icon').value = template.icon;
-        document.getElementById('maint-icon-color').value = template.icon_color;
-        updatePreview();
-        document.getElementById('modal-new-maintenance').classList.remove('hidden');
+    function openActivationModal(id, title) {
+        document.getElementById('activation-id').value = id;
+        document.getElementById('activation-title').textContent = title;
+        document.getElementById('modal-activation').classList.remove('hidden');
     }
 
-    function updatePreview() {
-        const title = document.getElementById('maint-title').value || 'Titre de la maintenance';
-        const message = document.getElementById('maint-message').value || 'Message de la maintenance';
-        const duration = document.getElementById('maint-duration').value;
-        const icon = document.getElementById('maint-icon').value;
-        const iconColor = document.getElementById('maint-icon-color').value;
-
-        document.getElementById('preview-title').textContent = title;
-        document.getElementById('preview-message').textContent = message;
-        document.getElementById('preview-duration').textContent = duration ? `⏱️ Durée estimée : ${duration}` : '';
-        
-        const previewIcon = document.getElementById('preview-icon');
-        previewIcon.className = `fas ${icon} text-9xl ${iconColor} mb-4`;
+    function closeActivationModal() {
+        document.getElementById('modal-activation').classList.add('hidden');
+        document.getElementById('activation-form').reset();
     }
 
-    // Initialiser l'aperçu
-    updatePreview();
+    function setQuickTime(minutes) {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + minutes);
+        const formatted = now.toISOString().slice(0, 16);
+        document.getElementById('activation-endtime').value = formatted;
+    }
+
+    function openEditModal(maint) {
+        document.getElementById('edit-id').value = maint.id;
+        document.getElementById('edit-title').value = maint.title;
+        document.getElementById('edit-message').value = maint.message;
+        document.getElementById('edit-duration').value = maint.estimated_duration;
+        document.getElementById('modal-edit').classList.remove('hidden');
+    }
+
+    function closeEditModal() {
+        document.getElementById('modal-edit').classList.add('hidden');
+        document.getElementById('edit-form').reset();
+    }
+
+    // Fermer les modals avec Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeActivationModal();
+            closeEditModal();
+        }
+    });
     </script>
 
     <?php include '../includes/footer.php'; ?>
