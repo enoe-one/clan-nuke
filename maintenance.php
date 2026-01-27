@@ -294,17 +294,84 @@ $config = $type_configs[$maintenance['maintenance_type']] ?? $type_configs['sche
             </div>
         </div>
 
+        <!-- Événements à venir -->
+        <?php
+        $upcoming_events = $pdo->query("SELECT * FROM events 
+            WHERE event_date >= NOW() 
+            AND event_date <= DATE_ADD(NOW(), INTERVAL 24 HOUR) 
+            ORDER BY event_date ASC 
+            LIMIT 3")->fetchAll();
+        ?>
+        
+        <?php if (!empty($upcoming_events)): ?>
+            <div class="mb-10 fade-in-up" style="animation-delay: 0.9s;">
+                <div class="bg-gradient-to-br from-yellow-900 to-orange-900 rounded-2xl p-6 sm:p-8 border-2 border-yellow-500 shadow-2xl">
+                    <h3 class="text-2xl sm:text-3xl font-bold text-yellow-300 mb-6 flex items-center">
+                        <i class="fas fa-calendar-exclamation mr-3 text-3xl sm:text-4xl"></i>
+                        Événements à venir
+                    </h3>
+                    <div class="space-y-3 sm:space-y-4">
+                        <?php foreach ($upcoming_events as $event): ?>
+                            <div class="bg-black bg-opacity-40 rounded-xl p-4 sm:p-5 transform hover:scale-105 transition">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div class="flex-1">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <?php if ($event['is_important']): ?>
+                                                <span class="bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
+                                                    <i class="fas fa-star mr-1"></i>IMPORTANT
+                                                </span>
+                                            <?php endif; ?>
+                                            <span class="bg-yellow-600 text-white px-2 py-1 rounded text-xs font-bold">
+                                                <?php echo strtoupper($event['type']); ?>
+                                            </span>
+                                        </div>
+                                        <h4 class="text-lg sm:text-xl font-bold text-white mb-2">
+                                            <?php echo htmlspecialchars($event['title']); ?>
+                                        </h4>
+                                        <p class="text-yellow-200 text-sm sm:text-base">
+                                            <i class="fas fa-clock mr-2"></i>
+                                            <?php echo date('d/m/Y à H:i', strtotime($event['event_date'])); ?>
+                                        </p>
+                                        <?php if ($event['description']): ?>
+                                            <p class="text-gray-300 text-sm mt-2 line-clamp-2">
+                                                <?php echo htmlspecialchars($event['description']); ?>
+                                            </p>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="text-center sm:text-right">
+                                        <div class="bg-yellow-600 bg-opacity-30 rounded-lg px-4 py-2 inline-block">
+                                            <p class="text-yellow-200 text-xs">Dans</p>
+                                            <p class="text-white text-lg sm:text-xl font-bold">
+                                                <?php
+                                                $diff = (strtotime($event['event_date']) - time()) / 3600;
+                                                if ($diff < 1) {
+                                                    echo round($diff * 60) . ' min';
+                                                } else {
+                                                    echo round($diff) . 'h';
+                                                }
+                                                ?>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- Discord -->
         <?php if ($maintenance['show_discord_link']): ?>
             <div class="mb-10 fade-in-up" style="animation-delay: 1s;">
-                <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-2xl p-8 border-2 border-blue-500 shadow-2xl transform hover:scale-105 transition">
-                    <i class="fab fa-discord text-6xl text-blue-300 mb-4 float"></i>
-                    <p class="text-blue-200 text-xl mb-6 font-bold">
+                <div class="bg-gradient-to-br from-blue-900 to-indigo-900 rounded-2xl p-6 sm:p-8 border-2 border-blue-500 shadow-2xl transform hover:scale-105 transition">
+                    <i class="fab fa-discord text-5xl sm:text-6xl text-blue-300 mb-4 float"></i>
+                    <p class="text-blue-200 text-lg sm:text-xl mb-6 font-bold">
                         Rejoignez notre Discord pour les dernières infos !
                     </p>
                     <a href="<?php echo DISCORD_INVITE; ?>" target="_blank" 
-                       class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-xl font-black text-lg shadow-xl transform hover:scale-110 transition">
-                        <i class="fab fa-discord mr-3"></i>Rejoindre Discord
+                       class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 sm:px-10 py-3 sm:py-4 rounded-xl font-black text-base sm:text-lg shadow-xl transform hover:scale-110 transition">
+                        <i class="fab fa-discord mr-2 sm:mr-3"></i>Rejoindre Discord
                     </a>
                 </div>
             </div>
