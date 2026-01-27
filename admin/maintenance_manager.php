@@ -162,10 +162,11 @@ $all_maintenances = $pdo->query("SELECT * FROM maintenance_settings ORDER BY
     is_active DESC, created_at DESC")->fetchAll();
 
 // Récupérer les événements à venir (dans les prochaines 24h)
-$upcoming_events = $pdo->query("SELECT * FROM events 
-    WHERE event_date >= NOW() 
-    AND event_date <= DATE_ADD(NOW(), INTERVAL 24 HOUR) 
-    ORDER BY event_date ASC 
+$upcoming_events = $pdo->query("
+    SELECT * FROM events
+    WHERE date_start >= NOW()
+    AND date_start <= DATE_ADD(NOW(), INTERVAL 72 HOUR)
+    ORDER BY date_start ASC
     LIMIT 5")->fetchAll();
 
 // Configurations visuelles par type
