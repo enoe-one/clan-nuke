@@ -30,9 +30,13 @@ try {
         title VARCHAR(255) NOT NULL,
         message TEXT,
         estimated_duration VARCHAR(100),
+        start_time DATETIME,
         end_time DATETIME,
         show_countdown BOOLEAN DEFAULT TRUE,
         show_discord_link BOOLEAN DEFAULT TRUE,
+        show_progress_bar BOOLEAN DEFAULT FALSE,
+        progress_percentage INT DEFAULT 0,
+        additional_info TEXT,
         created_by INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -64,11 +68,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $title = $_POST['title'];
                 $message = $_POST['message'];
                 $duration = $_POST['estimated_duration'];
+                $additional_info = $_POST['additional_info'] ?? '';
+                $show_progress = isset($_POST['show_progress_bar']) ? 1 : 0;
                 
                 $stmt = $pdo->prepare("INSERT INTO maintenance_settings 
-                    (maintenance_type, title, message, estimated_duration, show_countdown, show_discord_link, created_by) 
-                    VALUES (?, ?, ?, ?, 1, 1, ?)");
-                $stmt->execute([$type, $title, $message, $duration, $_SESSION['user_id']]);
+                    (maintenance_type, title, message, estimated_duration, additional_info, 
+                     show_countdown, show_discord_link, show_progress_bar, created_by) 
+                    VALUES (?, ?, ?, ?, ?, 1, 1, ?, ?)");
+                $stmt->execute([$type, $title, $message, $duration, $additional_info, $show_progress, $_SESSION['user_id']]);
                 
                 logAdminAction($pdo, $_SESSION['user_id'], 'Création maintenance', $title);
                 $success = "Maintenance créée avec succès !";
@@ -77,13 +84,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'quick_activate':
                 $id = $_POST['maintenance_id'];
                 $end_time = $_POST['end_time'] ?? null;
+                $start_time = date('Y-m-d H:i:s');
                 
                 // Désactiver toutes les maintenances
                 $pdo->query("UPDATE maintenance_settings SET is_active = 0");
                 
-                // Activer celle sélectionnée avec l'heure de fin
-                $stmt = $pdo->prepare("UPDATE maintenance_settings SET is_active = 1, end_time = ? WHERE id = ?");
-                $stmt->execute([$end_time, $id]);
+                // Activer celle sélectionnée avec l'heure de début et fin
+                $stmt = $pdo->prepare("UPDATE maintenance_settings 
+                    SET is_active = 1, start_time = ?, end_time = ? 
+                    WHERE id = ?");
+                $stmt->execute([$start_time, $end_time, $id]);
                 
                 // Activer dans site_content
                 $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
@@ -96,7 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'deactivate_maintenance':
-                $pdo->query("UPDATE maintenance_settings SET is_active = 0, end_time = NULL");
+                $pdo->query("UPDATE maintenance_settings SET is_active = 0, end_time = NULL, start_time = NULL, progress_percentage = 0");
                 
                 // Désactiver dans site_content
                 $pdo->prepare("INSERT INTO site_content (page, section, content, updated_by, updated_at) 
@@ -120,14 +130,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $title = $_POST['title'];
                 $message = $_POST['message'];
                 $duration = $_POST['estimated_duration'];
+                $additional_info = $_POST['additional_info'] ?? '';
+                $show_progress = isset($_POST['show_progress_bar']) ? 1 : 0;
                 
                 $stmt = $pdo->prepare("UPDATE maintenance_settings 
-                    SET maintenance_type = ?, title = ?, message = ?, estimated_duration = ? 
+                    SET maintenance_type = ?, title = ?, message = ?, estimated_duration = ?, 
+                        additional_info = ?, show_progress_bar = ?
                     WHERE id = ?");
-                $stmt->execute([$type, $title, $message, $duration, $id]);
+                $stmt->execute([$type, $title, $message, $duration, $additional_info, $show_progress, $id]);
                 
                 logAdminAction($pdo, $_SESSION['user_id'], 'Modification maintenance', "ID: $id");
                 $success = "Maintenance modifiée avec succès !";
+                break;
+                
+            case 'update_progress':
+                $id = $_POST['maintenance_id'];
+                $progress = intval($_POST['progress_percentage']);
+                
+                // Limiter entre 0 et 100
+                $progress = max(0, min(100, $progress));
+                
+                $stmt = $pdo->prepare("UPDATE maintenance_settings SET progress_percentage = ? WHERE id = ?");
+                $stmt->execute([$progress, $id]);
+                
+                logAdminAction($pdo, $_SESSION['user_id'], 'MAJ progression maintenance', "$progress%");
+                $success = "Progression mise à jour : $progress%";
                 break;
                 
             case 'delete_maintenance':
@@ -193,7 +220,10 @@ $type_configs = [
         'bg' => 'from-red-900 via-red-800 to-orange-900',
         'border' => 'border-red-500',
         'text' => 'text-red-400',
-        'badge' => 'bg-red-600'
+        'badge' => 'bg-red-600',
+        'page_bg' => 'from-red-950 via-gray-900 to-black',
+        'title_color' => 'text-red-400',
+        'message_bg' => 'from-red-900 to-red-950'
     ],
     'technical_danger' => [
         'name' => 'Danger Technique',
@@ -201,7 +231,10 @@ $type_configs = [
         'bg' => 'from-red-900 via-pink-900 to-red-900',
         'border' => 'border-pink-500',
         'text' => 'text-pink-400',
-        'badge' => 'bg-pink-600'
+        'badge' => 'bg-pink-600',
+        'page_bg' => 'from-pink-950 via-gray-900 to-black',
+        'title_color' => 'text-pink-400',
+        'message_bg' => 'from-pink-900 to-pink-950'
     ],
     'scheduled' => [
         'name' => 'Maintenance Prévue',
@@ -209,7 +242,10 @@ $type_configs = [
         'bg' => 'from-blue-900 via-blue-800 to-indigo-900',
         'border' => 'border-blue-500',
         'text' => 'text-blue-400',
-        'badge' => 'bg-blue-600'
+        'badge' => 'bg-blue-600',
+        'page_bg' => 'from-blue-950 via-gray-900 to-black',
+        'title_color' => 'text-blue-400',
+        'message_bg' => 'from-blue-900 to-blue-950'
     ],
     'emergency_update' => [
         'name' => 'Mise à Jour Urgente',
@@ -217,7 +253,10 @@ $type_configs = [
         'bg' => 'from-purple-900 via-violet-800 to-purple-900',
         'border' => 'border-purple-500',
         'text' => 'text-purple-400',
-        'badge' => 'bg-purple-600'
+        'badge' => 'bg-purple-600',
+        'page_bg' => 'from-purple-950 via-gray-900 to-black',
+        'title_color' => 'text-purple-400',
+        'message_bg' => 'from-purple-900 to-purple-950'
     ],
     'custom' => [
         'name' => 'Personnalisée',
@@ -225,7 +264,10 @@ $type_configs = [
         'bg' => 'from-gray-900 via-gray-800 to-gray-900',
         'border' => 'border-gray-500',
         'text' => 'text-gray-400',
-        'badge' => 'bg-gray-600'
+        'badge' => 'bg-gray-600',
+        'page_bg' => 'from-gray-950 via-gray-900 to-black',
+        'title_color' => 'text-gray-400',
+        'message_bg' => 'from-gray-800 to-gray-900'
     ]
 ];
 
@@ -472,14 +514,30 @@ $stats = [
                             <div class="bg-gradient-to-br <?php echo $config['bg']; ?> rounded-lg p-4 sm:p-6 border-2 <?php echo $config['border']; ?> 
                                         <?php echo $maint['is_active'] ? 'ring-4 ring-yellow-500' : ''; ?> relative overflow-hidden">
                                 
-                                <!-- Badge ACTIF -->
-                                <?php if ($maint['is_active']): ?>
-                                    <div class="absolute top-2 right-2 sm:top-4 sm:right-4">
-                                        <span class="bg-yellow-500 text-black px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold pulse-ring">
-                                            ● EN DIRECT
-                                        </span>
-                                    </div>
-                                <?php endif; ?>
+                                    <?php if ($maint['is_active']): ?>
+                                        <div class="absolute top-2 right-2 sm:top-4 sm:right-4">
+                                            <span class="bg-yellow-500 text-black px-2 sm:px-4 py-1 sm:py-2 rounded-full text-xs sm:text-sm font-bold pulse-ring">
+                                                ● EN DIRECT
+                                            </span>
+                                        </div>
+                                        
+                                        <!-- Contrôle progression (si activé) -->
+                                        <?php if ($maint['show_progress_bar']): ?>
+                                            <div class="absolute bottom-2 right-2 sm:bottom-4 sm:right-4">
+                                                <form method="POST" class="flex items-center gap-2 bg-black bg-opacity-50 p-2 rounded-lg">
+                                                    <input type="hidden" name="action" value="update_progress">
+                                                    <input type="hidden" name="maintenance_id" value="<?php echo $maint['id']; ?>">
+                                                    <input type="number" name="progress_percentage" 
+                                                           value="<?php echo $maint['progress_percentage']; ?>" 
+                                                           min="0" max="100" step="5"
+                                                           class="w-16 p-1 text-xs rounded bg-gray-700 text-white border border-gray-600">
+                                                    <button type="submit" class="bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php else: ?>
                                 
                                 <div class="flex flex-col gap-4">
                                     <!-- En-tête -->
@@ -503,6 +561,36 @@ $stats = [
                                             <?php echo htmlspecialchars($maint['message']); ?>
                                         </p>
                                     </div>
+                                    
+                                    <!-- Informations supplémentaires -->
+                                    <?php if ($maint['additional_info']): ?>
+                                        <div class="bg-blue-900 bg-opacity-30 rounded-lg p-3 sm:p-4 border border-blue-500">
+                                            <p class="text-blue-200 text-xs sm:text-sm font-semibold mb-2">
+                                                <i class="fas fa-info-circle mr-2"></i>Informations supplémentaires
+                                            </p>
+                                            <p class="text-gray-300 text-xs sm:text-sm whitespace-pre-line">
+                                                <?php echo htmlspecialchars($maint['additional_info']); ?>
+                                            </p>
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Barre de progression -->
+                                    <?php if ($maint['show_progress_bar'] && $maint['is_active']): ?>
+                                        <div class="bg-black bg-opacity-20 rounded-lg p-3">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-gray-300 text-xs sm:text-sm font-semibold">
+                                                    <i class="fas fa-tasks mr-2"></i>Progression
+                                                </span>
+                                                <span class="<?php echo $config['text']; ?> font-bold text-sm sm:text-base">
+                                                    <?php echo $maint['progress_percentage']; ?>%
+                                                </span>
+                                            </div>
+                                            <div class="w-full bg-gray-700 rounded-full h-3">
+                                                <div class="bg-gradient-to-r from-<?php echo $config['accent_color']; ?>-500 to-<?php echo $config['accent_color']; ?>-700 h-3 rounded-full transition-all duration-500" 
+                                                     style="width: <?php echo $maint['progress_percentage']; ?>%"></div>
+                                            </div>
+                                        </div>
+                                    <?php endif; ?>
 
                                     <!-- Infos et actions -->
                                     <div class="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
@@ -595,6 +683,27 @@ $stats = [
                     <input type="text" name="estimated_duration" required
                            placeholder="Ex: 30 minutes, 1-2 heures"
                            class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 text-sm sm:text-base">
+                </div>
+                
+                <div>
+                    <label class="block text-white font-semibold mb-2 text-sm sm:text-base">Informations supplémentaires (optionnel)</label>
+                    <textarea name="additional_info" rows="3"
+                              placeholder="Ex: - Mise à jour base de données&#10;- Installation nouveaux serveurs&#10;- Optimisation performances"
+                              class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 text-sm sm:text-base"></textarea>
+                    <p class="text-gray-400 text-xs mt-1">Sera affiché en encadré bleu sous le message principal</p>
+                </div>
+                
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" name="show_progress_bar" class="w-5 h-5 rounded">
+                        <div>
+                            <span class="text-white font-semibold">
+                                <i class="fas fa-tasks mr-2 text-blue-400"></i>
+                                Activer la barre de progression
+                            </span>
+                            <p class="text-gray-400 text-xs mt-1">Permet de mettre à jour le pourcentage d'avancement en temps réel</p>
+                        </div>
+                    </label>
                 </div>
 
                 <div class="flex flex-col sm:flex-row gap-3 pt-2">
@@ -705,6 +814,23 @@ $stats = [
                     <input type="text" name="estimated_duration" id="edit-duration" required
                            class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 text-sm sm:text-base">
                 </div>
+                
+                <div>
+                    <label class="block text-white font-semibold mb-2 text-sm sm:text-base">Informations supplémentaires (optionnel)</label>
+                    <textarea name="additional_info" id="edit-additional-info" rows="3"
+                              placeholder="Informations complémentaires à afficher..."
+                              class="w-full p-3 rounded bg-gray-700 text-white border border-gray-600 text-sm sm:text-base"></textarea>
+                </div>
+                
+                <div class="bg-gray-700 p-4 rounded-lg">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" name="show_progress_bar" id="edit-progress" class="w-5 h-5 rounded">
+                        <span class="text-white font-semibold">
+                            <i class="fas fa-tasks mr-2 text-blue-400"></i>
+                            Activer la barre de progression
+                        </span>
+                    </label>
+                </div>
 
                 <div class="flex flex-col sm:flex-row gap-3 pt-2">
                     <button type="submit" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-bold text-sm sm:text-base">
@@ -744,6 +870,8 @@ $stats = [
         document.getElementById('edit-title').value = maint.title;
         document.getElementById('edit-message').value = maint.message;
         document.getElementById('edit-duration').value = maint.estimated_duration;
+        document.getElementById('edit-additional-info').value = maint.additional_info || '';
+        document.getElementById('edit-progress').checked = maint.show_progress_bar == 1;
         document.getElementById('modal-edit').classList.remove('hidden');
     }
 
