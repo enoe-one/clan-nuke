@@ -26,7 +26,7 @@ try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS maintenance_settings (
         id INT AUTO_INCREMENT PRIMARY KEY,
         is_active BOOLEAN DEFAULT FALSE,
-        maintenance_type ENUM('server_issue', 'technical_danger', 'scheduled', 'emergency_update', 'custom') DEFAULT 'scheduled',
+        maintenance_type VARCHAR(50) NOT NULL DEFAULT 'scheduled',
         title VARCHAR(255) NOT NULL,
         message TEXT,
         estimated_duration VARCHAR(100),
@@ -36,7 +36,9 @@ try {
         created_by INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (created_by) REFERENCES users(id)
+        FOREIGN KEY (created_by) REFERENCES users(id),
+        INDEX idx_active (is_active),
+        INDEX idx_type (maintenance_type)
     )");
 } catch (PDOException $e) {
     // Table existe déjà
@@ -47,9 +49,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     try {
+        // Liste des types valides
+        $valid_types = ['server_issue', 'technical_danger', 'scheduled', 'emergency_update', 'custom'];
+        
         switch ($action) {
             case 'create_maintenance':
-                $type = $_POST['maintenance_type'];
+                $type = $_POST['maintenance_type'] ?? 'scheduled';
+                
+                // Validation du type
+                if (!in_array($type, $valid_types)) {
+                    throw new Exception("Type de maintenance invalide : " . htmlspecialchars($type));
+                }
+                
                 $title = $_POST['title'];
                 $message = $_POST['message'];
                 $duration = $_POST['estimated_duration'];
@@ -99,7 +110,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
             case 'update_maintenance':
                 $id = $_POST['maintenance_id'];
-                $type = $_POST['maintenance_type'];
+                $type = $_POST['maintenance_type'] ?? 'scheduled';
+                
+                // Validation du type
+                if (!in_array($type, $valid_types)) {
+                    throw new Exception("Type de maintenance invalide");
+                }
+                
                 $title = $_POST['title'];
                 $message = $_POST['message'];
                 $duration = $_POST['estimated_duration'];
@@ -161,12 +178,11 @@ $active_maintenance = $pdo->query("SELECT * FROM maintenance_settings WHERE is_a
 $all_maintenances = $pdo->query("SELECT * FROM maintenance_settings ORDER BY 
     is_active DESC, created_at DESC")->fetchAll();
 
-// Récupérer les événements à venir (dans les prochaines 24h)
-$upcoming_events = $pdo->query("
-    SELECT * FROM events
-    WHERE date_start >= NOW()
-    AND date_start <= DATE_ADD(NOW(), INTERVAL 72 HOUR)
-    ORDER BY date_start ASC
+// Récupérer les événements à venir (dans les prochaines 72h)
+$upcoming_events = $pdo->query("SELECT * FROM events 
+    WHERE date_start >= NOW() 
+    AND date_start <= DATE_ADD(NOW(), INTERVAL 72 HOUR) 
+    ORDER BY date_start ASC 
     LIMIT 5")->fetchAll();
 
 // Configurations visuelles par type
@@ -413,12 +429,12 @@ $stats = [
                     </h3>
                     <div class="space-y-2">
                         <?php foreach ($upcoming_events as $event): ?>
-                            <div class="bg-black bg-opacity-30 p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                            <div class="bg-black bg-opacity-30 p-3 sm:p-4 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <div class="flex-1">
                                     <p class="text-white font-semibold text-sm sm:text-base"><?php echo htmlspecialchars($event['title']); ?></p>
                                     <p class="text-yellow-300 text-xs sm:text-sm">
                                         <i class="fas fa-clock mr-1"></i>
-                                        <?php echo date('d/m/Y à H:i', strtotime($event['event_date'])); ?>
+                                        <?php echo date('d/m/Y à H:i', strtotime($event['date_start'])); ?>
                                     </p>
                                 </div>
                                 <?php if ($event['is_important']): ?>
