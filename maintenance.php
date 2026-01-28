@@ -20,36 +20,59 @@ if (!$maintenance) {
 // Configurations visuelles par type
 $type_configs = [
     'server_issue' => [
-        'bg_gradient' => 'from-red-900 via-red-800 to-orange-900',
+        'bg_gradient' => 'from-red-950 via-gray-900 to-black',
         'icon' => 'fa-exclamation-triangle',
         'icon_color' => 'text-red-500',
         'accent_color' => 'red',
         'particles' => true,
-        'shake' => true
+        'shake' => true,
+        'title_color' => 'text-red-400',
+        'message_bg' => 'from-red-900 to-red-950',
+        'border_color' => 'border-red-500'
     ],
     'technical_danger' => [
-        'bg_gradient' => 'from-pink-900 via-red-900 to-pink-900',
+        'bg_gradient' => 'from-pink-950 via-gray-900 to-black',
         'icon' => 'fa-radiation-alt',
         'icon_color' => 'text-pink-500',
         'accent_color' => 'pink',
         'particles' => true,
-        'shake' => true
+        'shake' => true,
+        'title_color' => 'text-pink-400',
+        'message_bg' => 'from-pink-900 to-pink-950',
+        'border_color' => 'border-pink-500'
     ],
     'scheduled' => [
-        'bg_gradient' => 'from-blue-900 via-indigo-800 to-blue-900',
+        'bg_gradient' => 'from-blue-950 via-gray-900 to-black',
         'icon' => 'fa-calendar-check',
         'icon_color' => 'text-blue-400',
         'accent_color' => 'blue',
         'particles' => false,
-        'shake' => false
+        'shake' => false,
+        'title_color' => 'text-blue-400',
+        'message_bg' => 'from-blue-900 to-blue-950',
+        'border_color' => 'border-blue-500'
     ],
     'emergency_update' => [
-        'bg_gradient' => 'from-purple-900 via-violet-800 to-purple-900',
+        'bg_gradient' => 'from-purple-950 via-gray-900 to-black',
         'icon' => 'fa-rocket',
         'icon_color' => 'text-purple-400',
         'accent_color' => 'purple',
         'particles' => false,
-        'shake' => false
+        'shake' => false,
+        'title_color' => 'text-purple-400',
+        'message_bg' => 'from-purple-900 to-purple-950',
+        'border_color' => 'border-purple-500'
+    ],
+    'custom' => [
+        'bg_gradient' => 'from-gray-950 via-gray-900 to-black',
+        'icon' => 'fa-cog',
+        'icon_color' => 'text-gray-400',
+        'accent_color' => 'gray',
+        'particles' => false,
+        'shake' => false,
+        'title_color' => 'text-gray-400',
+        'message_bg' => 'from-gray-800 to-gray-900',
+        'border_color' => 'border-gray-500'
     ]
 ];
 
@@ -161,59 +184,104 @@ $config = $type_configs[$maintenance['maintenance_type']] ?? $type_configs['sche
     
     <!-- Particules animées (pour dangers) -->
     <?php if ($config['particles']): ?>
-        <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
             <?php for ($i = 1; $i <= 10; $i++): ?>
                 <div class="particle"></div>
             <?php endfor; ?>
         </div>
     <?php endif; ?>
     
-    <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
+    <div class="min-h-screen flex items-center justify-center py-8 sm:py-12 px-4 relative z-10">
+        <div class="max-w-4xl w-full text-center">
         
         <!-- Icône principale animée -->
-        <div class="mb-12 fade-in-up">
+        <div class="mb-8 sm:mb-12 fade-in-up">
             <div class="relative inline-block">
                 <!-- Cercles pulsants en arrière-plan -->
                 <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="w-64 h-64 bg-<?php echo $config['accent_color']; ?>-500 opacity-20 rounded-full pulse-glow"></div>
+                    <div class="w-48 sm:w-64 h-48 sm:h-64 bg-<?php echo $config['accent_color']; ?>-500 opacity-20 rounded-full pulse-glow"></div>
                 </div>
                 <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="w-48 h-48 bg-<?php echo $config['accent_color']; ?>-500 opacity-30 rounded-full pulse-glow" style="animation-delay: 0.5s;"></div>
+                    <div class="w-32 sm:w-48 h-32 sm:h-48 bg-<?php echo $config['accent_color']; ?>-500 opacity-30 rounded-full pulse-glow" style="animation-delay: 0.5s;"></div>
                 </div>
                 
                 <!-- Icône principale -->
                 <div class="relative <?php echo $config['shake'] ? 'shake' : 'float'; ?>">
-                    <i class="fas <?php echo $config['icon']; ?> text-9xl <?php echo $config['icon_color']; ?> drop-shadow-2xl"></i>
+                    <i class="fas <?php echo $config['icon']; ?> text-7xl sm:text-8xl lg:text-9xl <?php echo $config['icon_color']; ?> drop-shadow-2xl"></i>
                 </div>
                 
                 <!-- Bouclier CFWT -->
-                <div class="absolute bottom-0 right-0">
-                    <i class="fas fa-shield-alt text-5xl text-white opacity-30 pulse-glow"></i>
+                <div class="absolute -bottom-2 -right-2 sm:bottom-0 sm:right-0">
+                    <i class="fas fa-shield-alt text-3xl sm:text-4xl lg:text-5xl text-white opacity-30 pulse-glow"></i>
                 </div>
             </div>
         </div>
 
         <!-- Titre principal -->
-        <div class="mb-8 fade-in-up" style="animation-delay: 0.2s;">
-            <h1 class="text-6xl font-black text-white mb-4 drop-shadow-2xl <?php echo $config['shake'] ? 'shake' : ''; ?>">
+        <div class="mb-6 sm:mb-8 fade-in-up" style="animation-delay: 0.2s;">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black <?php echo $config['title_color']; ?> text-contrast mb-4 break-words px-4">
                 <?php echo htmlspecialchars($maintenance['title']); ?>
             </h1>
-            <div class="h-2 w-64 mx-auto bg-gradient-to-r from-<?php echo $config['accent_color']; ?>-500 to-<?php echo $config['accent_color']; ?>-700 rounded-full"></div>
+            <div class="h-1.5 sm:h-2 w-48 sm:w-64 mx-auto bg-gradient-to-r from-<?php echo $config['accent_color']; ?>-500 to-<?php echo $config['accent_color']; ?>-700 rounded-full shadow-lg"></div>
         </div>
 
         <!-- Message principal -->
-        <div class="mb-10 fade-in-up" style="animation-delay: 0.4s;">
-            <div class="bg-gradient-to-br <?php echo $config['bg_gradient']; ?> backdrop-blur-md rounded-2xl p-8 border-2 border-<?php echo $config['accent_color']; ?>-500 shadow-2xl">
-                <p class="text-2xl text-white mb-6 leading-relaxed whitespace-pre-line font-semibold">
+        <div class="mb-8 sm:mb-10 fade-in-up" style="animation-delay: 0.4s;">
+            <div class="bg-gradient-to-br <?php echo $config['message_bg']; ?> backdrop-blur-md rounded-2xl p-6 sm:p-8 border-2 <?php echo $config['border_color']; ?> shadow-2xl">
+                <p class="text-lg sm:text-xl lg:text-2xl text-gray-100 mb-6 leading-relaxed whitespace-pre-line font-semibold text-contrast">
                     <?php echo nl2br(htmlspecialchars($maintenance['message'])); ?>
                 </p>
 
+                <!-- Informations supplémentaires -->
+                <?php if ($maintenance['additional_info']): ?>
+                    <div class="bg-blue-900 bg-opacity-50 rounded-xl p-4 sm:p-6 mb-6 border-2 border-blue-400 shadow-lg">
+                        <h3 class="text-lg sm:text-xl font-bold text-blue-200 text-contrast mb-3 flex items-center justify-center">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Informations supplémentaires
+                        </h3>
+                        <div class="text-sm sm:text-base text-blue-50 whitespace-pre-line leading-relaxed text-contrast">
+                            <?php echo nl2br(htmlspecialchars($maintenance['additional_info'])); ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                
+                <!-- Barre de progression -->
+                <?php if ($maintenance['show_progress_bar']): ?>
+                    <div class="bg-black bg-opacity-50 rounded-xl p-4 sm:p-6 mb-6 border border-<?php echo $config['accent_color']; ?>-500">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg sm:text-xl font-bold text-gray-100 text-contrast flex items-center">
+                                <i class="fas fa-tasks mr-2"></i>
+                                Progression
+                            </h3>
+                            <span class="text-2xl sm:text-3xl font-black text-<?php echo $config['accent_color']; ?>-300 text-contrast">
+                                <?php echo $maintenance['progress_percentage']; ?>%
+                            </span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-4 sm:h-5 overflow-hidden shadow-inner border border-gray-600">
+                            <div class="bg-gradient-to-r from-<?php echo $config['accent_color']; ?>-500 via-<?php echo $config['accent_color']; ?>-400 to-<?php echo $config['accent_color']; ?>-500 h-full rounded-full transition-all duration-1000 relative overflow-hidden shadow-lg" 
+                                 style="width: <?php echo $maintenance['progress_percentage']; ?>%">
+                                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                            </div>
+                        </div>
+                        <p class="text-gray-300 text-xs sm:text-sm mt-2 text-center font-semibold">
+                            <?php 
+                            $progress = $maintenance['progress_percentage'];
+                            if ($progress < 25) echo "⚙️ Démarrage des opérations...";
+                            elseif ($progress < 50) echo "🔧 Maintenance en cours...";
+                            elseif ($progress < 75) echo "✨ Finalisation...";
+                            elseif ($progress < 100) echo "🔍 Dernières vérifications...";
+                            else echo "✅ Terminé ! Redémarrage imminent...";
+                            ?>
+                        </p>
+                    </div>
+                <?php endif; ?>
+
                 <!-- Durée estimée -->
                 <?php if ($maintenance['estimated_duration']): ?>
-                    <div class="bg-black bg-opacity-40 rounded-xl p-5 inline-block">
-                        <i class="fas fa-clock text-<?php echo $config['accent_color']; ?>-400 text-3xl mr-3"></i>
-                        <span class="text-white text-xl font-semibold">Durée estimée : </span>
-                        <span class="text-<?php echo $config['accent_color']; ?>-300 text-2xl font-bold">
+                    <div class="bg-black bg-opacity-40 rounded-xl p-4 sm:p-5 inline-block border border-<?php echo $config['accent_color']; ?>-500 shadow-lg">
+                        <i class="fas fa-clock text-<?php echo $config['accent_color']; ?>-400 text-2xl sm:text-3xl mr-3"></i>
+                        <span class="text-gray-100 text-lg sm:text-xl font-semibold text-contrast">Durée estimée : </span>
+                        <span class="text-<?php echo $config['accent_color']; ?>-300 text-xl sm:text-2xl font-bold text-contrast">
                             <?php echo htmlspecialchars($maintenance['estimated_duration']); ?>
                         </span>
                     </div>
@@ -223,22 +291,22 @@ $config = $type_configs[$maintenance['maintenance_type']] ?? $type_configs['sche
 
         <!-- Compte à rebours -->
         <?php if ($maintenance['show_countdown'] && $maintenance['end_time']): ?>
-            <div id="countdown" class="mb-10 fade-in-up" style="animation-delay: 0.6s;">
-                <p class="text-gray-300 text-xl mb-6 font-semibold">
+            <div id="countdown" class="mb-8 sm:mb-10 fade-in-up" style="animation-delay: 0.6s;">
+                <p class="text-gray-200 text-lg sm:text-xl mb-6 font-semibold text-contrast">
                     <i class="fas fa-hourglass-half mr-2"></i>Retour prévu dans :
                 </p>
-                <div class="flex justify-center space-x-6">
-                    <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl min-w-[120px] border-2 border-<?php echo $config['accent_color']; ?>-500 shadow-xl transform hover:scale-110 transition">
-                        <div id="hours" class="text-5xl font-black text-<?php echo $config['accent_color']; ?>-400 mb-2">00</div>
-                        <div class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Heures</div>
+                <div class="flex justify-center gap-3 sm:gap-6 flex-wrap">
+                    <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-4 sm:p-6 rounded-2xl min-w-[100px] sm:min-w-[120px] border-2 <?php echo $config['border_color']; ?> shadow-2xl transform hover:scale-110 transition">
+                        <div id="hours" class="text-4xl sm:text-5xl font-black text-<?php echo $config['accent_color']; ?>-400 text-contrast mb-2">00</div>
+                        <div class="text-gray-300 text-xs sm:text-sm font-semibold uppercase tracking-wider">Heures</div>
                     </div>
-                    <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl min-w-[120px] border-2 border-<?php echo $config['accent_color']; ?>-500 shadow-xl transform hover:scale-110 transition">
-                        <div id="minutes" class="text-5xl font-black text-<?php echo $config['accent_color']; ?>-400 mb-2">00</div>
-                        <div class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Minutes</div>
+                    <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-4 sm:p-6 rounded-2xl min-w-[100px] sm:min-w-[120px] border-2 <?php echo $config['border_color']; ?> shadow-2xl transform hover:scale-110 transition">
+                        <div id="minutes" class="text-4xl sm:text-5xl font-black text-<?php echo $config['accent_color']; ?>-400 text-contrast mb-2">00</div>
+                        <div class="text-gray-300 text-xs sm:text-sm font-semibold uppercase tracking-wider">Minutes</div>
                     </div>
-                    <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl min-w-[120px] border-2 border-<?php echo $config['accent_color']; ?>-500 shadow-xl transform hover:scale-110 transition">
-                        <div id="seconds" class="text-5xl font-black text-<?php echo $config['accent_color']; ?>-400 mb-2">00</div>
-                        <div class="text-gray-400 text-sm font-semibold uppercase tracking-wider">Secondes</div>
+                    <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-4 sm:p-6 rounded-2xl min-w-[100px] sm:min-w-[120px] border-2 <?php echo $config['border_color']; ?> shadow-2xl transform hover:scale-110 transition">
+                        <div id="seconds" class="text-4xl sm:text-5xl font-black text-<?php echo $config['accent_color']; ?>-400 text-contrast mb-2">00</div>
+                        <div class="text-gray-300 text-xs sm:text-sm font-semibold uppercase tracking-wider">Secondes</div>
                     </div>
                 </div>
             </div>
@@ -271,35 +339,58 @@ $config = $type_configs[$maintenance['maintenance_type']] ?? $type_configs['sche
         <?php endif; ?>
 
         <!-- Stats visuelles -->
-        <div class="grid md:grid-cols-2 gap-6 mb-10 fade-in-up" style="animation-delay: 0.8s;">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-10 fade-in-up" style="animation-delay: 0.8s;">
             <!-- Statut serveur -->
-            <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border border-<?php echo $config['accent_color']; ?>-500 border-opacity-30 shadow-xl">
-                <i class="fas fa-server text-5xl text-<?php echo $config['accent_color']; ?>-400 mb-4"></i>
-                <p class="text-white font-bold text-lg mb-3">Statut du serveur</p>
+            <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-5 sm:p-6 rounded-2xl border border-<?php echo $config['accent_color']; ?>-500 border-opacity-30 shadow-xl">
+                <i class="fas fa-server text-4xl sm:text-5xl text-<?php echo $config['accent_color']; ?>-400 mb-4"></i>
+                <p class="text-white font-bold text-base sm:text-lg mb-3">Statut du serveur</p>
                 <div class="flex items-center justify-center">
-                    <span class="w-4 h-4 bg-yellow-500 rounded-full mr-3 pulse-glow"></span>
-                    <span class="text-yellow-400 font-bold text-lg">En maintenance</span>
+                    <span class="w-3 h-3 sm:w-4 sm:h-4 bg-yellow-500 rounded-full mr-3 pulse-glow"></span>
+                    <span class="text-yellow-400 font-bold text-base sm:text-lg">En maintenance</span>
                 </div>
             </div>
 
-            <!-- Progression -->
-            <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-2xl border border-<?php echo $config['accent_color']; ?>-500 border-opacity-30 shadow-xl">
-                <i class="fas fa-tasks text-5xl text-<?php echo $config['accent_color']; ?>-400 mb-4"></i>
-                <p class="text-white font-bold text-lg mb-3">Progression</p>
-                <div class="w-full bg-gray-700 rounded-full h-4 overflow-hidden">
-                    <div class="bg-gradient-to-r from-<?php echo $config['accent_color']; ?>-500 to-<?php echo $config['accent_color']; ?>-700 h-4 rounded-full pulse-glow" 
-                         style="width: 100%"></div>
-                </div>
-                <p class="text-gray-400 text-sm mt-3">Opérations en cours...</p>
+            <!-- Temps écoulé ou Progression -->
+            <div class="bg-gradient-to-br from-gray-800 to-gray-900 p-5 sm:p-6 rounded-2xl border border-<?php echo $config['accent_color']; ?>-500 border-opacity-30 shadow-xl">
+                <?php if ($maintenance['start_time']): ?>
+                    <i class="fas fa-hourglass-half text-4xl sm:text-5xl text-<?php echo $config['accent_color']; ?>-400 mb-4"></i>
+                    <p class="text-white font-bold text-base sm:text-lg mb-3">Temps écoulé</p>
+                    <p class="text-<?php echo $config['accent_color']; ?>-300 text-xl sm:text-2xl font-black" id="elapsed-time">
+                        Calcul...
+                    </p>
+                    <script>
+                    function updateElapsedTime() {
+                        const start = new Date('<?php echo $maintenance['start_time']; ?>').getTime();
+                        const now = new Date().getTime();
+                        const diff = now - start;
+                        
+                        const hours = Math.floor(diff / (1000 * 60 * 60));
+                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        
+                        document.getElementById('elapsed-time').textContent = 
+                            hours > 0 ? `${hours}h ${minutes}min` : `${minutes} min`;
+                    }
+                    updateElapsedTime();
+                    setInterval(updateElapsedTime, 60000); // Update chaque minute
+                    </script>
+                <?php else: ?>
+                    <i class="fas fa-tasks text-4xl sm:text-5xl text-<?php echo $config['accent_color']; ?>-400 mb-4"></i>
+                    <p class="text-white font-bold text-base sm:text-lg mb-3">Opérations</p>
+                    <div class="w-full bg-gray-700 rounded-full h-3 sm:h-4 overflow-hidden">
+                        <div class="bg-gradient-to-r from-<?php echo $config['accent_color']; ?>-500 to-<?php echo $config['accent_color']; ?>-700 h-full rounded-full pulse-glow" 
+                             style="width: 100%"></div>
+                    </div>
+                    <p class="text-gray-400 text-xs sm:text-sm mt-3">En cours...</p>
+                <?php endif; ?>
             </div>
         </div>
 
         <!-- Événements à venir -->
         <?php
         $upcoming_events = $pdo->query("SELECT * FROM events 
-            WHERE event_date >= NOW() 
-            AND event_date <= DATE_ADD(NOW(), INTERVAL 24 HOUR) 
-            ORDER BY event_date ASC 
+            WHERE date_start >= NOW() 
+            AND date_start <= DATE_ADD(NOW(), INTERVAL 72 HOUR) 
+            ORDER BY date_start ASC 
             LIMIT 3")->fetchAll();
         ?>
         
@@ -330,7 +421,7 @@ $config = $type_configs[$maintenance['maintenance_type']] ?? $type_configs['sche
                                         </h4>
                                         <p class="text-yellow-200 text-sm sm:text-base">
                                             <i class="fas fa-clock mr-2"></i>
-                                            <?php echo date('d/m/Y à H:i', strtotime($event['event_date'])); ?>
+                                            <?php echo date('d/m/Y à H:i', strtotime($event['date_start'])); ?>
                                         </p>
                                         <?php if ($event['description']): ?>
                                             <p class="text-gray-300 text-sm mt-2 line-clamp-2">
@@ -343,7 +434,7 @@ $config = $type_configs[$maintenance['maintenance_type']] ?? $type_configs['sche
                                             <p class="text-yellow-200 text-xs">Dans</p>
                                             <p class="text-white text-lg sm:text-xl font-bold">
                                                 <?php
-                                                $diff = (strtotime($event['event_date']) - time()) / 3600;
+                                                $diff = (strtotime($event['date_start']) - time()) / 3600;
                                                 if ($diff < 1) {
                                                     echo round($diff * 60) . ' min';
                                                 } else {
